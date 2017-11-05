@@ -1,3 +1,5 @@
+# Enhancement added for this repository
+
 staging area : repo between local and remote one
 
 ** : git status command will give you following information:
