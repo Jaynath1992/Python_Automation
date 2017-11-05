@@ -1,3 +1,0 @@
-This is f.ttx file
-Has been added for file decription purpose
-Don't move this file
