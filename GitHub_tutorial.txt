@@ -1,0 +1,161 @@
+staging area : repo between local and remote one
+
+** : git status command will give you following information:
+- currently in which branch you are
+- what are the changed/modified files
+
+
+Whenever you have made changes to any file on your local repository(machine)
+1. then you first need to move that file to staging area :
+using command : git add filee_name (Move this file to staging area)
+2. Commit that file using below command :
+git commit -m "commit_message"
+3. After commtting, move this file to remote repository
+
+Your branch is ahead of 'origin/master' by 1 commit
+
+origin is something from where you are going to upload the file to remote repository
+master is remote repository branch where you will be uploading all the files
+
+if you donot have a remote origin then you can add origin local to whatever repo we are
+uploading to or pushing to.
+
+git remote add origin https://github.com/huy333/TestgitHub.git
+
+Whenever you clone a repository then it automatically create a origin
+
+if you have not cloned it then you have to add git remote add origin https://github.com/huy333/TestgitHub.git
+
+4. Now to push file type below command :
+-> git push -u origin master
+
+Pull :
+
+When you do git pull then, basically it pulls everything from remote repository to your local
+repository
+
+git log will show you the log of all commit history
+
+git add command : add the file to staging area
+git commit : sets the file toy local version control database
+git push : push the code to GitHub
+
+** git diftool shows difference between your local changes and previous version of the file
+
+command : git diftool head
+
+**********************************************************************************************
+
+Git/Github tutorial 6: Branches(Create, Merge, Delete a branch)
+
+* To show all branch type command below :
+git branch
+
+To makeout branch active :
+-----------------------------
+git checkout "Branch_Name"
+
+To Push a branch to remote repo :
+*************************************
+-> First create a branch using command : git branch "branch_name"
+-> Then checkout to created branch using command : git checkout "branch_name"
+-> Then Push that branch to remote repository using command : git push --set-upstream origin "Automation_Files"
+
+*********************************************************************************************
+
+Merge feature branch into master branch :
+***********************************************
+
+-> First checkout master branch using command  git checkout master
+-> Then merge feature branch : git merge "feature_branch_name"
+
+***********************************************
+
+Deleting a branch :
+**************************
+step 1: git checkout -b dummy	-> create a branch dummy and checkout that branch
+step 2: go to master branch : git checkout master
+step 3:to delete that branch : git branch -d dummy
+
+********************************************************************************************
+On github, owner can share his code with others
+Other person can make code changes and send a request to owner to pull/merge his code changes into
+owner's repository.
+
+command :
+
+git remote
+origin
+
+git remote -v
+------------------
+origin https://github.com/jaynath1992/Python_Automation.git(fetch)
+origin https://github.com/jaynath1992/Python_Automation.git
+
+origin is the default value for the repo which was cloned
+********************************************************************
+
+git fetch origin : will fetch all the changes since you made last cloned or fetch
+
+Fetching will pull the data to your local repositories(will not merge the changes)
+
+*******************************************************************************************
+
+git pull origin : will fetch and merge the changes since you last cloned
+
+using git pull origin it will automatically fetch and merge the changes from remote branch to current branch
+
+
+git push origin master
+
+origin is the name of remote repository and commit them to master branch
+
+******************************************************************************
+
+To remove files from Git :
+
+command : git rm -r filename(or *.txt to remove text file)
+it will remove everything from local repo.now to make the changes reflected in remote repo first commit and then push.
+
+command : git commit -a -m 'delete file'
+comman d: git push
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
