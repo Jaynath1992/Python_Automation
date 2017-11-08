@@ -1,0 +1,113 @@
+Fixtures and requests :
+
+fixture(scope,params,autouse,name,id)
+
+scope = module/functon/class/session
+params =['','']] , an optional list of parameters which will cause multiple invocations of the fixture
+function and all of the tests using it.
+
+autouse = true/false. if autouse = true, then fixture function is activated for all tests that can see it.
+If false, then an explicit reference is needed to activate that fixture
+
+name = 'fixture' by default name would be name of decorated fixture function
+
+id's : list of string id's each corresponding to the params, so that
+they are part of test id,if o
+
+import pytest
+
+@pytest.fixture(scope="module")
+def fixture_function():
+
+***********************************************************************************************************************
+
+Fixture can optionally provide their values to test functions using yield statement,instead of return. In
+this case, the code block after the yield statement is executed as teardown code regardless of the test outcome.
+A fixture function must yield exactly once.
+
+The request object that can be used from fixture functions :
+
+class FixtureRequest
+
+->  A request for a fixture from a test or fixture function
+-> A request object gives access to the requesting test context and has an optional param attribute in case the fixture
+is parameterized indirectly.
+
+-> fixturename = None
+-> scope = None
+-> node
+-> config
+-> function
+-> cls
+-> instance
+-> module
+-> fspath
+-> keywords
+-> addfinalizer(finalizer) : add finalizer/teardown function to be called after the last test within the requesting test context
+finished execution
+ ************************************************************************
+
+pytest finds the test_ehlo because of the test_ prefix. The test function needs a function argument named
+smtp. A matching fixture function is discovered by looking for a fixture-marked function named smtp. 
+
+
+if i define scope of fixture function as scope=function, then fixture setup and cleanup would occur around each single test.
+
+Note that if we decorated our fixture
+function with scope='function' then fixture setup and cleanup would occur around each single test.
+
+As historical note, another way to write teardown code is by accepting a request object into your fixture
+function and can call its request.addfinalizer one or multiple times:
+
+Parameterizing Fixtures :
+
+Fixture functions can be parametrized in which case they will be called multiple times, each time executing the set
+of dependent tests, i. e. the tests that depend on this fixture. Test functions do usually not need to be aware of their
+re-running. Fixture parametrization helps to write exhaustive functional tests for components which themselves can
+be configured in multiple ways.
+
+
+import pytest
+import smtplib
+@pytest.fixture(scope="module",params=["smtp.gmail.com", "mail.python.org"])
+def smtp(request):
+
+	smtp = smtplib.SMTP(request.param)
+	yield smtp
+	print ("finalizing %s" % smtp)
+	smtp.close()
+
+
+autouse fixtures obey the scope= keyword-argument: if an autouse fixture has scope='session' it will
+only be run once, no matter where it is defined. scope='class' means it will be run once per class, etc.
+
+If during implementing your tests you realize that you want to use a fixture function from multiple test files you can
+move it to a conftest.py file or even separately installable plugins without changing test code. The discovery of fixtures
+functions starts at test classes, then test modules, then conftest.py files and finally builtin and third party plugins
+
+
+Marking test funtion with attributes :
+
+by using @pytest.mark helper you can easily set metadata on your test functions. There are some builtin markers :
+
+for example :
+
+1. skipif : skip a test function if certain condition is met
+2. xfail : produce an expected failure outcome, if a certain condition is met.
+3. parameterize : to peroform multiple calls to the same test functions
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,40 @@
+Python :
+
+1. Scripting language
+2. Interpreted language
+3. Rich set of API's	- 20,000 modules approx
+4. Open Source
+5. Platform indepenent	-SDK for android - QPYTHON 
+6. Dynamic , easy to use
+7. Software Automation (front end, Back end (Deployment,))
+8. Data Analytics (Statistical Analysis)
+9. Security
+10. Machine Learning and Natural language processing
+11. Case sensitive
+12. Indentation (Provides readibility)
+13. Jython(Java), Iron Python(C#),Cython(Write in Pyhton but compile in C)
+14. Supports Object Oriented and Procedural(Sequential),Modular both
+15 Cloud Computing
+16. Networking(Paramiko module)
+17. Hadoop Infrastructure
+18. Anti Spamming
+19. Sandboxes
+
+
+Programming Language 			Scripting Language
+
+1. dependent upon Compiler		1. dependent upon Interpreter (Internal Compiler)
+
+
+Python Is a interpreted language but not 100 % interpreted,it's hybrid (we can also compile the python code)
+
+
+Backslash (\) supress the special meaning of character
+ print '\'hello\''
+In Python 2.7, print is a reserved keyword while it is built in function in pyhton 3.6
+
+
+
+
+
+

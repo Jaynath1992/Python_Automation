@@ -1,0 +1,153 @@
+Class/Object functions: 
+
+name= 'jatin'
+dir(name)		return all built in string objects functions
+
+to get help - help(name.center)	-center is a function
+
+two types of functions : one start with character and other with _(underscore), these function used by pyhton internally.
+but we should avoid using that.
+
+one operator can behave differently as per the objects.(operator overloading)
+
++ - add integer objects but concatenates string objects 
+
+
+encode and decode :(base64 format)
+
+for encoding and decoding, we have base64 protocol format. u can encode your string to any format and u can decode in same format.
+
+similarly if u want to provide two level of security, then use two encoding format and to decrypt it use same two level of
+decoding format one by one in same order in which it was encoded.
+
+password = 'March@Apple2017'
+
+encryptedPassword = password.encode('base64')
+decryptedPasswword = encryptedPassword.decode('base64')
+
+
+format function :
+
+help(''.format)
+
+# New style of formatting in python
+'Hello {0},please find ur marks in math={1},physics={2} and chemistry={3}'.format('jaynath',80,90,45)
+'Hello {name}, Please pay me dollar {dollar}'.format(name='jaynath',dollar=10)
+ 
+isalnum() function :  either alpha or numeric, returns boolean value
+
+Join function :
+
+must be iterable object(string,list,dict)
+-> can not be number, must be iterable object
+
+range(10) :
+Question : Join 0,1,2,3,.....,9 using join function
+
+
+ ''.join(map(lambda x: str(x),range(10)))
+
+ljust() :
+
+'1234'.ljust(16,'X')
+
+rjust() :
+
+'1234'.rjust(16,'X')
+
+account='873823947993'
+>>> account[-4:].rjust(16,'X')
+
+>>> name = '     ja t i n   '
+>>> name.replace(' ','')
+'jatin'
+>>> name='jatin\n\n\r'
+>>> name.strip()
+'jatin'
+>>> 
+
+List functions :
+
+extend takes and iterable object(such as list,tuple or string) and adds each element of the iterable to the list one at a time.
+while append adds its arguments to the end of the list as a single list.
+
+list.append add a single item to the list.
+
+
+append : append object at the end of list
+extend : append element at the end of list
+
+this is difference between append and extend
+
+list.append(['Ashish'])	- adds as a lst object
+list.extend([''Ashish])	- adds as a element
+
+
+names.insert(127,'Ashish'0 - if index is not available in list then it will append)
+
+names.pop(0) : pull out the first index element
+names.pop() - pops out last index element
+
+names.remove(['Ashish'])
+
+Sorting :
+
+Pyhton does sorting based on ascii value :
+
+Ascii value :
+
+a - 97
+A - 65
+-----------------------
+
+Alphabetically : 
+
+key - function/lambda
+
+Step 1 : Fetch each and every element of my list
+
+aakash,Amit,Aakash,Ajay,ameet
+
+Step 2:
+
+it apply the function on each element 
+AAKASH,AMIT,AAKASH,AJAY,AMEET
+
+Step 3:
+
+It does the sorting
+
+AAKASH,AAKASH,AJAY,AMEET,AMIT
+
+STep 4:
+
+it returns original element associated with
+
+aakash,Aakash,Ajay,ameet,Amit
+
+-----------------------------------------------------
+list.sort() : returns a modified list
+
+sorted : returns a new sorted list - output is a list always. it does not modify list or tuple or string
+
+in python3, item is replaced by iteritems()
+
+u need for loop to use iteritems
+
+for k,v in dict.iteritems():
+	print k,v
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

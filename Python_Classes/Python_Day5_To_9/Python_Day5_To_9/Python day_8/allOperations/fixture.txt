@@ -1,0 +1,50 @@
+Fixtures and requests :
+
+fixture(scope=function/class/module/session,params=[1,2],autouse=True/False,ids=None,name=None)
+
+Parameters :
+
+- scope : the scope for which this fixture is shared, one of function
+(default), class, module or session
+
+- params : an optional list of parameters which will cause multiple
+invocations of the fixture function and all the tests using it.
+
+- autouse : if true, the fixture func is activated for all tests
+that can see it. if False then an explicit reference is needed to activate
+the fixture.
+
+ids - list of string ids each corresponding to the params
+so that they are part of the test id. if no ids are provided
+they will be generated automatically from the params.
+
+name – the name of the fixture. This defaults to the name of the decorated function.
+If a fixture is used in the same module in which it is defined, the function name of the
+fixture will be shadowed by the function arg that requests the fixture; one way to resolve
+this is to name the decorated function fixture_<fixturename> and then use
+
+@pytest.fixture(name='<fixturename>')
+
+Fixtures can optionally provide their values to test functions using a yield statement, instead of return. In
+this case, the code block after the yield statement is executed as teardown code regardless of the test outcome.
+A fixture function must yield exactly once.
+
+
+The request object that can be used from fixture functions
+
+class FixtureRequest
+
+addfinalizer(finalizer) :
+
+add finalizer/teardown function to be called after the last test within the requesting test context finished
+execution.
+
+The purpose of test fixtures is to provide a fixed baseline upon which tests can reliably and repeatedly execute. pytest
+fixtures offer dramatic improvements over the classic xUnit style of setup/teardown functions:
+
+Fixtures as Function arguments :
+
+Test functions can receive fixture objects by naming them as an input argument.
+Fixture functions are registered by marking them with
+@pytest.fixture.
+

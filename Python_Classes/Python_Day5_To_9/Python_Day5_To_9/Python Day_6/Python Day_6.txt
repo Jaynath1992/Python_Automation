@@ -1,0 +1,49 @@
+File handling : perform operation on ascii files
+
+Ascii files :text,csv,log
+Non Ascii files : pdf,excel,json..
+
+built in functions :
+
+1. open(filename,mode,buffering)
+
+mode : r,w,a,rb,wb,ab,r+,w+,a+	default mode : read
+bufferinf : 0 (disable the buffer , don't have cache)
+	    1 (default parameter, size 8 kb)
+
+infile = open('file.txt','r')
+
+infile.read() 	- reads content of file as string and also file pointer keeps  moving,once whole file is read then file pointer reaches to the end of file
+then if u try to read anything it will return empty string
+
+infile.read(5) : size =5 , will return 5 characters,and file pointer will be reached to at the begininng of 6th character
+
+infile.readline() 	- read the content of file line by line as string and also file pointer moves to at the beggining of next line
+
+infile.readlines()	- read content of file as a list and returns whole set of data. file pointer reaches to end
+
+******************************************************************************************************************
+How to set file pointer :
+
+seek(offset,where) : 
+
+infile.tell() 	: tell pointer index
+
+**  WAP to read a csv file which contains three columns id,name and department. print the name of employee which belongs to it dept.
+
+flush() : will write the data from buffer to file
+
+*************************************************************************
+
+Module : a group of similar functions
+
+1. inbuilt module : libraries (provided by python)
+2. UDF
+3. Rep modules (API)
+
+
+Question : WAP to accept a directory name from user and remove all the empty files from that directory
+
+
+
+	    

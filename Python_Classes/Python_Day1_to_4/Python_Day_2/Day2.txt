@@ -1,0 +1,95 @@
+execfile :
+
+When we want to execute one python program from another python program then we can use this function
+
+But this is available only in Python 2.7 not in Python 3.
+
+In Pyhton 3 we have exec function
+
+Core Objeects in Python :
+
+Object : which have memory space
+
+everyhting in python is a object of particular class
+
+1. number :	int,float,long,complex
+
+
+built in function : type(a) - to get the type of a class
+
+length of integer in python  : 0 to 2**31 -1 = 2147483648L
+
+Operators :
+
+1. Arithmetic Operators (+,-,*,/,**,//)	: When the operator have same precedence then left to right principle is followed
+
+2. Bitwise Operator (&,|,^)
+
+To convert decimal into binary :
+
+int('1001',2) - 9
+
+bin(10)	- '0b1010'	- it gives you first two character to represent 'ob' as binary
+
+left shift : Right Shift
+
+1011	11
+1111	15
+------&
+1011	| 1111
+		
+ 
+11 XOR 15 = 
+1011
+1111
+-----
+0100
+
+
+3. Comparision Operator : (>,>=,<,<=,==,!=,<.)
+
+TypeCasting : is a principle in programming language which comes into existence when you are performing a operation between
+two different objects . Numbers objects are compatible with each other so they perform implicit typecasting but this case is not
+valid when you are using different objects
+
+<> :	This operator is not available in python 3
+
+20 <> 20.0 - False
+
+Operator Overloading :
+
+One operator can be held multiple functionality when they are performing operation on different different objects
+
+Here is + is overloaded for string as well, so in case of number we are doing addition, in case of string they are doing
+the concatenation.
+
+
+len(string)-1 = gives last index of string , last character of string
+
+
+in operaotr : membership operator
+
+'i' in string
+
+Slicing :
+
+object[Start:End:Step]
+
+object[::] - print whole string
+object[1::1]
+
+
+
+List : will hold multiple values at single time
+
+what is immutable and mutable property of an object :
+
+-> mutable objects are those objects in which we modify the element of an object.
+
+
+String : immutable objects
+List : mutable object
+
+
+When we try to modify value of an element inside a list which is not present in the list, then it will raise exception(IndexError)
+

@@ -1,0 +1,36 @@
+User defined module :
+
+pyc file : used for distribution purpose
+
+if we modify anything in py file , then python does not create pyc file. it is old
+
+so for that we need to restrat our sheel and again create a new pyc file.
+
+compare py and pyc file : using timestamp, if py timestamp > pyc timestamp then reload
+
+if pyc timestamp is less than py , then it creates a new pyc
+
+import os
+os.chdir('C:\Users\Jaynath\Dropbox\Ethans 13th May Batch\Day 7')
+
+import Arithmatic
+
+To get rid of this changing directory, directly define PYTHONPATH in user env varibale
+
+
+inbuilt library :
+
+Current location
+
+PYTHONPATH : when u want to make ur python modul work from any directory then define PYTHONPATh env variables in sysstem and provide value of that path
+
+Installation directory : C:\Python27
+
+*******************************************
+
+Standard Boiler Plate :
+
+When a python program is run directly, the special variable __name__ is set to __main__
+
+when we have to import module, then module name will be name of that module
+

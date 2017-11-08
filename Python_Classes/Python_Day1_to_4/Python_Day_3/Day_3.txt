@@ -1,0 +1,137 @@
+Dictionary : holds key-value pairs
+
+1. it holds unique key.. it can not have duplicate keys. if it has duplicate keys then it will keep latest values for that duplicate key
+2. it holds elements in random order.unordered collection of objects
+3. Arithmatic operation, operator overloadig..not possible
+4. access value through key, viceversa is not true. 
+5. Always use square brackets for indexing in list,dictionary as well
+6. if i try to access a key which is not present in dictionary..then it will give keyerror exception
+7. to remove element use , del employee['name'], it will delete that object, it is called destructor in oops
+
+Deep copy :
+
+Key of a dictionary should always be a immutable objects
+
+employees = {[1,2,3]:[1,2,3]} 	-- Not possible but employees = {(1,2,3):[1,2,3]} - is Possible
+
+Typerror : unhashable type : 'list'
+
+********
+Tuple
+*********
+Tuple : is exactly same as list but tuple is immutable object(we can not modify objects of tuple)
+
+-> not appendable, not insertable, not removable
+
+-> If Tuple having one element , always give comma(,) after that, if not given it will be treated as integer
+
+If tuple contains objects which is mutable, then i can be able to modify the element.
+
+list of tuple is - mutable
+dictionary of tuple is - mutable
+
+Set : is an unordered collection of unique elements.
+
+you can define it using Set keyword at beginning
+
+accessing element using index is not supportable in set, because it is unordered collection of elements
+
+set object does not support indexing : 
+
+possible operations are : union, intersection, interjection
+
+
+
+
+Conditional Statements :
+
+if condition:
+   statement 1
+   statement 2
+else:				(in else block you can use any spaces for indentation)
+   Statement 3
+   Statement 4
+	
+
+
+
+In Python 3, we don't have raw_input , only we have input function
+
+raw_input and input both are pyhton2 in built functions, which prompts user and accepts string and number respectively
+
+In pyhton 3, raw_input is not availbale, and it get replace by input function
+
+
+Conditional statements:
+
+Integer : 
+
+0,0.0,0L,0j	- retutn false
+string - empty string is false, even string is having space or tab or single spaces is true
+list - empty list false
+dict - empty dict false
+tuple - empty tuple false
+set - empty set false
+Boolean false
+None - None
+
+
+if condition:
+	
+elif condition:
+
+elif cindition:
+
+else:
+
+
+Loops :
+
+while loop
+for loop
+
+
+while condition:
+    Statement 1
+    Stetment 2
+
+it runs continuosly , until user provides intervention to it.
+
+Ques: WAP to accept a input from user in form of number and print 10 odd numbers after that number.
+
+
+
+While:
+
+break
+continue
+
+while:
+
+
+else:
+	print 'will execute once while condition finishes it's execution but if we are using break statement then it will not got to else block'
+
+
+break stement : will come out of the loop..if we are using break statement in a while loop , then it will come out of the loop without
+executing the else bloack(if given)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

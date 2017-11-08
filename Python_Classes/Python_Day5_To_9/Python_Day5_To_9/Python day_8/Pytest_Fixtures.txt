@@ -1,0 +1,90 @@
+@pytest.mark.skip(reason = 'don't run this test')
+
+to skip test from running
+
+
+pytest - k multiply
+
+fixtures :
+
+code repetition for every test cases
+
+two ways to fix this issues
+
+1. setup and teardown methods (classix xunit style)
+
+it will initialise for your test cases in the beggining
+
+2. fixtures (recommended)
+
+fixtures is much better than the traditional classic xunit style
+where we use setup and teardown methods
+
+initialisation is done in setup_module(module):
+
+teardown_module(module) : after finishing the test case execution
+
+fixtures leverage a concept of dependency injection
+
+@pytest.fixture(scope="module")
+
+if i don't give scope= "module" then it will run before every test
+functions
+
+if i want to run only once then use scope = module
+
+@pytest.fixture(scope = "module")
+def cur():
+ print('Setting up...')
+ db = MyDB()
+ conn = db.connect("server")
+ curs = conn.cursor()
+ yield curs
+ curs.close()
+ conn.close()
+ print('Closing up...')
+
+def test_johns_id(cur):
+ id = cur.execute("select * from employee_db")
+ assert id == 124
+
+def test_toms_id(cur):
+ id = cur.execute("Select * from employee_db")
+ assert id == 789
+ ******************************************
+PyTest : Parameterized Tests
+
+import mathlib
+import pytest
+
+@pytest.mark.parameterize("test_input,expected_output",
+				
+			[(5,25),(9,81),(10,100)]
+			  )
+
+
+def test_cal_square(test_input,expected_output):
+	result = mathlib.calc_square(test_input)
+	assert result = expected_output
+
+@pytest.fixtures()
+
+def my_fixture():
+	print 'This is my fixture'
+
+def test_my_fixture_1():
+	print 'This is my fixture 1'
+
+Note : To use the fixture, pass it as a parameter to test functions
+When we run the test, we will see that, first the fixture is called
+
+Other way of using Pytets fixtures :
+
+@pytest.mark.usefixtures('my_fixture')
+def test_my_fixture():
+ print 'I m the test'
+
+*************************************
+Use py.test -s TEST_NAME	- to print statement
+
+

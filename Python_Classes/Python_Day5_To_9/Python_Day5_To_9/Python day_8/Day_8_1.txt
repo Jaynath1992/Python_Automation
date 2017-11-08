@@ -1,0 +1,42 @@
+Errors :
+
+1. Syntax erros : when not following principles of programming
+2. Run time issues : exception
+3. 
+
+Catching Exceptions :
+
+we cannot get two exception at a time. only one exception can error at ta time.
+
+Generic excrptions:
+
+1. try except block : is a generic block which is used for exception handling in python.
+2. one try block can have multiple except blocks
+3. try except block can be nested
+4. A generic exceptions is catched by an exception class
+5. One try block should be ended by either except block or finally block
+6. we can also have an else block with try block, which will get executed when no exception raised by try block
+7. We can also use sys module to get more information about exception, exception name, as well as reason for wxception
+
+
+import sys.exec_info() - geives all information
+
+Exception Name : sys.exec_info()[0]
+Why I got exception : sys.exec_info[1]
+
+globals() is afinction which contains all functions,identifiers,classes in python
+
+try , else : else block will get executed only when try block has successfully executed
+
+we can use try..except try..finally block,but try .. else is not accepted, only try would not be allowed,gives syntax error
+
+3. Logical error : 
+
+Debugging :
+
+1. breakpoint : temporary suspension of code
+2. Continue : 
+3. Step In/Into : line by line execution, will go inside function
+4. Step over : skip over function or module,
+5. Step out : if ainside function then to come out of that function use step over
+

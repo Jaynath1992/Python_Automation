@@ -1,0 +1,148 @@
+range and xrange : difference
+
+range returns list but xrange returns objects
+
+in terms of memory management xrange does it efficiently.
+
+range(start,stop,step)
+
+Like range(), but instead of returning a list, returns an object that
+generates the numbers in the range on demand.  For looping, this is 
+slightly faster than range() and more memory efficient.
+
+
+in python 3, we have only range function, xrange is replaced by range function. it does the same work done by xrange
+
+Function :
+
+1. Built-in function
+2. UDF
+3. Object/ Class functions
+4. Module function
+
+Decorator :
+
+function of functions
+
+decorator is a special concept in python, which helps to implement top level functions, which helps to add more instructions
+to the exisitng fucntions
+
+Lambda functions:
+
+-> is an anonymous(which does not have any name) user defind functions which normally use when we want to pass function object as an argument to function.
+
+->it is a simple one line function, 
+-> donot use def or return keyword
+->These are implicit
+
+lambda x,y:x if x>y else y  (to get max of two numbers)
+
+map function:
+-> Apply same function to each element of a sequence
+-> Return the modified list
+
+map(lambda x:x**3,(10,20,30,15)) , 2nd argument should be iterable object
+
+map(lambda x:x**3,range(1,11))
+
+filter function:
+
+-> Filter function returns out of a sequence
+-> return filtered list
+
+filter(map(lambda x: x**2, [10,20,30]))
+def cube(x):
+	return x ** 3
+
+map(cube,range(1,11))
+
+Filter function :
+
+filter(...)
+    filter(function or None, sequence) -> list, tuple, or string
+    
+    Return those items of sequence for which function(item) is true.  If
+    function is None, return the items that are true.  If sequence is a tuple
+    or string, return the same type, else return a list.
+
+
+** Filter even number from list and get square of those elements
+
+>>> l = [10,13,20,17,21,24]
+>>> list(map(lambda y:y*y,filter(lambda x:x%2==0,l)))
+[100, 400, 576]
+
+2nd Way :
+
+>>> z = [item*item for item in l if item%2==0]
+>>> z
+[100, 400, 576]
+>>> 
+
+Reduce function :
+
+The reduce function is little less obvious in it's intent.This function reduces a list to a single
+value by combining elements via a supplied function.
+
+-> Reduce function is really useful function for performing some computation on a list and returning
+the result.
+reduce is a really useful function for performing some computation on a list and returning the 
+result. It applies a rolling computation to sequential pairs of values in a list. 
+For example, if you wanted to compute the product of a list of integers.
+>>> product = reduce((lambda x, y: x * y), [1, 2, 3, 4])
+>>> product
+24
+>>> product = reduce((lambda x, y: x + y), [1, 2, 3, 4])
+>>> product
+10
+
+
+Comprehension:
+
+is a technique in python for utilizing the nested loops within a single line and produce a list or dictionary or set as per the statistics , comprehension is
+33 % faster as compare to normal loops.
+
+
+list dictionary or set comprehension
+
+List comprehension :
+
+
+a= [i for i in range(1,10)]	list comprehension single dimension
+
+[i for i in range(1,10) if i % 2 ==1]	2-dimensional
+
+
+[j for i in [[1,2,3],[4,5,6]] for j in i]
+
+[j for i in "" for j in i if j%2==1]
+
+
+To check prime and non prime using list comprehension :
+
+notaprime : notaprime = [j for i in range(2,10) for j in range(i*2,100,i)]
+
+prime : [i for in range(2,100) if i not in notaprime]
+
+
+
+Enumerate function :
+
+gives index and value pair of list or dictionary.
+
+for i,j in enumerate(names):
+	print i,j
+
+{i:j for i,j in enumerate(names)}
+
+
+
+Zip function : Return a list of tuples, where each tuple contains the i-th element
+    from each of the argument sequences.  The returned list is truncated
+    in length to the length of the shortest argument sequence
+
+dept =['IT','HR','Admin']
+names=['Jatin','Raj','Mohan']
+
+zip(names,dept)
+

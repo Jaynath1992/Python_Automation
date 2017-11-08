@@ -1,0 +1,36 @@
+Packages :
+
+-> Collection of modules
+
+First create a a package(allOperations), within this package create a __init__.py file, without or with any statement
+
+Then add some modules inside that package. then import those packages or modules in whichever way u want to import them
+according to ur own choice
+
+__init__ : in this file we can initialise all modules which we want to import
+
+if u want to import all modules from packages then it will not allow in pyhton, restriction
+
+from allOperations import * - not import all modules,gives error
+
+solution is : add this statement in __init__.py file
+
+__all__ = ['arithmatic','arithmatic2']
+
+
+from package import * - only import modules not packages : it only import __init__ added modules
+
+
+>>> from allOperations.arithmatic2 import add
+>>> add(20,30)
+
+
+from allOperations import *
+>>> arithmatic.add(10,20)
+
+Traceback (most recent call last):
+  File "<pyshell#15>", line 1, in <module>
+    arithmatic.add(10,20)
+NameError: name 'arithmatic' is not defined
+
+In this case u need to define name of modules in __init__ files , __all__ = ['arithmatic']

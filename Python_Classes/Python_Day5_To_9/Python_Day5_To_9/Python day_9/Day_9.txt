@@ -1,0 +1,61 @@
+Object oriented python :
+
+1. Sequential way of programming
+2. Modular way of programming
+3. Object oriented way of programming
+
+
+class : is nothing but a prototype which contains two things one, class methods and and second attributes
+
+
+object can access class methods and attributes
+
+
+attribute : private and public
+
+public are those which are use by objects
+
+private are used by internal methods of classs
+
+
+__add__ : private mathods
+
+methods :
+
+
+1. encapsulation : hising the complexity from user and only displaying interface to them
+2.nheritance : they inherit or borrow the features from the class.
+
+derived class, parent class
+
+3. Polymorphism : many forms
+
+overriding : 
+overloading: same methods but different signatures : not available in python
+
+
+
+
+oop is a methodology through which we can write a program in much effective way and utilizing the object oriented 
+fundamentals like encapsulation, inheritance and polymorphism.
+
+oop is highly useful in a project whic requires reusability functionality with each and every time.
+
+
+an oop is met with modular programming, the whole code become mucg readable,scalable, and easy to use
+
+a/c to ... oop they basically help you to reduce effort , time and beneficial for the big projects
+
+Encapsulation :which says, hide the complexity from the user and only provide interface to them.
+
+with the help of inheritance we can inherit it multiple classes and reduce the lines of code, with the powerful methodology
+
+Polymorphism : provides multiple forms of an implementation using overriding and overloading principle
+
+
+Construtor is a special function in oop language which creates an object
+
+
+
+ 
+
