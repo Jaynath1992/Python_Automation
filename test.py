@@ -8,7 +8,7 @@ def multiply(a, b):
  print('Multiplication of number a : {} and b : {} is {}'.format(a,b,a*b))
 
 if __name__ == '__main__':
-a = 50
+ a = 50
  b = 35
  sum(a,b)
  sub(a,b)
