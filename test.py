@@ -9,7 +9,7 @@ def multiply(a, b):
 
 if __name__ == '__main__':
  a = 50
- b = 25
+ b = 35
  sum(a,b)
  sub(a,b)
  multiply(a,b)	
