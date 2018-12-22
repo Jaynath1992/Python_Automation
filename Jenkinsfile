@@ -1,11 +1,9 @@
-pipeline {
-    stages {
-        stage('Git Checkout') {
-            scm checkout
-        }
-        stage('Run test') {
-            sh 'python -m pytest -v -s -k test_script.py'
-        }
+node {
+    stage('Git checkout') {
+        checkout scm
+    }
+    stage('Run test') {
+        pytest -v -s -k test_script.py
     }
 
 }
