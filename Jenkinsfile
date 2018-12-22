@@ -3,7 +3,7 @@ node {
         checkout scm
     }
     stage('Run test') {
-        bat 'pytest -v -s test_script.py'
+        cmd 'pytest -v -s test_script.py'
     }
 
 }
