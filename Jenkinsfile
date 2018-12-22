@@ -1,5 +1,5 @@
 pipeline {
-    agent any {
+        agent any 
         stages {
             stage('Build Phase') {
                 echo 'Build done'
@@ -11,6 +11,4 @@ pipeline {
                 echo 'Deployment Done'
             }
         }
-        
-    }
 }
