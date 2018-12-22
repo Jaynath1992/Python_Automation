@@ -3,7 +3,7 @@ node {
         checkout scm
     }
     stage('Run test') {
-        sh 'pytest -v -s -k test_script.py'
+        sh 'pytest -v -s test_script.py'
     }
 
 }
