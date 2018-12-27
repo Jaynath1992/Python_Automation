@@ -4,19 +4,25 @@ pipeline {
 		stage('Run Test') {
 			parallel {
 				stage('Build Phase') {
-					agent python
+					agent {
+						docker { image 'alpine:20181019' }	
+					}		
 					steps {
 						echo 'Build phase completed'
 					}
 				}
 				stage('Testing Phase') {
-					agent python
+					agent {
+						docker { image 'alpine:20181019' }	
+					}
 					steps {
 						echo 'Testing phase comepleted'
 					}
 				}
 				stage('Deployment Phase') {
-					agent pyhton
+					agent {
+						docker { image 'alpine:20181019' }	
+					}
 					steps {
 						echo 'Deployment completed'
 					}
