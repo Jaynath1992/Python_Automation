@@ -1,21 +1,25 @@
 pipeline {
         agent any
         stages {
-                stage('Build Phase') {
-                        steps {
-                                echo 'Build phase completed'
+                parallel 'Build Phase': {
+                        stage('Build Phase') {
+                                steps {
+                                        echo 'Build phase completed'
+                                }
+                        }, 'Stage Phase': {
+                                stage('Testing Phase') {
+                                        steps {
+                                                echo 'Testing phase comepleted'
+                                        }
+                                }
+                        }, 'Deploy Phase': {
+                        stage('Deployment Phase') {
+                                steps {
+                                        echo 'Deployment completed'
+                                }
                         }
-                }
-                stage('Testing Phase') {
-                        steps {
-                                echo 'Testing phase comepleted'
                         }
-                }
-                stage('Deployment Phase') {
-                        steps {
-                                echo 'Deployment completed'
-                        }
-                }
+                }    
                 
         }
 
