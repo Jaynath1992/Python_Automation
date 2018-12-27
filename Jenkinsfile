@@ -8,7 +8,7 @@ pipeline {
 						docker { image 'alpine:20181019' }	
 					}		
 					steps {
-						echo 'Build phase completed'
+						sh '''echo Build phase completed '''
 					}
 				}
 				stage('Testing Phase') {
@@ -16,7 +16,7 @@ pipeline {
 						docker { image 'alpine:20181019' }	
 					}
 					steps {
-						echo 'Testing phase comepleted'
+						sh '''echo Testing phase comepleted'''
 					}
 				}
 				stage('Deployment Phase') {
@@ -24,7 +24,7 @@ pipeline {
 						docker { image 'alpine:20181019' }	
 					}
 					steps {
-						echo 'Deployment completed'
+						sh '''echo Deployment completed'''
 					}
 				}
 			}
