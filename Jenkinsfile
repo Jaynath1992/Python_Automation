@@ -7,11 +7,11 @@ pipeline {
                                         echo 'Build phase completed'
                                 }
                         }
-						stage('Testing Phase') {
-								steps {
-										echo 'Testing phase comepleted'
-								}
-						}
+			stage('Testing Phase') {
+				steps {
+					echo 'Testing phase comepleted'
+				}
+			}
                         stage('Deployment Phase') {
                                 steps {
                                         echo 'Deployment completed'
