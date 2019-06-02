@@ -1,3 +1,23 @@
+**************************
+List Comprehension :
+**************************
+
+values = [(expression) for value in collection if condition]
+values = [(expression) if condition else () for value in collection]
+
+
+evens = [item for item in range(1, 10) if item % 2 == 0]
+
+
+squares = list()
+for item in range(1, 10):
+  if item % 2 == 0:
+    squares.append(item * item)
+return squares
+
+
+
+
 QUESTION :
 calculate the sum of squares of even numbers between 1 to 10 using reduce and lambda and list comprehension approach function :
 
