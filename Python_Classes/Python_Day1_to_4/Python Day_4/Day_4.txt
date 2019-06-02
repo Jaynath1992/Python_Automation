@@ -21,11 +21,32 @@ Function :
 4. Module function
 
 Decorator :
+-> In pyhton decorators are wrapper around another function
+-> if you want to change/modify the functionality of existing function without changing the original function, then decorators are very helpful.
+* Decorators are simply wrapper around another function, which changes the behavior of exisitng function.
+* Basically decorator takes in a function, add some functionality and returns it
 
-function of functions
-
+**function of functions
 decorator is a special concept in python, which helps to implement top level functions, which helps to add more instructions
 to the exisitng fucntions
+
+example of decorator :
+
+def smart_divide(func):
+  def _inner(a, b):
+    if a < b and a != 0:
+      a, b = b, a
+    print 'output is :'
+    func(a, b)
+  return _inner
+
+@smart_divide
+def divide(a, b):
+  print a / b
+
+if __name__ == '__main__':
+  divide(10, 30)	# output will be always larger(a,b)/minimum(a,b)
+
 
 Lambda functions:
 
@@ -46,6 +67,8 @@ map(lambda x:x**3,(10,20,30,15)) , 2nd argument should be iterable object
 map(lambda x:x**3,range(1,11))
 
 filter function:
+filter function returns those elements of iterable object for which function is true
+for ex : filter(lambda x: x%2==0, [10, 13, 11, 23, 40, 24])	# output : [10, 40, 24]
 
 -> Filter function returns out of a sequence
 -> return filtered list
@@ -126,7 +149,11 @@ prime : [i for in range(2,100) if i not in notaprime]
 
 
 
-Enumerate function :
+Enumerate function : returns index, value pair from a list
+
+x = [10, 20, 30, 40]
+for i,j in enumerate(x):
+  print i, j
 
 gives index and value pair of list or dictionary.
 
