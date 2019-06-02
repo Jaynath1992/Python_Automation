@@ -1,3 +1,11 @@
+QUESTION :
+calculate the sum of squares of even numbers between 1 to 10 using reduce and lambda function :
+
+reduce(lambda x, y : x + y, [item * item for item in range(1, 10) if item % 2 == 0 ])
+
+
+
+
 Decorators in Python :
 
 * Change or modify the functionality of exisiting function
