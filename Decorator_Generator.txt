@@ -1,0 +1,113 @@
+Decorators in Python :
+
+* Change or modify the functionality of exisiting function
+* Decorators are simply wrapper around another function, which changes the behavior of exisitng function.
+* Basically decorator takes in a function, add some functionality and returns it
+
+Things to know before learning decorators :
+
+1. In Python, everthing is objects, whether it is a variable or function or class or any other thing
+so function can be assigned to a vraible, various different names can be bound to same function object.
+
+2. A function can be passed as an argument to another function, if you have used functions like map, reduce, filter, you already know about this. such function that take other functions as arguments are also called higher
+order functions.
+
+Example :
+
+def inc(x):
+  return x + 1
+
+def dec(x):
+  return x - 1
+
+def operate(func, x):
+  result = func(x)
+  return result
+
+if __name__ == '__main__':
+  operate(inc(4))
+
+ # output : 5
+
+3.A function can return another function :
+
+def make_pretty(func):
+    
+  def inner():
+       
+    print("I got decorated")
+        
+    func()
+    
+    return inner
+
+
+
+def ordinary():
+    
+  print("I am ordinary")
+
+if __name__ == '__main__':
+  x = make_pretty(ordinary)
+  x()
+
+We can use the @ symbol along with the name of the decorator function and place it above the definition of the function to be decorated. For example
+@make_pretty
+def ordinary():
+    print("I am ordinary")
+
+def works_for_all(func):
+    def inner(*args, **kwargs):
+        print("I can decorate any function")
+        return func(*args, **kwargs)
+    return inner
+
+Chaining Decorators in Python :
+
+Multiple decorators can be chained in Python.This is to say, a function can be decorated multiple times with different (or same) decorators. We simply place the decorators above the desired function.
+
+****************************
+Generators :
+****************************
+Generator function : To generate a sequence of values
+
+
+-> Any function having a yield statement becomes a generator function, generator returns an iterator
+-> Generator does not holds all result in memory, it yields one value at a time, to get next value from generator we use next() function, so performance wise it is better and also memory utilization is efficient.
+
+def get_square(n):
+  start = 1
+  while start <=n:
+    square = start * start
+    yield square
+    start = start + 1   
+
+if __name__ == '__main__':
+  x = get_square(10)	
+  for i in x:
+    print i		# Since any function containing yield statement becomes an iterator, this function get_square() will return you generator function. in order to iterate all values from a generator you can use for loop
+
+
+def square_numbers(nums):
+  result = list()
+  for i in nums:
+    result = result.append(i*i)
+  return result
+
+if __name__ == '__main__':
+  print square_numbers([10, 20, 30, 40, 50, 60])	# internally it is generator
+
+tuple comprehension : is called generator
+
+# Generatro function to write program for fibonacci series
+
+def fibonacci_sequence(n):
+  a, b = 0, 1
+  for i in range(n):
+    yield a
+    a, b = b, a+ b
+
+if __name__ == '__main__':
+  x = fibonacci_sequence(10)
+  for i in x:
+    print i
