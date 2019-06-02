@@ -30,6 +30,9 @@ If tuple contains objects which is mutable, then i can be able to modify the ele
 list of tuple is - mutable
 dictionary of tuple is - mutable
 
+** if we have list inside tuple, then we can modify the items of that list, in this case tuple of list is mutable
+** If we have tuple inside list, then we can not modify the items of that tuple, in this case list of tuples is immutable
+
 Set : is an unordered collection of unique elements.
 
 you can define it using Set keyword at beginning
