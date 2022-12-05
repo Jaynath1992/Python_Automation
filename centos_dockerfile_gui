@@ -1,0 +1,63 @@
+FROM centos:latest
+MAINTAINER Jaynath.Kumar <Jaynath.Kumar@veritas.com>
+
+ENV HOME /home/jenkins
+#RUN groupadd -S -g 10000 jenkins
+#RUN adduser -S -u 10000 -h $HOME -G jenkins jenkins
+RUN groupadd -g 10000 jenkins  && useradd -u 10000 -g jenkins -s /bin/sh jenkins
+RUN chown jenkins:jenkins $HOME
+
+LABEL Description="This is centos based docker image to run robot framwork tests for python 3.8 version"
+
+
+# VERSIONS
+ENV CENTOS_VERSION=8 \
+    PYTHON_VERSION=3.8 \
+    CHROME_BROWSER_VERSION=83.0.4103.116 \
+    CHROME_DRIVER_VERSION=83.0.4103.39 \
+    FIREFOX_VERSION=78.0.2 \
+    GECKO_DRIVER_VERSION=0.26.0
+
+# Install Java
+RUN yum install -y \
+   java-1.8.0-openjdk \
+   java-1.8.0-openjdk-devel
+
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk/
+
+# Install required packages from yum repo
+RUN yum update -y && yum install -y git curl wget unzip openssl openssl-devel tar bzip2 bzip2-devel libffi-devel
+
+# Install python and other dependent packages
+RUN yum update -y \
+  && yum install -y python38 \
+  && pip3 install --no-cache-dir robotframework robotframework-seleniumlibrary paramiko robotframework-sshlibrary robotframework-stringformat robotframework-yamllibrary
+
+# Install chrome browser
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm \
+  && yum localinstall -y google-chrome-stable_current_x86_64.rpm
+
+# Install Chrome Driver
+RUN mkdir -p /opt/selenium \
+    && curl http://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip -o /opt/selenium/chromedriver_linux64.zip \
+    && cd /opt/selenium; unzip /opt/selenium/chromedriver_linux64.zip; rm -rf chromedriver_linux64.zip; ln -fs /opt/selenium/chromedriver /usr/local/bin/chromedriver;
+
+
+# Install Firefox browser
+RUN wget http://ftp.mozilla.org/pub/firefox/releases/$FIREFOX_VERSION/linux-x86_64/en-US/firefox-$FIREFOX_VERSION.tar.bz2 \
+  && tar xvjf firefox-$FIREFOX_VERSION.tar.bz2 \
+  && ln -s firefox/firefox /usr/bin/firefox
+
+# Gecko Driver
+ENV GECKODRIVER_VERSION 0.26.0
+RUN wget --no-verbose -O /tmp/geckodriver.tar.gz https://github.com/mozilla/geckodriver/releases/download/v$GECKODRIVER_VERSION/geckodriver-v$GECKODRIVER_VERSION-linux64.tar.gz \
+  && rm -rf /opt/geckodriver \
+  && tar -C /opt -zxf /tmp/geckodriver.tar.gz \
+  && rm /tmp/geckodriver.tar.gz \
+  && mv /opt/geckodriver /opt/geckodriver-$GECKODRIVER_VERSION \
+  && chmod 755 /opt/geckodriver-$GECKODRIVER_VERSION \
+  && ln -fs /opt/geckodriver-$GECKODRIVER_VERSION /usr/bin/geckodriver \
+  && ln -fs /opt/geckodriver-$GECKODRIVER_VERSION /usr/bin/wires
+
+#USER jenkins
+WORKDIR /home/jenkins
