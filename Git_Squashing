@@ -1,0 +1,44 @@
+https://confluence.community.veritas.com/pages/viewpage.action?spaceKey=SNAS&title=SNAS+coding+practices
+****************************************************************************************************************
+
+we are proposing to enforce squashing of multiple commits in the feature branch and rebase of the feature branch on top of the dev branch before doing a merge to dev.
+
+To Squash commits :
+**********************
+Squashing commit means, merging multiple commits together and creating a new one before merging them to dev branch
+
+Rebase the feature branch on top of the latest dev branch.
+----------------------------------------------------------------- 
+Step 1 : Checkout to dev branch : bash-4.1$ git checkout dev
+
+Step 2: Pull changes from remote dev branch into local dev branch :	bash-4.1$ git pull origin dev
+
+Step 3: Go to the feature branch and do a rebase. : 
+---------------------------------------------------
+bash-4.1$ git checkout <feature_branch>
+bash-4.1$ git rebase dev
+
+If there are merge conflicts, edit the files and fix the conflicts (look for ‘<<<’ in the files) and then do “git add file_name” on all the edited files.  Then finish the rebase 
+bash-4.1$ git rebase --continue
+
+***Squashing multiple commits in the feature branch to a single commit:
+
+Step 4: $ git log --author=Jaynath.Kumar --oneline
+
+Step 5: To Squash commits :
+-------------------------
+bash-4.1$ git rebase -i HEAD~3
+
+Step 5: Rename ‘pick’ to ‘squash’ in the text editor, Do not rename all commits from 'pick' to 'squash', keep topmost commit as it is like pick and rename all other commits from pick to sqush. and save it using :wq!
+
+Step 6: Push the changes to remote repositories :
+bash-4.1$git push -f origin <feature_branch_name>
+
+Step 7: Optional step if you want to reset abort :
+****************************************************
+git reset --abort
+
+
+For empty build trigger :
+
+git commit --allow-empty -m "IA-31256 Trigger Build"
