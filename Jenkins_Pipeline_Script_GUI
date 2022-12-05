@@ -1,0 +1,111 @@
+def AGENT_LABEL = null
+
+
+node('master') {
+  stage('Set agent'){
+     echo "${params.Container}" 
+     if ("${params.Container}" == 'Alpine') {
+        AGENT_LABEL = "docker_alpine"
+     } else if ("${params.Container}" == 'Centos'){
+        AGENT_LABEL = "centos_docker"
+     } else if ("${params.Container}" == 'Ubuntu') {
+        AGENT_LABEL = "ubuntu_docker"
+         
+        }
+     }
+ 
+   }
+
+
+pipeline {
+    agent {
+        label "${AGENT_LABEL}"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '', daysToKeepStr: '7'))
+        timestamps ()
+        
+    }
+	parameters {
+	    gitParameter(
+              branch: '',
+              branchFilter: "origin/(.*)",
+              defaultValue: "dev",
+              description: 'Select the branch to build',
+              listSize: '5',
+              name: 'Branch',
+              quickFilterEnabled: false,
+              selectedValue: 'NONE',
+              sortMode: 'ASCENDING_SMART',
+              tagFilter: "*",
+              type: 'PT_BRANCH_TAG',
+              useRepository: 'https://stash.veritas.com/scm/iastorage/sfnas.git')
+		text(name: 'NsoConfigYML', defaultValue: '', description: 'Copy & Paste nso_config.yml file content') 
+		choice(name: 'Container', choices:"Alpine\nCentos\nUbuntu", description: 'Container in which you want to run the tests(like alpine, centos, ubuntu), by default set to run inside alpine')
+		choice(name: 'Browser', choices:"Chrome\nFirefox", description: 'Browser in which you want to run the tests(like chrome, firefox), by default set to chrome')
+		booleanParam(name: 'Headless', defaultValue: true, description: 'Set headless value as true when running the tests inside docker container')
+		string(name: 'TestSuiteName',  defaultValue: 'ALL', description: 'Please select the suite for which you want to run the test')
+		string(name: 'TestCaseName', defaultValue: 'ALL', description: 'Please select the test case which you want to run')
+		
+	}
+	stages {
+	    
+	    stage('Checkout code from SCM') {
+	        steps {
+	            git branch: "${params.Branch}", credentialsId: 'Bitbucket Creds', url: 'https://stash.veritas.com/scm/iastorage/sfnas.git'
+	        }
+	    }
+	 stage('Get YML File Contents and create NSO Config YML file') {
+	    steps { 
+	        script {
+                if("${params.NsoConfigYML}" != null) {
+                    sh script: '''cd $WORKSPACE; ls; cd ./tests/framework/UI/PicassoUI; ls -l; pwd'''
+                    writeFile file: 'nso_config.yml', text: "${params.NsoConfigYML}"
+                    fileExists 'nso_config.yml'
+                    sh script: '''pwd; ls -l; cat nso_config.yml; mv nso_config.yml $WORKSPACE/tests/framework/UI/PicassoUI; cd $WORKSPACE; ls -l; cd ./tests/framework/UI/PicassoUI; ls -l; pwd; cat nso_config.yml'''
+                    
+                } 
+	        }
+	    }
+    }
+	    
+		stage('Run Robot Tests') {
+	      steps {
+	            script {
+	             try {
+                          def r = sh script: '''cd $WORKSPACE; ls; cd ./tests/framework/UI/PicassoUI; export YMLFILE=nso_config.yml; cat nso_config.yml; python3 run_initial_config_suites.py --browser=${Browser} --headless=${Headless} --suitename=${TestSuiteName}  --tc_name="${TestCaseName}"''',returnStatus: true
+                           if (r == 0) {
+                            currentBuild.result = 'SUCCESS'
+                          } else {
+                            currentBuild.result = 'FAILURE'
+                          }
+                    } catch (ex) {
+                              echo ex.message
+                              currentBuild.result = 'FAILURE'
+                    }   
+	      }  
+	      		}
+	      post {
+        	always {
+		        script {
+		          step(
+			            [
+			              $class              : 'RobotPublisher',
+			              outputPath          : './tests/framework/UI/PicassoUI/result_reports',
+			              outputFileName      : '*.xml',
+			              reportFileName      : '*.html',
+			              logFileName         : '*.html',
+			              disableArchiveOutput: false,
+			              passThreshold       : 50,
+			              unstableThreshold   : 40,
+			              otherFiles          : "*.png,*.jpg",
+			            ]
+		          	)
+		        }
+	  		}		
+	    }
+	}			
+			
+	}
+	
+}
