@@ -1,0 +1,151 @@
+Debugging with pydev & robot, follow below link
+--------------------------------------------------------
+http://nokia.github.io/RED/help/user_guide/launching/debug/robot_python_debug.html
+
+
+Must read this whole page, read each and evrry link here :
+-----------------------------------------------------------------
+-> https://nokia.github.io/RED/help/user_guide/user_guide.html
+
+-> first open workspace, then choose project from file systems 
+-> Window -> Prespective -> Open prespective-> Robot -> Open click, it will open robot prespective in eclipse
+-> Right click project(PicassoUI), Robot framework -> Add robot nature
+-> It will add a default folder Robot Standard libraries and also create red.xml file
+-> Double click red.xml file, and navigate to libraries tab -> PyhtonPath(right pane) -> Add these below path line by line : and then save red.xml file
+
+PicassoUI/resources/components
+PicassoUI/resources/keywords
+PicassoUI/resources/variables
+PicassoUI/suites
+
+-> Also add libraries like SelenkumLibrary, \\lib\\Custome_keyword.py in Path left pane..save red.xml file
+-> Add SeleniumLibrary from this location C:\Python37\Lib\site-packages\SeleniumLibrary\__init__.py file
+-> Add SSHLibrary to red.xml file
+
+After adding above libraries , save red.xml file
+
+-> Open code : wherever error appears: ctrl + 1 -> add that library to red.xml
+
+-> Go to window -> preferences -> Robot Framework -> Errors/Warnings -> Click on checkbox Turn Off validation (Not recommended)
+
+
+-. Next step : to create a debugging configuration with python and robot please follow below steps :
+-> Click on File -> New -> Other -> RobotFramework -> RED with PyDev debugging session -> Next -> Next -> Finish -> It will navigate to robot configuration
+
+Now Additional robot framework arguments, add this below line :
+-> -d result_reports --pythonpath  resources/keywords --pythonpath resources/variables --pythonpath resources/components --pythonpath scripts
+
+-> go to environment tab in same debug configuration opened window -> add environment variable as : Name: YMLFILE , value : nso_config.yaml
+
+
+Important thing here : before we start debugging our robot tests..we need to set the nso_config.yaml file as project level environment variable, so to do this you need to do below things :
+
+-> In Debug Configuration -> Executor tab -> External script section -> Add this line there (C:\Jaynath_Automation\sfnas\tests\framework\PicassoUI\setup_env.bat) -> Additonal executable file arguments section -> add (nso_config.yaml)
+
+before you run any test, make sure pydev debugger is running -> you can enable this by going to -> windows -> preferences -> PyDev -> Debug -> Remote Debugger server activation -> Keep always on (restart when terminated)
+
+Run the tests with this configuration once, so that YMLFILE envrionment variable would be set, next time when you run tests, then remove those values from there and add below values in those section :
+
+-> -m redpydevd --pydevd C:\Users\jaynath.kumar\eclipse\java-2020-06\eclipse\..\..\..\.p2\pool\plugins\org.python.pydev.core_7.6.0.202006041357\pysrc\pydevd.py
+
+-> C:\Python27\python.exe
+
+
+
+-> To debug python and robot code together, when you want to step into python code from robot file then first time it will ask you "click here to try opening source of this file"
+Note
+: if you don't want to see this page you can configure debugger in Preferences so that it will never suspend inside library keywords when stepping.
+
+Set the preferences  -> Suspend execution whenever debugger goes into erroneous state.
+
+
+-> Open robot debug shell, it will also be having python expressions icon to evaluate , go to -> window -> show view -> Robot -> Debug Shell
+
+
+***Please follow this link for pydev & robot debugging :
+**********************************************************
+http://nokia.github.io/RED/help/user_guide/launching/debug/robot_python_debug.html
+
+Download RED editor from this link below :
+**********************************************
+-> https://github.com/nokia/red
+
+You can directly download red editor from this location, which is built on top of Eclipse
+
+To learn about how to create robot project and other stuff you can find information in this below link :
+
+-> https://nokia.github.io/RED/help/
+
+
+Second way :
+
+Download eclpise and install plugin red & pydev from eclipse marketplace : eclipse -> help -> marketplace
+
+**important : When you want to install or view anything in the eclipse marketplace thne make sure to disconnect from veritas VPN first, just disconnect from pulsecure vpn app
+otherwise you will get error and eclipse marketplace will not load properly
+
+
+******************************************************************************************************************************************************************************
+Overview of red.xml file : https://nokia.github.io/RED/help/user_guide/project_config/red_xml_overview.html
+*****************************************************************************************************************************************************************
+
+** The red.xml is a file which stores project related setting - some of those controls editing phase (validation, code assistance etc.) while the other can influence RobotFramework execution.
+It is always located in project root directory.
+
+Creating/recreating red.xml
+----------------------------------
+1. The red.xml file is automatically created when Robot project is created (e.g. by using File -> New -> Robot Project action).
+2. In case you're importing Robot files to generic Eclipse project you need to make the project Robot-specific by selecting Robot Framework -> Add Robot nature action from context menu of the project.
+
+In any case red.xml file shall be visible in Project Explorer in root folder.
+
+
+Table preferences : go to this location : Window -> Preferences -> Robot Framework -> Editor
+---------------------
+All table related preferences (cell text folding, number of columns, default behaviors) can be configured at Window -> Preferences -> Robot Framework -> Editor in Tables section.
+
+
+
+RED Preferences & red.xml and other :
+**************************************
+
+Editor preferences are stored together with other Eclipse settings, all of them are shared across active workspace.
+Preferences can be found in toolbar menu Window -> Preferences -> Robot Framework.
+One of the most important item in multiple python environment is setting active Python and RobotFramework instances to be used for running and debugging.
+If you need to use different Pythons & Robots in various projects, this can be done editing red.xml in respective project
+***************************************************************************************************************************************************************
+
+Step 1: Open existing project in red or eclipse, and then right click that project: -> add robot nature
+Step 2: Once you perform step1, it will automatically generate a red.xml file under project (for example : PicassoUI)
+Step 3: Double click red.xml file, and add Selenium2Library, PicassoUI\\lib\\custome_keyword.py, ...
+
+
+
+Eclipse RED helpful notes :
+-------------------------------
+
+Key shortcuts in editors :
+****************************
+1. Ctrl+1 : Quick Fix allows to perform predefined actions for common problems. It can be activated on item only when light bulb icon is present next to line number.
+
+2. Ctrl+Space : Code assistance provides Robot Framework test items assist. Cycle through modes with CTRL+SPACE. Working modes are customizable in Preferences.
+
+3. Ctrl+/ : Block comment sets multi-line comments on the selected text in Source editor.
+
+4. Ctrl+Shift+F	: Automatic source formatting applies simple source code reformat in Source editor.
+
+5. F3 : CTRL+LeftMouseButton	- Jumps to keyword definition selected by cursor or mouse.
+
+
+*********************************************************************************************************************************
+
+Preferences in red.xml :
+-------------------------------
+
+Red.xml file is place with Project respective preferences, it is not shared with other projects. It is always created during project creation process in RED.
+
+It provides information about external libraries and variables used in Project so RED can generate libraries documentation used in content assistance and validation.
+
+If RED Robot Editor does not provide you content help or validation suggests that library is not visible, it is good to have a look into red.xml When library is included in red.xml, documentation is automatic generated by RED
+
+
