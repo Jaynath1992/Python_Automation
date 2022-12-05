@@ -1,0 +1,43 @@
+Please follow below mentioned points in order to setup docker on machine and execute the test cases inside docker container locally :
+******************************************************************************************************************************************
+
+Task 1: Install docker on RHEL machine :
+------------------------------------
+
+Step 1: Update yum repositories packages on local system
+-------------------------------------------------------------
+#> yum update -y 
+#> yum repolist enabled
+
+Step 2: Execute below command first to enable extras repositories
+------------------------------------------------------------------
+#> subscription-manager repos --enable rhel-7-server-extras-rpms
+
+Step 3: Install yum-utils package and then docker-ce repositories
+------------------------------------------------------------------
+#> yum install -y yum-utils	# This package contains yum-config-manager which we can use later to add docker-ce repositories
+
+Step 4: Add docker-ce.repo using yum-config-manager command :
+------------------------------------------------------------- 
+#> yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo	# add this docker-ce.repo
+
+
+*** After doing step4, go to /etc/yum.repos.d/docker-ce.repo file, and check under "docker-ce-stable" section: change the baseurl as : https://download.docker.com/linux/centos/7/$basearch/stable
+and save the docker-ce.repo file using command - :wq!  , save and exit that file
+***
+Or Alternatively you can also do using command below :
+----------------------------------------------------------
+
+yum-config-manager --setopt="docker-ce-stable.baseurl=https://download.docker.com/linux/centos/7/$basearch/stable" --save
+
+Step 5: Install docker-ce (docker community edition) using below command
+------------------------------------------------------------------------------------
+#> yum install -y docker-ce	
+
+Step 6: Start and enable docker services and then version of docker installed on RHEL machine
+-------------------------------------------------------------------------------------------------
+
+#> systemctl start docker
+#> systemctl enable docker
+#> systemctl status docker
+#> docker --version
