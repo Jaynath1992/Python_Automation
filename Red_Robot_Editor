@@ -2,6 +2,9 @@ Debugging with pydev & robot, follow below link
 --------------------------------------------------------
 http://nokia.github.io/RED/help/user_guide/launching/debug/robot_python_debug.html
 
+Download Eclipse IDE from this link which has support for RED editor : https://www.eclipse.org/downloads/packages/release/2020-03/r
+Eclipse 2020-03 is compatible with RED latest version only, so don't download latest version of eclipse otherwise you wont be able to install RED in eclipse.
+
 
 Must read this whole page, read each and evrry link here :
 -----------------------------------------------------------------
