@@ -1,3 +1,44 @@
+List comprehension : is a technique of implementing nested for loop in single line and it returns  list or tuple or set as per statistics, it is 33 % more faster and efficient than traditional for loop approach:
+
+syntax of list comprehension with if condition :
+-------------------------------------------------
+[expression for item in list if condition == True]
+
+syntax of dictionary comprehension with if and else condition
+-------------------------------------------------------------------
+[expression1 if condition == True else expression2 for item in list ]
+
+Examples :
+
+even_odd_list = ["Even" if i % 2 == 0 else "Odd" for i in numbers]
+
+square_of_even_numbers = [item*item for item in range(1, 20) if item % 2 == 0]
+square_cube_numbers = [item**2 if item % 2 == 0 else item**3 for item in range(1, 20)]
+
+List Comprehension with String :
+-------------------------------------
+=> find vowels char from word python
+word = "Python"
+vowels = "aeiou"
+output = ''.join([char for char in word if char in vowels])
+
+=> above are all single dimensional list comprehension examples, we can also have nested or 2 dimensional list comprehensions :
+
+2 dimesnions list comprehensions :
+------------------------------------
+Let's write code to compute a multiplication table.
+
+[[i * j for j in range(1, 6)] for i in range(2, 5)]
+
+examples :
+=> to compute squares of element for even and cube of element for odd numbers 
+mylist = [[10,15],[20,25], [30,35]]
+out = [[j*j if j %2 ==0 else j*j*j for j in i] for i in mylist]
+
+
+
+
+
 range and xrange : difference
 
 range returns list but xrange returns objects
