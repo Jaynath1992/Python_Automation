@@ -35,7 +35,7 @@ examples :
 mylist = [[10,15],[20,25], [30,35]]
 out = [[j*j if j %2 ==0 else j*j*j for j in i] for i in mylist]
 
-
+out = [[j*j if j %2 == 0 else j for j in i] for i in l1]  => outer for loop would be in end and inner for loop will be inside  
 
 
 
