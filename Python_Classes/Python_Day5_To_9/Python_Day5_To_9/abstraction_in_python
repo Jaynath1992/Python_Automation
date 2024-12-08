@@ -1,1 +1,69 @@
 
+"""
+
+Abstraction : Abstraction is a process of hiding the implementation details or un-necessary details from user and showing only functionality to the user.
+=> just show the functionality what it holds, how these functionalities have been implemented user should not be aware, so it hides the
+internal details or implementation of those functionalities.
+
+=> abstract method : a method which is declared in a class but doesn't have any implementation, it is just a declaration. and does not 
+contain body definition.
+
+
+Points to remember about abstraction :
+1. Any normal class to work like abstract class in python, you should inherit ABC class of abc module in that class
+2. Abstract class is a class that contains one or more abstract methods.
+3. In order to be a class to be abstract, it should have atleast one abstract method.
+
+4. abstract class can't be instantiated, you can't create an object of an abstract class.
+5. abstractmethod are declared using the decorator @abstractmethod.
+6. All abstract methods must be implemented in the child class, otherwise it will throw an error.
+7. Abstract class can contain both, abstract method and non-abstract or concrete methods.
+"""
+
+#=> Scenario/Case 1 : Check if we can create object of abstract class or not? 
+
+from abc import ABC, abstractmethod
+
+class Vehicle(ABC):
+
+    def __init__(self, n):
+        self.no_of_tyres = n
+    
+    #@abstractmethod
+    def start(self):
+        pass
+
+
+#=> above one is  not abstract class, although you have ABC class inherited inside Vehicle class, but you don't have any abstract method
+#=> So unless a class has atleast one abstract method, it can't be considered as abstract class.
+
+if __name__ == '__main__':
+    v = Vehicle(4)  # here we are able to create object of vehicle class becuase still Vehicle class is not an abstract class. since it does not have any abstract method.
+    v.start()
+
+
+#=> Once we define a single abstract method inside abstract class, then we won't be able to instantiate object of abstract class. AS you can see
+# in example below.
+
+from abc import ABC, abstractmethod
+
+class Vehicle(ABC):
+
+    def __init__(self, n):
+        self.no_of_tyres = n
+    
+    @abstractmethod
+    def start(self):
+        pass
+
+
+#=> Now above one is   abstract class, since it has inherited ABC class as well as it has one abstract method, 
+#=> So now you can;t create object of abstract class, if you try then it will give error.
+
+if __name__ == '__main__':
+    v = Vehicle(4)  # Here you will get error like :- TypeError: Can't instantiate abstract class Vehicle with abstract method start
+    v.start()
+
+
+
+
