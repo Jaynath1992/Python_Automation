@@ -55,6 +55,10 @@ class Vehicle(ABC):
     @abstractmethod
     def start(self):
         pass
+    
+    def display(self):   # here this is non-abstract method or concrete method
+        print(f"Number of tyres in vehicle are : {self.no_of_tyres}")
+
 
 
 #=> Now above one is   abstract class, since it has inherited ABC class as well as it has one abstract method, 
@@ -65,5 +69,182 @@ if __name__ == '__main__':
     v.start()
 
 
+Example of implementation in our project :
+**********************************************
+# vim /Users/jaynath/cvs-qa/cbsqa/lib/gnf/gcnv/base/api/storage_pool/storage_pools.py
+
+"""
+Module provides helper methods with respect to Storage pools operatiions
+create, get, delete, put for Storage Pools
+"""
+
+import logger as logger
+
+from abc import ABC, abstractmethod
+from gnf.gcnv.base.api.async_operations import async_operations
+
+log = logger.get_log()
 
 
+class StoragePools(ABC):
+    """StoragePool API abstraction"""
+
+    @abstractmethod
+    def describe_storage_pools(self, *args, **kwargs):
+        """Describes the all storage pools"""
+        pass
+
+    @abstractmethod
+    def create_storage_pool(self, *args, **kwargs):
+        """Creates the storage pool"""
+        pass
+
+    @abstractmethod
+    def delete_storage_pool(self, *args, **kwargs):
+        """Deletes the storage pool"""
+        pass
+
+    @abstractmethod
+    def update_storage_pool(self, *args, **kwargs):
+        """Updates the given storage pool"""
+        pass
+
+    @abstractmethod
+    def get_multiple_pools(self, *args, **kwargs):
+        """ Gets the multiple pools"""
+        pass
+
+    @abstractmethod
+    def filter_storage_pools(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def get_storage_pools_by_order(self, *args, **kwargs):
+        pass
+
+
+# vim /Users/jaynath/cvs-qa/cbsqa/lib/gnf/gcnv/base/api/storage_pool/storage_pools.py
+"""
+Module provides helper methods with respect to Storage pools operatiions
+create, get, delete, put for Storage Pools
+"""
+
+import logger as logger
+
+# from gnf.gcnv.cvp.api.async_operations.async_operations import AsyncOperationsAPI
+from gnf.gcnv.base.api.gnf_base import GNFBase
+from gnf.gcnv.base.api.storage_pool.storage_pools import StoragePools
+
+log = logger.get_log()
+
+
+class StoragePoolsAPI(GNFBase, StoragePools):
+    """Class which exposes APIs to create, list, describe, update and delete a storage pool """
+
+    def __init__(self, rest_api, **kwargs):
+        """Storage Pools constructor
+        @para api: Rest Client object
+        """
+        super(StoragePoolsAPI, self).__init__(rest_api, **kwargs)
+
+    @property
+    def url(self):
+        """Volumes URL"""
+        return self.base_url + self.sde_location + self.storage_pools_short_url
+
+    def describe_storage_pools(self, storage_pool_identifier=None, query_params=None):
+        """Describes the all storage pools
+
+        @param storage_pool_identifier: str: Itentifier of the storage pool - Will be unique per project
+        @param query_params dict: Query parameters to be added in URL
+        @return: List: List of dictionaries of pools belonging to a project and region
+        """
+        resource_url = self.base_url + self.sde_location + self.storage_pools_short_url
+        if storage_pool_identifier:
+            # Get details of specific pool name
+            resource_url += '/{0}'.format(storage_pool_identifier)
+        resp = self.rest_api.get(resource_url, params=query_params)
+        return resp
+
+    def create_storage_pool(self, data={}, query_params={}):
+        """Creates the storage pool
+
+        @param data: dict: Data for the storage pool body creation
+        @return: Dict: Dictionaries of pool created in the project and region
+        """
+        location = self.sde_location
+        # added this to handle some PO flows in SO
+        if 'po_required' in data:
+            location = self.region
+            del data['po_required']
+        # Added this check to verify negative scenario for PO SP with zone in URI
+        if 'zone_in_uri' in data:
+            location = self.sde_location
+            del data['zone_in_uri']
+
+        resource_url = self.base_url + location + self.storage_pools_short_url
+        resp = self.rest_api.post(resource_url, data, params=query_params)
+        return resp
+
+    def delete_storage_pool(self, storage_pool_identifier):
+        """Deletes the storage pool
+
+        @param storage_pool_identifier: str:  Name of the storage pool - Must be unique
+        @return: dict: custom format of Request's response object
+        """
+        resource_url = self.base_url + self.sde_location + self.storage_pools_short_url + '/' + storage_pool_identifier
+        resp = self.rest_api.delete(resource_url)
+        return resp
+
+    def update_storage_pool(self, storage_pool_identifier, data={}):
+        """Updates the given storage pool
+
+        @param storage_pool_identifier: Identifier of the pool
+        @param data: dict: Data for the storage pool body update
+        @return: dict: custom format of Request's response object
+        """
+        resource_url = (self.base_url + self.sde_location + self.storage_pools_short_url + "/{}").format(
+            storage_pool_identifier)
+        resp = self.rest_api.put(resource_url, data=data)
+        return resp
+
+    def get_multiple_pools(self, region=None, data={}, method='post'):
+        """ Gets the multiple pools"""
+        if not region:
+            region = self.sde_location
+        url = self.base_url + region
+        resource_url = url + "/getMultiplePools"
+        if method.lower() == 'post':
+            resp = self.rest_api.post(resource_url, data)
+        elif method.lower() == 'put':
+            resp = self.rest_api.put(resource_url, data)
+        elif method.lower() == 'delete':
+            resp = self.rest_api.delete(resource_url, data)
+        elif method.lower() == 'get':
+            resp = self.rest_api.get(resource_url)
+        else:
+            raise Exception("Method: %s is not valid" % method.upper())
+
+        return resp
+
+    def filter_storage_pools(self, filter_query):
+        resource_url = (self.base_url + self.sde_location + self.storage_pools_short_url + '?filter={}').format(
+            filter_query)
+        return self.rest_api.get(resource_url)
+
+    def get_storage_pools_by_order(self, order_by_query):
+        """Returns the storage pools order by given query. This function expects the query in snake case"""
+        resource_url = (self.base_url + self.sde_location + self.storage_pools_short_url + '?order_by={}').format(
+            order_by_query)
+        return self.rest_api.get(resource_url)
+
+    def ad_diagnostics(self, storage_pool_identifier, data):
+        """
+        This function will run the AD diagnostics on the storage pool
+        :param storage_pool_identifier: storage pool identifier
+        :param data: data for the AD diagnostics
+        :return: response of the AD diagnostics
+        """
+        resource_url = (self.base_url + self.sde_location + self.storage_pools_short_url + "/{}").format(
+            storage_pool_identifier) + "/directoryService"
+        return self.rest_api.post(resource_url, data,add_tag=False)
