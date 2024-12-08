@@ -298,3 +298,31 @@ Hybrid Inheritance :  combination of 2 or more inheritance (single + multi level
 """
 => Class A, class B(A), class C(A), class D(B,C) :
 
+=> Examples for hybrid inheritance : 
+class A(object):
+    
+    def show(self):
+        print('show method in class A')
+        
+class B(A):
+    
+    def show(self):
+        C.show(self)
+        D.display(self)
+        print('show method in B class')
+    
+class C(A):
+    
+    def show(self):
+        print('show method in C class')
+    
+
+class D(B, C):
+    
+    def display(self):
+        print('This is class D display func')
+
+if __name__ == '__main__':
+    d = D()
+    print(D.__mro__)
+    d.show()
