@@ -68,6 +68,54 @@ if __name__ == '__main__':
     v = Vehicle(4)  # Here you will get error like :- TypeError: Can't instantiate abstract class Vehicle with abstract method start
     v.start()
 
+=> Implementation of abstractclass examples below :
+
+from abc import ABC, abstractmethod
+
+class Vehicle(ABC):
+
+    def __init__(self, n):
+        self.no_of_tyres = n
+
+    @abstractmethod
+    def start(self):
+        pass
+    
+    def display(self):   # here this is non-abstract method or concrete method
+        print(f"Number of tyres in vehicle are : {self.no_of_tyres}")
+
+class Car(Vehicle):
+
+    def __init__(self, no_of_tyres, color):
+        super().__init__(no_of_tyres)
+        self.color = color
+    
+    def start(self):
+        print("Car starts with key")
+
+class Bike(Vehicle):
+
+    def __init__(self, no_of_tyres, color, model):
+        super().__init__(no_of_tyres)
+        self.color = color
+        self.model = model
+    
+    def start(self):
+        print("Bike starts with kick")
+
+if __name__ == '__main__':
+    c = Car(4, 'Red')
+    c.start()
+    c.display()
+
+    b = Bike(2, 'Black', 'Pulsar')
+    b.start()
+    b.display()
+
+
+
+
+
 
 Example of implementation in our project :
 **********************************************
