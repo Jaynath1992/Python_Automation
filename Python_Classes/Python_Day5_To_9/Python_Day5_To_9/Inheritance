@@ -80,4 +80,221 @@ if __name__ == '__main__':
     obj.func2()
     obj.func3()     
 
+Points to remember :
+**************************
+=> Super keyword : is used to access the methods, constructors and variables of a parent class into child class, specially in case of method overriding
+where you have defined 2 methods with same name in both parent class and child class, then if you want to use parent class method into child class, then 
+use super keyword . if your class is derived from 2 or more parent class, then in order to use the methods from parent class into child class, you can use
+ClassName.methodName .
+
+=> Super is keyword in case of method overriding for calling the methods from parent class into child class.
+
+=> When you have constructor defined in child class, then you can not access the attribiutes of parent class constructor into child class, becuase now child 
+class has its own implementation for constructor. so in order to access the constructor of parent class into child class, you need to call them using super keyword
+or using ClassName.__init(self) keyword.
+
+"""
+Multiple Inheritance :
+"""
+Multiple Inheritance : In which a child class is derived from more than one parent class.
+
+# Example for multiple inheritance :
+
+
+class Father():
+
+    def __init__(self):
+        print('This is father class constructor')
+
+    def func1(self):
+        print('This is father class func1')
+
+
+class Mother():
+
+    def __init__(self):
+        print('This is mother class constructor')
+
+    def fucl2(self):
+        print('This is mother class func2')
+
+
+class Child(Father, Mother):
+
+    def func3(self):
+        print('This is child class func3')
+
+if __name__ == '__main__':
+    obj = Child()
+    obj.func1()
+    obj.fucl2()
+    obj.func3()
+
+Points to remember for multiple inheritance :
+*************************************************
+=> So in case of multiple inheritance, if a method,  which child class is calling, is present in both of the present class, then which method it will make call ?
+So it searches for the method by scanning from left to right in the inherited classes in child class. But before that first it will search for that method 
+in child class, if that method is not present, then it will start searching for the method from left to right inherited classes. SO this is the order for 
+searching classes to resolve a method or attribute call.
+
+=> if the method name is same in all classes(derived and both parent), then it will first search in it's own class for that method, if not found then
+only it will scan the classes from left to right.
+
+This techinique is called as Method resolution order, this defines order in which a method is searched for in a class hierarchy.
+=> MRO internally uses C3 Linearization algorithm to find the order in which a class would be searched for resolving a method or attribute.
+=> In python 2.X, in old style class syntax, it used to follow DLR algorithm, that means, depth first and then left to right search, but in case of 
+python 3.X, with new style class definition, it follows C3 Linearization algorithm.
+
+
+=> In order to access the method from a class explicitly, we can use ClassName.methodName , and pass the object reference of child class as a argument
+if you don't pass object reference then it will give you error like "required positional argument: 'self"
+=> Below examples illustrates that :
+
+class Father(object):
+  def func1(self):
+    print('This is func1 in father class')
+
+  def show(self):
+    print('This is show func in father class')
+
+class Mother():
+  def func2(self):
+    print('This is func2 in Mother class')
+
+  def show(self):
+    print('This is show func in mother class')
+
+class Child(Father, Mother):
+
+  def display(self):
+    print('display method in child class')
+
+if __name__ == '__main__':
+  child_obj = Child()
+  Mother.show(child_obj)
+
+=> In order to access methods from both father and mother class into child class, explicitly we can make call like this below :
+
+class Father(object):
+  def func1(self):
+    print('This is func1 in father class')
+
+  def show(self):
+    print('This is show func in father class')
+
+class Mother():
+  def func2(self):
+    print('This is func2 in Mother class')
+
+  def show(self):
+    print('This is show func in mother class')
+
+class Child(Father, Mother):
+
+  def display(self):
+    # super().show() # This will access only father class show method
+    Mother.show(self) # to access both show method use like this
+    Father.show(self)
+    print('display method in child class')
+
+if __name__ == '__main__':
+  child_obj = Child()
+  child_obj.display()
+
+=> Constructor implementation in case of multiple inheritance :
+
+class Father(object):
+    
+  def __init__(self, name, age):
+    print('Calling from father class constructor')
+    self.name = name
+    self.age = age
+    
+  def func1(self):
+    print('This is func1 in father class')
+
+  def show(self):
+    print('This is show func in father class')
+
+class Mother():
+    
+  def __init__(self, location):
+      print('This is mother class constructor')
+      self.location = location
+      
+  def func2(self):
+    print('This is func2 in Mother class')
+
+  def show(self):
+    print('This is show func in mother class')
+
+class Child(Father, Mother):
+
+#=> Here this child class has its own constructor so it will call its own constructor, but it wont be able to accees the constructors of parent classes
+# so in order to access parent class constructirs, call them using className.__init__(self, args,....)
+  def __init__(self, name, age, hobby, location):
+      Father.__init__(self, name, age)     # Call father class constructor using className.__init__(self,args....)
+      Mother.__init__(self, location)      # call mother class constructor using className.__init__(self, args,...)
+      self.hobby = hobby
+  
+
+  def display(self):
+    print('Child details is : \n')
+    print(self.name, self.age, self.hobby, self.location)
+
+if __name__ == '__main__':
+  child_obj = Child('Jaynath', 32, 'cricket', 'Bengaluru')
+  child_obj.display()
+
+"""
+Hierarchical inheritance : 
+=> Is a type of inheritance in which multiple classes inherit from a single superclass.
+=> When more than one derived class are created from a single base this type of inheritance is called hierarchical inheritance.
+
+"""
+
+Examples of hierarchical inheritance :
+
+class Human(object):
+    
+    def __init__(self, name, age):
+        print('calling from human constructor')
+        self.name = name
+        self.age = age
+        
+    def show(self):
+        print('This is show func in human class')
+
+class Male(Human):
+    
+    def __init__(self, name, age, hobby):
+        print('calling from Male constructor')
+        Human.__init__(self, name, age)
+        self.hobby = hobby
+    
+class Female(Human):
+    
+    def __init__(self, name, age, hobby, location, occupation):
+        print('calling from female constructor')
+        Human.__init__(self, name, age)
+        Male.__init__(self, name, age, hobby)
+        self.location = location
+        self.occupation = occupation
+        
+    def display(self):
+        print(f'Details are : {self.name}, {self.age}, {self.hobby}, {self.location}, {self.occupation}')
+
+if __name__ == '__main__':
+    f1 = Female('Aditi', 24, 'Dancing', 'Pune', 'Worker')
+    f1.display()
+    print(Female.mro())
+
+
+"""
+Hybrid Inheritance :  combination of 2 or more inheritance (single + multi level) or hierarchial + multiple
+=> in python generally it is combination of multiple inheritance + hierarchical inheritance
+
+=> Diamond ring problem in python inheritance is example of hybrid inheritance
+"""
+=> Class A, class B(A), class C(A), class D(B,C) :
 
