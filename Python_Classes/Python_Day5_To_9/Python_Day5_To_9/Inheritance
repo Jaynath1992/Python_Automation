@@ -1,0 +1,83 @@
+"""
+=> inheritance is the ability to inherit properties and methods of existing class into a newer class.
+=> So inheritance is process in which a child class inherits the properties and methods of a parent class.
+
+Why Inheritance ?
+-> Inheritance gives us the concept of re-usability
+-> It removes code redundancy and duplication
+
+Types of inheritance :
+
+1. Single Level inheritance
+2. Multi Level Inheritance
+3. Multiple Inheritance
+4. Hierarchical inheritance
+5. Hybrid inheritance
+
+"""
+
+"""
+Single Level Inheritance : Derived class inherits the properties and methods from a single parent class.
+
+"""
+# Example of single level inheritance in python below :
+class Parent():
+
+    def __init__(self):
+        print('This is parent class constructor')
+    
+    def func1(self):
+        print("This is parent class func1")
+
+class Child(Parent):
+
+    def __init__(self):
+        print('This is child class constructor')
+
+    def func2(self):
+        print('This is child class func2')
+
+if __name__ == '__main__':
+    obj = Child()
+    # Now using child object we can access both parent class and child class methods
+    obj.func1()
+    obj.func2()      
+
+
+"""
+Multi Level Inheritance : In this type of inheritance, a class is derived from a class which is also derived from another class.
+
+Multilevel Inheritance in Python is a type of Inheritance in which a class inherits from a class, which itself inherits from another class
+"""
+# Example of multi level inheritance in python
+class Parent(object):
+    
+    def __init__(self):
+        print('This is parent class constructor')
+    
+    def func1(self):
+        print('This is parent class func1')
+
+class Child(Parent):
+    
+    def __init__(self):
+        print('This is child class constructor')
+    
+    def func2(self):
+        print('This is child class func2')
+
+class GrandChild(Child):
+    
+    def __init__(self):
+        print('This is grandchild class constructor')
+    
+    def func3(self):
+        print('This is grandchild class func3')
+
+if __name__ == '__main__':
+    obj = GrandChild()
+    obj.func1()
+    obj.func2()
+    obj.func3()     
+
+
