@@ -1,0 +1,127 @@
+"""
+Polymorphism : Many forms, means a method can have multiple forms. a method can behave differently with different types of objects.
+
+We can achieve polymorphism in python using below ways:
+*********************************************************
+1. Method overloading
+2. Method overriding
+3. Operator overloading
+4. Duck typing
+
+"""
+
+"""
+Operator Overloading: a operator can behave deifferently with different types of objects.
+
+"""
+# print(1 +  2)     # on integer it will perform addition
+# print("1" + "2")  # on string it will perform concatenation
+
+# print(2*3)        # on integer it will perform multiplication
+# print("2"*3)    # on string it will perform repetition
+
+
+# # a function is behaving differently with different types of objects.
+# print(len("jaynath"))  # here it will return characters of string
+# print(len([1,2,3,4,5,6,7,8,9,10])) # here it will return no. of items of list
+# print(len({1:'jay', 2:'raj', 3:'vijay'})) # here it will return no. of keys values pair of dictionary
+
+"""
+Method Overloading: Method overloading is not supported in python, because python does not support multiple method with same name.
+=> defining multiple method with same name but different number of parameters/arguments within same class is called method overloading.
+
+=> Method overloading is compile time polymorphism, because it is resolved at compile time.
+"""
+
+class MethodOverloading(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def add(self, a, b):
+        sum = a + b
+        print(f'Result of sum is : {sum}')
+    
+    def add(self, a, b, c):
+        sum = a + b + c
+        print(f"Result of sum is : {sum}")
+
+
+if __name__ == '__main__':
+    obj = MethodOverloading()
+    #obj.add(10, 20)  
+    # here it will give error like :- TypeError: add() missing 1 required positional argument: 'c', because it will consider last method only.
+    # python interpreter will consider last method only, it will not consider first method.so if you pass 3 arguments then it will work.
+    # so if you define 2 methods with same name, then it will consider the latest defined method only.
+
+    #> call using 3 arguments, it would work
+    obj.add(10, 20, 30)
+
+#=> So python does not support method overloading, but we can acheive it in different way, using default value of argument or by passing *args, and **kwargs to method.
+
+# implement using default value
+
+class MethodOverloading(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def add(self, a, b, c=0):
+        sum = a + b + c
+        print(f"Result of sum is : {sum}")
+
+if __name__ == '__main__':
+    obj = MethodOverloading()
+    obj.add(10, 20)  # here it will work
+    obj.add(10, 20, 30)  # here it will work
+
+#=> 2nd way to implement method overloading using *args and **kwargs
+
+class MethodOverloading(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def add(self, *args, **kwargs):
+        sum = 0
+        for arg in args:
+            sum = sum + arg
+        for key, value in kwargs.items():
+            sum = sum + value
+        print(f"Result of sum is : {sum}")
+
+if __name__ == '__main__':
+    obj = MethodOverloading()
+    obj.add(40, 90, c=45)  # here it will work
+    obj.add(60, 25, 35, d=37)  # here it will work
+
+
+
+"""
+Method Overriding: mehtod name same and also no.of arguments are same, but implementation is different in parent and child class. so these 
+methods would be in different classes. one is in parent class and another is in child class.
+
+=> Method overriding is runtime polymorphism, because it is resolved at runtime.
+
+Method overriding is a feature that allows a subclass to provide a specific implementation of a method that is already provided by its parent class.
+
+=> Method overriding: defining multiple method with same name and same number of arguments but different implementation in parent and child class is called method overriding.
+
+=> Metrhod overloading happens within same class, but method overriding happens in different classes.
+"""
+
+class Parent(object):
+
+    def display(self):
+        print("This is parent class method")
+
+class Child(Parent):
+    
+    def display(self):
+        super().display()
+        print("This is child class method")
+
+if __name__ == '__main__':
+    c = Child()
+    # which methid to call whether from child or parent is decided at runtime, so it is runtime polymorphism.
+    c.display()  # here it will call child class method, because it will consider child class method only.
