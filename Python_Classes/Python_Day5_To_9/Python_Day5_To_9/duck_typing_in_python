@@ -1,0 +1,53 @@
+"""
+Duck typing : 
+
+"""
+
+def square(x):
+    return x*x
+
+print(square(5)) # it will return 25
+print(square(2.5)) # it will return 6.25
+#print(square("jaynath")) # it will give error like :- TypeError: can't multiply sequence by non-int of type 'str'
+
+#=> it is dynamic typing, like you dont need to define data type of variable at compile time. At runtime it will distinguish the data type.
+#=> In other programming language like java, you have to define the data type of variable at compile time, like what type of data it is.
+# and it is called static typing. 
+
+#=> but in python, you don't need to define the data type of variable at compile time, it will automatically detect the data type at runtime.
+# thats why it is called dynamic typing.
+
+# So python is dynamic type language, and basically this feature duck typing allows python to support data type to be dynamic.
+# So duck typing is used in python to support dynamic typing.
+
+
+#=> if method is defined on that object , then it would be called, otherwise it will give error.
+
+# Examples to understand duck typing
+
+class AudioFile:
+    def play(self):
+        print("Playing audio")
+
+class VideoFile:
+    def play(self):
+        print("Playing video")
+
+def play_media(media):
+    media.play()
+
+audio = AudioFile()
+video = VideoFile()
+
+play_media(audio)
+play_media(video)
+
+"""
+Advantages of Duck Typing
+
+1. Flexibility and Polymorphism: Duck typing promotes flexible code where functions can operate on objects based on their behavior rather than their specific type, facilitating polymorphism and code reuse.
+
+2. Simplified Code: Duck typing eliminates the need for explicit type checks, resulting in cleaner, more concise code that is easier to read and maintain.
+
+3. Enhanced Reusability: Functions designed with duck typing can be reused across different parts of the codebase, reducing duplication and improving overall code quality.
+"""
