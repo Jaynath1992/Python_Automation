@@ -1,4 +1,30 @@
 """
+"""
+Python supports all different programming paradigm, it supports procedural programming, functional programming and object-oriented
+
+Object oriented programming is a programming paradigm that provides a means of structuring programs so that properties and behaviors are bundled into individual objects.
+
+-> OOps is a methodology through which we can write a program in much effective way, it empowers developers to build modular, 
+maintainable and scalable applications.
+
+Major principles of object oriented programming are :
+1. Classes
+2. Objects
+3. methods
+4. Encapsulation
+5. Inheritance
+6. Polymorphism
+7. Abstraction 
+
+
+1. Python class : is a collection of objects. It is a logical entity that has some specific attributes and methods.
+=> so a class contains 2 things : attributes and methods, attributes are the properties of the class and methods are the functions that are associated with the class.
+
+2. Object : The object is an entity which has state and behavior, Everything in python is an object, and almost everything has attributes and methods.
+
+
+=>** Lets talk about first oops concept that is inheritance
+
 => inheritance is the ability to inherit properties and methods of existing class into a newer class.
 => So inheritance is process in which a child class inherits the properties and methods of a parent class.
 
