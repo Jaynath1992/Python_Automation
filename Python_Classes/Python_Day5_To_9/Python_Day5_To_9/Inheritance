@@ -326,3 +326,49 @@ if __name__ == '__main__':
     d = D()
     print(D.__mro__)
     d.show()
+
+"""
+Diamond problem : This case happens in case of hybrid inheritence where a derived class is inheriting from two base classes and these two base classes are inheriting from a common base class.
+
+
+=> MRO (method resolution order) : is order in which derived class will call attributes and methods of inherited classes in case of multiple inheritence.
+=> In object-oriented programming with inheritance, the MRO (method resolution order) determines the order in which a method is searched for in a class hierarchy.
+
+=> This MRO internally uses C3 Linearization algorithm to find the order in which classes should be searched when resolving a method or attribute.
+
+=> In Python2 , MRO is calculated using depth-first search algorithm(DLR algorithm), but in Python3, it uses C3 Linearization algorithm.
+
+"""
+
+class Parent1(object):
+    
+    def show(self):
+        print("This Parent class 1 show method")
+
+class Parent2(object):
+    
+    def show(self):
+        print("This is parent2 show class method")
+
+class Child1(Parent1):
+    
+    def show1(self):
+        print("This is child 1 class show method")
+
+class Child2(Parent2):
+    
+    def show2(self):
+        print("This is child2 class show method")
+        
+
+class GrandChild(Child1, Child2):
+    
+    def display(self):
+        print("This is Grandchild class show method")
+        
+
+if __name__ == '__main__':
+    obj = GrandChild()
+    print(GrandChild.__mro__)
+    obj.show()
+
