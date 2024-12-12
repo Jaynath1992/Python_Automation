@@ -1,0 +1,153 @@
+"""
+
+=> Encapsulation : Encapsulation is one of the key features of object oriented programming. Encapsulation refers to the 
+bundling/wrapping up of data and methods into a single unit called class. 
+
+-> It prevents othe other classes from accessing and changing attributes and methods of a class. This also helps to achieve data hiding.
+
+-> Encapsulation is used to restrict access to methods and variables. In encapsulation, code and data are wrapped together within a 
+single unit from being modified by accident.
+
+-> Encapsulation gives us the concept of data hiding or information hiding.
+
+
+Encapsulation in python is acheived using access specifiers to control access to class members.
+
+1. Public members : members of a class that are accessible from outside the class are called public members.
+2. Protected members : members of a class that are accessible from within the class and its subclasses are called protected members.
+
+-> use single underscore(_) prefix to indicate that an attribute or method is intended for internal use within the class or its subclasses.
+
+3. Private members : members of a class that are accessible from within the class only are called private members.
+-> use double underscore(__) prefix to make an attribute or method private.
+
+=> when you have to access method or attribute of a class from outside the class, you can use public members.
+
+
+#> In python there is no as such strict restriction for accessing protected members outside the class, 
+# but it is responsinility of developer/programmer to not use protected members or private members outside the class
+
+
+=> using name mangling concept we can access private variable or method outside the class,
+
+print(object_name._class_name__private_variable_name)
+print(object_name._class_name__private_method_name)
+
+"""
+
+import random
+
+# program to illustrate protected access modifiers in a class :
+
+class Employee:
+    def __init__(self, name, age, salary):
+        # protected members, declared using single underscore(_)
+        self._name = name
+        self._age = age
+        self._salary = salary
+        # private members, declared using double underscore(__)
+        self.__employee_id = random.choice(range(10000, 99990))
+    
+    def _display(self):
+        print(f"Employee Id : {self.__employee_id} Name is : {self._name}, Age is : {self._age} and Salary is : {self._salary} rupees")
+    
+
+class Manager(Employee):
+    def __init__(self, name, age, salary):
+        super().__init__(name, age, salary)
+    
+    def display(self):
+        #print(f"Manager Name is : {self._name}, Age is : {self._age} and Salary is : {self._salary} rupees")
+        self._salary = self._salary + 10000
+        super()._display()  # super () keyword is used to access the mehtods, variables or constructors of the parent class into child class 
+
+
+if __name__ == '__main__':
+    emp1 = Employee('Mohan', 30, 50000)
+    emp1._name = "Heena"
+    emp2 = Employee('Raj', 25, 45000)
+    emp2._salary = 55000
+    emp1._display()
+    emp2._display()
+
+    manager1 = Manager('Rahul', 35, 60000)
+    manager1.display()
+
+
+"""
+Access specifiers in python :
+1. Public - accessed outside class
+2. Protected - accessed within class and derived classes
+3. Private - accessed within that class only
+
+#> In python there is no as such strict restriction for accessing protected members outside the class, but it is responsinility of developer/programmer to not use protected members outside the class
+#> Private attributes ot methods you can't access this from outside, or even within derived classes
+"""
+
+"""
+Access specifiers in python :
+1. Public - accessed outside class
+2. Protected - accessed within class and derived classes
+3. Private - accessed within that class only
+
+=> In python there is no
+"""
+
+class Student(object):
+    
+    def __init__(self, name, age, rollno):
+        self.name = name # public instance variable
+        self._age = age # protected instance variable
+        self.__rollno = rollno # private instance variable
+
+#> In python there is no as such strict restriction for accessing protected members outside the class, but it is responsinility of developer/programmer to not use protected members outside the class
+#> Private attributes ot methods you can't access this from outside, or even within derived classes
+        
+    def __display(self):  # private method
+        print('Name of student is : {} \n age is : {} \nroll number is : {}'.format(self.name, self._age, self.__rollno))
+
+    def display_data(self):   # public method
+        self.__display()
+    
+    
+class Branch(Student):
+    
+    # def __show(self):  # This is private method
+    #     # print('User name is : {} and age is : {} and roll is : {}'.format(self.name, self._age, self.__rollno))
+    #     print('User name is : {} and age is : {}'.format(self.name, self._age))
+    def _show(self):  # This is protected method
+        # print('User name is : {} and age is : {} and roll is : {}'.format(self.name, self._age, self.__rollno))
+        print('User name is : {} and age is : {}'.format(self.name, self._age))
+
+
+
+def show_data():
+    b = Branch('Raju', 29, 32)
+    print(f'Name is : {b.name}')
+    print(f'Age is : {b._age}')
+    #print(f'Roll number is : {b.__rollno}')
+        
+    
+if __name__ == '__main__':
+    
+    show_data()
+    s1 = Student('Rahul', 32, 12)
+    s1.name = 'Khushboo'
+    s1._age = 35
+    print(dir(s1))
+    s1._Student__rollno = 42
+    # but still if you want to access private attribute of that class then you can access using name mangling concept
+    print('Student roll number is :{}'.format(s1._Student__rollno))
+    
+    # print(s1.name)
+    #print(s1.__rollno)
+    s1.display_data()
+    
+    
+    b1 = Branch('Nisha', 18, 22)
+    b1.display_data()
+    print(dir(b1))
+    
+    b1._show()
+
+# getter and setters method in python encapsulation to achieve accessing and setting public and private values of a class.
