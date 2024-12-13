@@ -1,0 +1,233 @@
+"""
+File Handling in Python :
+----------------------------
+open(filename,mode,buffering)
+mode : r,w,a,rb,wb,ab,r+,w+,a+	default mode : read
+bufferinf : 0 (disable the buffer , don't have cache)
+	    1 (default parameter, size 8 kb)
+
+file mode :
+------------        
+r -	It opens an existing file to read-only mode. if file is not exisitng then it will give IOError. The file pointer is placed at the beginning of the file.
+w -	It opens the file to write only. It overwrites the file if previously exists or creates a new one if no file exists with the same name
+r+ - It opens the file to read and write both. The file pointer exists at the beginning.This mode does not override the existing data, but you can modify the data starting from the beginning of the file.
+w+ - It opens the file to write and read data. It will override existing data.
+a -	 It opens the file in the append mode. It will not override existing data. It creates a new file if no file exists with the same name.
+a+ - It opens a file to append and read both. It won’t override existing data.
+rb - It opens the file in binary mode to read only.
+rb+	- It opens the file to read and write both in binary format. The file pointer exists at the beginning of the file.
+wb -	It opens the file to write only in binary format. It overwrites the file if it exists previously or creates a new one if no file exists.
+wb+	- It opens the file to write and read both in binary format
+ab+	- It opens a file to append and read both in binary format.
+
+*************************************************************************************************
+file.read() 	- reads content of file as string and also file pointer keeps  moving,once whole file is
+read then file pointer reaches to the end of file then if u try to read anything it will return empty string
+
+infile.read(5) : size =5 , will return 5 characters,and file pointer will be reached to at the begininng of 6th character
+
+infile.readline() 	- read the content of file line by line as string and also file pointer moves to at the beggining of next line
+
+infile.readlines()	- read content of file as a list and returns whole set of data. file pointer reaches to end
+
+How to set file pointer :
+seek(offset,where) :
+infile.tell() 	: tell pointer index
+
+Seek method :
+-------------
+** The seek() method is used to change or move the file's handle position to the specified location. 
+The cursor defines where the data has to be read or written in the file.
+# move to 11 character in file
+file.seek(11)
+
+tell method :
+----------------
+The tell() method to return the current position of the file pointer from the beginning of the file.
+
+
+Method         Description
+----------------------------------
+read()	        Returns the file content as string type.
+readline()      Returns single line from the file as string type.
+readlines()	    Returns all lines from the file as a list type.
+write()	        Writes the specified string to the file.
+writelines()	Writes a list of strings to the file.
+close()	        Closes the opened file.
+seek()	        Set file pointer position in a file
+tell()	        Returns where your file pointer index is
+fileno()	    Returns a number that represents the stream, from the operating system's perspective.
+flush()	        Flushes the internal buffer.
+"""
+def file_operations(filename):
+    file = open(filename, 'r+')
+    file.tru
+    content = file.read()    #=> type : str
+    file.write('\nThis is the new content\n')
+    file.seek(0)  # move to 0th character
+    # read from 2nd line
+    lines = file.readlines()
+    seek = len(lines[0])  
+    file.seek(seek + 1)
+    content = file.read() 
+    file.close()
+    return content
+
+def write_to_file(file_path):
+    """Write to file"""
+    file = open(file_path, 'w+')
+    file.write('This is the first line\nThis is the second line\nThis is the third line\n')
+    file.writelines(['This is the fourth line\n', 'This is the fifth line\n'])
+    file.seek(0)
+    content = file.read(100)
+    file.seek(2)
+    file.close()
+    return content
+
+def read_file(file_path):
+    """read file"""
+    file = open(file_path, 'r')
+    content = file.read()
+    # The below line will throw error(io.UnsupportedOperation: not writable) since we have opened the file in read mode
+    file.write('This is the first line\nThis is the second line\nThis is the third line\n')
+    file.close()
+    return content
+
+def write_file(file_path):
+    """write file"""
+    file = open(file_path, 'w')
+    lines = ['This is Jaynath Kumar\n', 'This is calling from bengaluru\n', 'working in netapp\n']
+    file.write('This is the first line\nThis is the second line\nThis is the third line\n')
+    file.writelines(lines)
+    # The below line will throw error(io.UnsupportedOperation: not readable) since we have opened the file in write mode, so can't read the data
+    #file.read()
+    file.close()
+
+def append_file(file_path):
+    """Append to file"""
+    file = open(file_path, 'a')
+    file.write('\nLine 1 appending to the file\nLine 2 appending to the file\n')
+    file.close()
+
+import os
+
+def delete_files_starting_with_prefix(file_prefix, dir_path):
+    """Delete files starting with a partucular prefix"""
+    try:
+        for file in os.listdir(dir_path):
+            file_path = os.path.join(dir_path, file)
+            if file.startswith(file_prefix):
+                os.remove(file_path)
+    except IOError as e:
+        print("Error occured while deleting files : {}".format(e))
+
+def reverse_each_line_in_file(filename):
+
+    with open(filename, 'r+') as file:
+        lines = file.readlines()
+        reversed_lines_list = []
+        for line in lines:
+            words = line.strip().split(' ')
+            reversed_line = ' '.join(words[::-1])
+            if reversed_line != '':
+                reversed_lines_list.append(reversed_line + '\n')
+        with open('write_file', 'w') as write_file:
+            write_file.writelines(reversed_lines_list)
+
+def get_employee_with_specific_role(role):
+    """Get employee with specific role """
+    employee_list = []
+    with open('employee.txt', 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            words = line.strip().split(' ')
+            if words[1].lower() == role.lower():
+                employee_list.append(line.strip())
+    return employee_list
+
+# out = get_employee_with_specific_role('Tester')
+# print(out)
+
+# Python Program to count the occurrences of a word in a text file
+def get_occurence_of_word_from_file(filename, word):
+    with open(filename, 'r') as file :
+        lines = file.readlines()
+        new_list = []
+        for line in lines:
+            words = line.strip().split(' ')
+            new_list.extend(words)
+        word_dict_count = {word:new_list.count(word) for word in new_list}  
+        for key, value in word_dict_count.items():
+            if key.lower() ==   word.lower():
+                return {key:value}
+    return {word:0}
+
+# out = get_occurence_of_word_from_file('employee.txt', 'Tester')
+# print(out)
+
+# Print the Contents of File in Reverse Order
+def print_file_content_in_reverse_order(filename):
+    reversed_lines_list = []
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            reversed_line = ' '.join(line.strip().split(' ')[::-1])
+            reversed_lines_list.append(reversed_line + '\n')
+
+    with open('reversed_file', 'w') as write_file:
+        write_file.writelines(reversed_lines_list)
+
+#print_file_content_in_reverse_order('employee.txt')
+
+#=> Python Program to Extract Numbers from Text File
+from functools import reduce
+def extract_numbers_from_file(filename):
+    numbers_list = []
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            words = line.strip().split(' ')
+            numbers = [int(word) for word in words if word.isdigit()]
+            numbers_list.extend(numbers)
+    print(numbers_list)
+    # add all numbers 
+    sum_val = reduce(lambda x, y: x+y, numbers_list)
+    return sum_val
+
+out = extract_numbers_from_file('employee.txt')
+print(out)
+
+
+# How does os.walk() works in python
+def get_all_files():
+    for dir, subdir, files in os.walk('C:/Users/jaynath/OneDrive - NetApp Inc/Desktop/Python_Practices'):
+        # print('Directory : ', dir)
+        # print('Sub Directory : ', subdir)
+        # print('Files : ', files)
+        for file in files:
+            print(os.path.join(dir, file))
+
+
+
+if __name__ == '__main__':
+    # 1st program
+
+    filename = r'C:\Users\jaynath\OneDrive - NetApp Inc\Desktop\Python_Practices\file_handling_programs\file.txt'
+    # content = file_operations(filename)
+    # print(content)
+    
+    # # 2nd program
+    # content = write_to_file('jay.txt')
+    # print(content)
+
+    # 3rd program
+    #append_file(filename)
+
+    # 4th program
+    #read_file(filename)
+
+    #5th program
+    #write_file('test.csv')
+
+    #reverse_each_line_in_file(filename)
+    get_all_files()
