@@ -1,0 +1,61 @@
+"""
+Generator are functions that returns iterator objects, you can use next method to iterate over objects one at a time
+
+any function having yield statement, become a generator function, 
+
+
+-> Any function having a yield statement becomes a generator function, generator returns an iterator object
+-> Generator does not holds all result in memory, it yields one value at a time, 
+to get next value from generator we use next() function, so performance wise it is better and also memory utilization is efficient.
+
+
+# Since any function containing yield statement becomes an iterator, this function get_square() 
+# will return you generator function. in order to iterate all values from a generator 
+# you can use for loop
+
+"""
+
+
+def simple_generator():
+    yield 1
+    yield 2
+    yield 3
+
+# generator_obj = simple_generator()
+# print(next(generator_obj))    
+# for i in generator_obj:
+#     print(i)
+
+def get_square(n):
+   for i in range(1, n+1):
+      yield i * i  
+
+
+# square_gen = get_square(5)
+# for i in square_gen:        # # Since any function containing yield statement becomes an iterator, this function get_square() will return you generator function. in order to iterate all values from a generator you can use for loop
+#   print(i)
+
+# # Generator function to write program for fibonacci series  
+
+def fibonacci_sequence(n):
+   a = 0
+   b = 1
+   for i in range(n):
+      yield a
+      a, b = b , a + b
+
+# fib_obj = fibonacci_sequence(10)
+
+# for i in fib_obj:
+#    print(i)
+
+#=> tuple comprehension, we can also say that it is generator expression
+# 
+tup_obj = (item*item for item in range(1, 6))    # it will return generator expression
+print(tup_obj) 
+print(next(tup_obj))  
+print(next(tup_obj))
+print(next(tup_obj))
+print(next(tup_obj))
+print(next(tup_obj))
+print(next(tup_obj))    # StopIteration:
