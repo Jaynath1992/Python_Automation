@@ -193,6 +193,7 @@ if __name__ == '__main__':
 
 
 
+
 import time
 
 class CalculateTime(object):
@@ -203,18 +204,20 @@ class CalculateTime(object):
     def __call__(self, *args, **kwargs):
         start_time = time.time()
         out = self.func(*args, **kwargs)
-        print('Output is : {}'.format(out))
+        print('Output of func : {} is : {}'.format(self.func.__name__, out))
         end_time = time.time()
         print('Time taken by function : {} is : {}'.format(self.func.__name__, end_time-start_time))
 
 
 @CalculateTime
 def add(a, b):
+    "Perform add of 2 numbers"
     time.sleep(0.5)
     return a + b
 
 @CalculateTime    
 def mul(a, b):
+    "perform mul of 2 numbers"
     time.sleep(0.9)
     return a * b
     
@@ -222,5 +225,4 @@ if __name__ == '__main__':
     add(20, 50)
     mul(70, 50)
     
-
     
