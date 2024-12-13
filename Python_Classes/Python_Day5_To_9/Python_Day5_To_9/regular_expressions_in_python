@@ -1,0 +1,98 @@
+"""
+regular expression is sequence of characters that uses a search pattern to find string or set of strings
+It can detect the presence or absence of a text by matching it with a particular pattern
+
+Python has a built-in module named “re” that is used for regular expressions in Python.
+
+MetaCharacters      Description
+--------------------------------------
+\                   Used to drop the special meaning of character following it
+[]                  Represent a character class
+^                   Matches the beginning
+$                   Matches the end    
+.                   Matches any character except newline
+?                   Matches zero or one occurrence
+*                   Any number of occurrences (including 0 occurrences)
++                   One or more occurrences
+{}                  Indicate the number of occurrences of a preceding regex to match.
+()                  Enclose a group of Regex
+
+
+Square Brackets ([]) represent a character class consisting of a set of characters that we wish to match
+Caret (^) symbol matches the beginning of the string i.e. checks whether the string starts with the given character(s) or not
+Dollar($) symbol matches the end of the string i.e checks whether the string ends with the given character(s) or not
+Star (*) symbol matches zero or more occurrences of the regex preceding the * symbol
+Plus (+) symbol matches one or more occurrences of the regex preceding the + symbol
+
+=> RegEx functions :
+
+re.compile("pattern")  => Regular expressions are compiled into pattern objects
+re.findall("pattern", string)            => returns a list of all found items 
+re.split("pattern", string, maxsplit=0, flags=0)    => Split string by the occurrences of a character or a pattern.
+re.sub() 
+re.search()     => Searches for first occurrence of character or pattern
+
+re.search() => scan the string from left to right and search for a match, if match is found it will return match object, it wont find all matching patterns in the string, it will just search the first match
+This method either returns None (if the pattern doesn’t match), or a re.MatchObject contains information 
+about the matching part of the string. This method stops after the first match, 
+so this is best suited for testing a regular expression more than extracting data.
+
+"""
+
+import re
+
+def get_string_match():
+    """get the string match"""
+    s = 'GeeksforGeeks: A computer science portal for geeks'
+    pattern = re.compile(r'portal')   # compile the pattern
+    match = re.search(pattern, s)       # search for pattern within string, and returns match object
+    print(match.group())        # get the matched string
+    print(match.start())        # get the start index of matched string
+    print(match.end())          # get the end index of matched string
+
+#get_string_match()
+
+def get_matching_char_from_string():
+    """get the matching characters from string"""
+    string = "The quick brown fox jumps over the lazy dog"
+    # Square Brackets ([]) represent a character class consisting of a set of characters that we wish to match
+    pattern = re.compile("[a-m]")    # [a-m]
+    out = re.findall(pattern, string)    # returns list of all found items
+    return out
+
+#print(get_matching_char_from_string())
+
+
+def search_mobile_numbers_from_string():
+    """search mobile numbers of 10 digits from string"""
+    string = """Hello my Number is 1234567809 and
+            my friend's number is 9876540321 and 1234"""
+    pattern = re.compile(r'[\d+]{10}')
+    out = re.findall(pattern, string)  
+    print(out)
+
+#search_mobile_numbers_from_string()    
+
+def find_mobile_numbers_from_file(filename):
+    """find all mobile numbers in file"""
+    mobile_numbers_list = []
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            found_items = re.findall('\d{10}', line)  #=> here \d represents digit and 10 represents length of digit 
+            mobile_numbers_list.extend(found_items)
+    print(mobile_numbers_list)
+
+find_mobile_numbers_from_file('mohan.txt') 
+
+def find_all_ip_addresses_from_file(filename):
+
+    ip_addresses_list = []
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            found_items = re.findall(r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", line)  # ip address regex
+            ip_addresses_list.extend(found_items)
+    print(ip_addresses_list)        
+          
+#find_all_ip_addresses_from_file('mohan.txt')        
