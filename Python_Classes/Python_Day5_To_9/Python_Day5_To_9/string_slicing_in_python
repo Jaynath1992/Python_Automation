@@ -1,0 +1,168 @@
+"""
+String slicing in Python is a way to get specific parts of a string by using start, end, and step values. 
+It’s especially useful for text manipulation and data parsing.
+
+s = "Hello, Python!"
+
+# Slice string from index 0 to index 5 (exclusive)
+s2 = s[0:5]
+
+print(s2)
+
+Syntax of String Slicing in Python
+substring = s[start : end : step]
+
+Parameters:
+s: The original string.
+start (optional): Starting index (inclusive). Defaults to 0 if omitted.
+end (optional): Stopping index (exclusive). Defaults to the end of the string if omitted.
+step (optional): Interval between indices. A positive value slices from left to right, 
+while a negative value slices from right to left. If omitted, it defaults to 1 (no skipping of characters).
+
+
+To retrieve the entire string, use slicing without specifying any parameters.
+s = "Hello, World!"
+
+# Get the entire string
+s2 = s[:]
+s3 = s[::]
+
+print(s2)
+print(s3)
+
+"""
+
+s = "Hello, World!"
+
+# Get the entire string
+s2 = s[:]   # here start index is 0 inclusive, end index is end of the string exclusive, step is 1
+s3 = s[::]  # here start index is 0 inclusive, end index is end of the string exclusive, step is 1
+
+print(s2)
+print(s3)
+
+#Explanation: Using [:] or [::] without specifying start, end, or step returns the complete string.
+
+
+"""
+Get All Characters Before or After a Specific Position
+To get all the items from a specific position to the end of the string, we can specify the start index and leave the end blank.
+And to get all the items before a specific index, we can specify the end index while leaving start blank.
+"""
+
+s = "Hello, World!"
+
+# Characters from index 7 to the end
+print(s[7:])
+
+# Characters from the start up to index 5 (exclusive)
+print(s[:5])
+
+
+s = "Hello, World!"
+
+# Characters from index 1 to index 5 (excluding 5)
+print(s[1:5]) 
+
+s = "abcdefghi"
+
+# Every second character
+print(s[::2])
+
+# Explanation: The slice s[::2] takes every second character from the string.
+# Every third character from index 1 to 8 (exclusive)
+print(s[1:8:3])
+
+"""
+Out-of-Bounds Slicing
+
+In Python, String slicing allows out-of-bound indexing without raising errors. If indices exceed the 
+string length, the slice returns only available characters without raising an error.
+
+Example: The slice s[3:15] starts at index 3 and attempts to reach index 15, but if string ends at index 8 
+then it will return only the available elements.
+
+Using Negative Indexing in Slicing
+
+Negative indexing is useful for accessing elements from the end of the String. 
+The last element has an index of -1, the second last element -2, and so on.
+
+s = "abcdefghijklmno"
+
+# Characters from index -4 to the end
+print(s[-4:])   => lmno
+
+# Characters from the start up to index -3 (excluding -3)
+print(s[:-3])  => abcdefghijkl
+
+# Characters from index -5 to -2 (excluding -2)
+print(s[-5:-2])  => klm
+
+# Get every 2nd elements from index -8 to -1 (excluding index -1)
+print(s[-8:-1:2])  => hjln
+
+
+Reversing a String Using Slicing
+s = "Python"
+
+# Reverse the string
+print(s[::-1])  => nohtyP
+
+
+"""
+#{}
+def check_even_odd():
+    number = int(input('Please provide the input number : '))
+
+    if number < 0:
+        print('The number {} is negative'.format(number))
+    if number % 2 == 0:
+        print('The number {} is even'.format(number))
+    elif number % 2 != 0:
+        print('The number {} is odd'.format(number))
+    else:
+        print('The number {} is not valid'.format(number))
+
+
+def print_odd_numbers(length):
+    for i in range(1, length+1):
+        if i % 2 == 1:
+            print(i, end=' ')
+
+def print_table():
+    multiplication = list()
+    for i in range(2, 5):
+        row = []
+        for j in range(1, 6):
+            row.append(i*j)
+        multiplication.append(row)
+    return multiplication
+
+
+if __name__  == '__main__':
+    # row = print_table()
+    # print(row)
+    # out = [[i*j for j in range(1,6)] for i in range(2,5)]
+    # print(out) {} []
+    
+    # program to get unique element from list
+    # x = [1,1,1,2,2,3,3,4,5,6,6,7]
+    # result = []
+    # for item in x:
+    #     if item not in result:
+    #         result.append(item)
+    # print(result)  
+    
+    # program to get 
+    # x = [1,1,1,2,2,3,3,4,5,7,7]    # Get Output : [4,5]      
+    # char_count_dict = {item:x.count(item) for item in x}
+    # output = [key for key, value in char_count_dict.items() if value == 1]
+    # print(output)
+    # result = []
+    # for key, value in char_count_dict.items():
+    #     if value > 1:
+    #         result.append(key)
+    # print(result)        
+    # {}
+
+    
