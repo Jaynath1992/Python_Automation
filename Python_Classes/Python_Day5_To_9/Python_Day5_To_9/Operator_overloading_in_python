@@ -1,0 +1,45 @@
+""""
+Operator Overloading:
+
+-> An operator can behave differently with different types of objects.
+-> for example:  + operator can perform addition on integers and concatenation on strings.
+
+=> Dunder methods (double underscore)or magic methods : 
+"""
+
+print(2 +3 )  # print(__add__(2,3)) => will give same results
+
+print(int.__add__(2,3)) 
+print(str.__add__('2','3'))
+
+print('2' + '3')
+
+print(3*4)  # perform multiplication of integers
+print('3'*4) # perform repetition of char
+
+#=> can we add 2 object of user defined class? lets see
+
+class OperatorOverloading:
+
+    def __init__(self, x):
+        self.x = x
+
+    def __add__(self, other):
+        return self.x + other.x
+
+class Person:
+
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+    
+    def __gt__(self, other):
+        return self.age > other.age
+    
+p1 = Person('jay', 22)
+p2 = Person('raj', 25)
+
+if p1 > p2:
+    print('jay is older than raj')
+else:
+    print('raj is older than jay')
