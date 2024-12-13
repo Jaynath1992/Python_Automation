@@ -190,4 +190,37 @@ if __name__ == '__main__':
     add(10, 20, 30, c=50, d=60, e=80)
     substraction()
     multiplication(30,20,15, a=20, b=31, c=45)
+
+
+
+import time
+
+class CalculateTime(object):
+    
+    def __init__(self, func):
+        self.func = func
+    
+    def __call__(self, *args, **kwargs):
+        start_time = time.time()
+        out = self.func(*args, **kwargs)
+        print('Output is : {}'.format(out))
+        end_time = time.time()
+        print('Time taken by function : {} is : {}'.format(self.func.__name__, end_time-start_time))
+
+
+@CalculateTime
+def add(a, b):
+    time.sleep(0.5)
+    return a + b
+
+@CalculateTime    
+def mul(a, b):
+    time.sleep(0.9)
+    return a * b
+    
+if __name__ == '__main__':
+    add(20, 50)
+    mul(70, 50)
+    
+
     
