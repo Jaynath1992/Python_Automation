@@ -1,0 +1,234 @@
+"""
+Programs related to list, tuple, dictionary, string
+"""
+
+# Find duplicates from list
+
+def find_duplicates_from_list(l):
+    """find duplicates from list and returns in list format"""
+    new_list = []
+    for item in l:
+        if l.count(item) >= 2:
+            new_list.append(item)
+    
+    return list(set(new_list))
+
+
+def remove_duplicates_from_list(l):
+    """Remove duplicates from list"""
+    new_dict = {}
+    # first get the item and their count in the list
+    for item in l:
+        if item in new_dict.keys():
+            new_dict[item] += 1
+        else:
+            new_dict[item] = 1
+    print('dictionary with item and their count : {}'.format(new_dict))
+    # get the item with count > 1
+    unique_dict= {}
+    for key, value in new_dict.items():
+        if value <= 1:
+            unique_dict[key] = value
+    return unique_dict
+ 
+
+# find 2nd lowest charatcter in a string
+
+# input_str = 'abacbcacbcckjddeab'
+#output_str = 
+def find_character_and_their_count(input_str):
+    """Find char and their count"""
+    
+    char_count_dict = {item:input_str.count(item) for item in input_str}
+    char_count_dict_sorted = sorted(char_count_dict.items(), key=lambda x: x[1], reverse=True)
+    second_lower_count_char_dict = char_count_dict_sorted[-2]
+    
+    new_dict = {}
+    # Get all char with same count
+    for key, value in dict(char_count_dict_sorted).items():
+        if value == second_lower_count_char_dict[1]:
+            new_dict[key] = value
+    new_dict.update({second_lower_count_char_dict[0]:second_lower_count_char_dict[1]})
+    
+    return new_dict
+    
+if __name__ == '__main__':
+    input_str = 'abacbcacbcckjddeab'
+    out = find_character_and_their_count(input_str)
+    print(out)
+
+    
+l = [10, 20, 30, 10, 20, 24, 10, 30, 25, 62]
+
+out = list(set(l))
+
+out = sorted(out,  reverse=True)
+
+print(l)
+print(out)
+
+
+# find common elements between 2 list
+
+l1 = [10, 20, 40, 12, 25, 32]
+l2 = [20, 30, 10, 15, 20, 45]
+
+out = list(set(l1) & set(l2))
+print(out)
+
+#Calculate the product of all elements in the list
+
+from functools import reduce
+
+l = [25, 35, 42, 12, 15, 34]
+out = reduce(lambda x,y : x*y, l)
+print(out)
+
+#Find the difference between two lists.
+
+l1 = [20, 40, 60, 12, 45, 12, 25, 32]
+l2 = [86, 12, 23, 45, 56, 78]
+
+out = list(set(l1) - set(l2))
+print(out)
+
+# sum of all elements in a list
+
+l = [20, 30, 12, 15, 20]
+
+print(sum(l))
+
+
+from functools import reduce
+out = reduce(lambda x, y : x+y, l)
+print(out)
+
+ #Count the occurrences of an element in a list.
+
+def find_item_occurence(search_item):
+    out = {item:l.count(item) for item in l if item==search_item}
+    print(out)
+    
+search_item = 15    
+find_item_occurence(search_item)
+
+#Question: Check if a list is a palindrome (reads the same forward and backward).
+
+l = [10, 20, 25, 24, 34, 12]
+def check_palindrone(l):
+    is_palindrone = False
+    if l == l[::-1]:
+        is_palindrone = True
+    return is_palindrone
+    
+out = check_palindrone(l)
+print(out)
+
+
+
+# if __name__ == '__main__':
+#     l = [10, 12, 14, 15, 17, 20, 15, 18, 20, 12]
+#     # out = find_duplicates_from_list(l)
+#     # print(out)
+#     print(remove_duplicates_from_list(l))
+        
+
+l = [[1, 2], [20, 30,[40, 50]], 60, [70, [80,90]]]
+
+def get_flatten_list(l):
+    flatten_list = list()
+    for sublist in l:
+        for item in sublist:
+            if isinstance(item, list):
+                flatten_list.extend(item)
+            else:
+                flatten_list.append(item)
+                
+    
+
+output = get_flatten_list(l)
+print(output)
+
+#Question: Flatten a list of lists into a single list.
+
+nested_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9], 40, 60]
+
+
+def get_flatten_list(l):
+    flatten_list = list()
+    for item in l:
+        if isinstance(item, list):
+            flatten_list.extend(item)
+        else:
+            flatten_list.append(item)
+    return flatten_list
+                    
+
+output = get_flatten_list(nested_list)
+print(output)
+
+# reverse a number 
+
+def reverse_number(num):
+    reverse_num = str(num)[::-1]
+    return reverse_num
+
+if __name__ == '__main__':
+    num = 245
+    out = reverse_number(num)
+    print(out)
+
+# reverse number using 2nd way
+
+def reverse_number(num):
+    reverse_num = 0
+    while num > 0:
+        rem = num % 10 
+        reverse_num = (reverse_num  * 10) + rem 
+        num = num // 10 
+    return reverse_num
+
+
+#Question 13: Merge two dictionaries.
+
+dict1 = {"a": 1, "b": 2}
+dict2 = {"b": 3, "c": 4}
+
+# mereg2 dict using list approach
+out = dict(list(dict1.items()) + list(dict2.items()))
+print(out)
+
+# merge 2 dict using dictionary approach
+merged_dict = {**dict1, **dict2}   
+print(merged_dict)
+
+
+# zip function using list
+l1 = [1,2,3,4,5]
+l2 = ['a','b','c','d','e']
+
+#out = [(1,a), (2,b), (3,c), (4,d), (5,e)]
+
+out = list(zip(l1, l2))
+print(out)
+
+
+# sort a dictionary using key and value
+
+# sorting using dictionary values
+dict1 = {4:'jaynath', 1:'apple', 3:'zscalar', 2:'devloper'}
+
+out = dict(sorted(dict1.items(), key=lambda x : x[1], reverse=False))
+print(out)
+
+# sorting using dictionary values
+out = dict(sorted(dict1.items(), key=lambda x: x[0], reverse=False))
+
+print(out)
+
+
+
+if __name__ == '__main__':
+    num = 245
+    out = reverse_number(num)
+    print(out)
