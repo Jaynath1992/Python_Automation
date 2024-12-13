@@ -1,0 +1,193 @@
+"""
+List comprehension syntax:
+--------------------------
+[expression for value in collection if condition]
+[expression1 if condition else expression2 for value in collection]
+
+Decorators in python :
+-----------------------
+=> Change or modify the functionality of existing function
+=>  Decorators are simply wrapper around another function, which changes the behavior of existing function
+=> Basically decorator takes in a function, add some functionality and returns it
+
+=> Decorator: A decorator is a higher-order function that takes another function as an argument, 
+adds some functionality, and returns a new function. It allows modifying or extending behavior of 
+functions or methods.
+
+
+Things to know before learning decorators:
+=> In python everything is objects, whether it is variable or function or class or any other thing.
+=> Functions can be passed as arguments to other functions. if you have used function like map, reduce, filter you already know about this.
+such function that takes other functions as arguments are also called higher order functions.
+
+=> # to preserve metadata of original function like function name(func.__name__), docstring(func.__doc__)
+
+Examples :
+----------
+def inc(x):
+  return x + 1
+
+def dec(x):
+  return x - 1
+
+def operate(func, x):
+  result = func(x)
+  return result
+
+if __name__ == '__main__':
+    print(operate(inc(4)))
+    
+"""
+
+from functools import wraps
+
+#Example 1: Treating the functions as objects. 
+# Python program to illustrate functions 
+# can be treated as objects 
+def get_value(*args, **kwargs):
+   print(args, kwargs) 
+
+# y = get_value
+# y(1,2,3,4,5)    # (1, 2, 3, 4, 5)
+   
+#=> we have assigned the function get_value to a variable. 
+# This will not call the function instead it takes the function object referenced by a get_value 
+# and creates a second name pointing to it, yell.
+
+#> Example 2: Passing the function as an argument 
+
+
+
+def inc(x):
+  return x + 1
+
+def dec(x):
+  return x - 1
+
+def operate(func, x):
+  result = func(x)
+  return result
+
+
+def make_me_pretty(my_func, *args, **kwargs):
+    def inner(*args, **kwargs):
+        print('*******************')
+        my_func()
+        print('*******************')
+    return inner    
+
+def my_func():
+  print('This is my function')
+
+
+def work_for_all(func):
+    def inner(*args, **kwargs):
+       print('executing before function :{} call...'.format(func.__name__))
+       result = func(*args, **kwargs)
+       print('result is : {}'.format(result))
+       print('executing after function : {} call...'.format(func.__name__))
+    return inner   
+
+#=> Copying decorator metadata is an important part of writing decorators. If you forget to use @wraps
+from functools import wraps
+import time
+def calculate_time(func, *args, **kwargs):    # here outer function will take the function object as argument
+    @wraps(func)    # to preserve metadata of original function like function name(func.__name__), docstring(func.__doc__)
+    def inner(*args, **kwargs):
+       start = time.time()
+       result = func(*args, **kwargs)
+       end = time.time()
+       time_taken = end - start
+       print('Time taken to execute function : {} is : {}'.format(func.__name__, time_taken))
+    return inner  
+
+
+#=> How to implement decorator through class in python :
+import functools
+
+class CalculateTime():
+    def __init__(self, func):
+      self.func = func
+
+    #@functools.wraps(self.func)
+    def __call__(self, *args, **kwargs):
+       start = time.time()
+       result = self.func(*args, **kwargs)
+       end = time.time()
+       time_taken = end - start
+       print('Time taken to execute function : {} is : {}'.format(self.func.__name__, time_taken))
+       return result          
+
+
+
+
+#@work_for_all
+#@calculate_time   
+@CalculateTime
+def add(*args, **kwargs):
+    from functools import reduce
+    val = 0
+    sum = [val+arg for arg in args]
+    for key, value in kwargs.items():
+        sum.append(value)
+    value = reduce(lambda x,y : x + y, sum)
+    time.sleep(3)
+    print(value)
+
+@work_for_all
+def substraction(*args, **kwargs):
+    print('This is substraction function')
+
+#@work_for_all
+#@calculate_time
+@CalculateTime
+def multiplication(*args, **kwargs):
+    from functools import reduce
+    val = 1
+    mul = [val*arg for arg in args]
+    for key, value in kwargs.items():
+        mul.append(value)
+    mul_value = reduce(lambda x,y : x * y, mul)
+    time.sleep(2)
+    print(mul_value)       
+
+
+def hello_decorator(func):
+    def inner1(*args, **kwargs):
+        
+        print("before Execution")
+        
+        # getting the returned value
+        returned_value = func(*args, **kwargs)
+        print("after Execution")
+        
+        # returning the value to the original frame
+        return returned_value
+        
+    return inner1
+
+
+# adding decorator to the function
+@hello_decorator
+def sum_two_numbers(a, b):
+    print("Inside the function")
+    return a + b
+
+a, b = 1, 2
+
+# getting the value through return of the function
+#print("Sum =", sum_two_numbers(a, b))
+   
+
+
+
+
+
+if __name__ == '__main__':
+
+    #print(operate(inc, 4))
+    #make_me_pretty(my_func)()
+    add(10, 20, 30, c=50, d=60, e=80)
+    substraction()
+    multiplication(30,20,15, a=20, b=31, c=45)
+    
