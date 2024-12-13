@@ -1,0 +1,39 @@
+"""
+1
+12
+123
+1234
+
+"""
+n =4 
+for i in range(1, n+1):
+    for j in range(1, i+1):
+        print(j, end=" ")
+    print( )
+
+def find_max_element_from_list(l1):
+    """Find max. element in list"""
+    max = l1[0]
+    for item in l1:
+        if item > max:
+            max = item
+    return max
+
+def find_max_element_from_list(l1):
+    """find max element from list using sorting techinique"""
+    try:
+        max_element = None
+        n = len(l1)
+        for i in range(n):
+            for j in range(n-i-1):
+                if l1[j] > l1[j+1]:
+                    l1[j], l1[j+1] = l1[j+1], l1[j]
+        max_element = l1[-1]
+        return max_element
+    except:
+        raise Exception('List are empty or not in correct form')
+
+if __name__ == '__main__':
+    l1 = [20, 10, 30, 25, 12, 56, 100, 150, 72]
+    output = find_max_element_from_list(l1)
+    print(output)
