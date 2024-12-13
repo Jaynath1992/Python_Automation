@@ -1,0 +1,109 @@
+"""
+Python all sorting methods
+"""
+
+# bubble sort algorithm in python
+
+"""
+Bubble Sort is one of the most straightforward sorting algorithms. Its name comes from the way the algorithm works: With every new pass, the largest element in the list “bubbles up” toward its correct position.
+
+Bubble sort consists of making multiple passes through a list, comparing elements one by one, and swapping adjacent items that are out of order.
+"""
+
+# Time complexity of bubble sort is O(n^2)
+
+def bubble_sort_list(l1):
+    n = len(l1)
+    for i in range(n):
+        for j in range(n-i-1):
+            if l1[j] > l1[j+1]:
+                l1[j], l1[j+1] = l1[j+1], l1[j]
+    return l1
+
+if __name__ == '__main__':
+    l1 = [5, 4, 10, 12, 15, 18, 22, 43, 32]
+    output = bubble_sort_list(l1)
+    print(output)
+
+"""
+The Merge Sort Algorithm in Python
+Merge sort is a very efficient sorting algorithm. It’s based on the divide-and-conquer approach, 
+a powerful algorithmic technique used to solve complex problems.
+
+To properly understand divide and conquer, you should first understand the concept of recursion. 
+Recursion involves breaking a problem down into smaller subproblems until they’re small enough to manage. 
+In programming, recursion is usually expressed by a function calling itself.
+
+"""
+# Time complexity of merge sort is O(n log n)
+
+def merge_sort(l1):
+    if len(l1) <= 1:
+        return l1
+
+    midpoint = len(l1) // 2
+    left = merge_sort(l1[:midpoint])
+    right = merge_sort(l1[midpoint:])
+
+    return merge(left, right)
+
+def merge(left, right):
+    result = []
+    i = j = 0
+
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+
+    result.extend(left[i:])
+    result.extend(right[j:])
+
+    return result
+
+# Example usage
+if __name__ == '__main__':
+    l1 = [38, 27, 43, 3, 9, 82, 10]
+    sorted_list = merge_sort(l1)
+    print(sorted_list)
+
+# quick sort in python
+
+# Time complexity of quick sort is O(n log n) in average case and O(n^2) in worst case
+
+def quick_sort(l1):
+    if len(l1) <= 1:
+        return l1
+    pivot = l1[len(l1) // 2]
+    left = [x for x in l1 if x < pivot]
+    middle = [x for x in l1 if x == pivot]
+    right = [x for x in l1 if x > pivot]
+    return quick_sort(left) + middle + quick_sort(right)
+
+if __name__ == '__main__':
+    l1 = [5, 4, 10, 12, 15, 18, 22, 43, 32]
+    out = quick_sort(l1)
+    print(out)
+
+""""
+The best time complexity sorting method in Python is Timsort, which is the default sorting algorithm used by Python's built-in sorted() function and the list.sort() method. Timsort has a best-case time complexity of O(n) and an average and worst-case time complexity of O(n log n).
+
+=> Timsort is a hybrid sorting algorithm derived from merge sort and insertion sort. 
+It was designed specifically for Python and is optimized for real-world data, such 
+as partially sorted lists and lists with small runs of sorted elements.
+Here is an example of how to use Timsort with the sorted() function and the list.sort() method:
+
+# Using the sorted() function
+unsorted_list = [38, 27, 43, 3, 9, 82, 10]
+sorted_list = sorted(unsorted_list)
+print(sorted_list)
+
+# Using the list.sort() method
+unsorted_list = [38, 27, 43, 3, 9, 82, 10]
+unsorted_list.sort()
+print(unsorted_list)
+
+"""
