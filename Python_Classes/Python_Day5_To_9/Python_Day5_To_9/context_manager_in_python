@@ -1,0 +1,99 @@
+"""
+why do we need context managers in Python?
+=>  
+
+What is a Context Manager in Python?
+
+An object which controls the environment seen in a with statement by defining __enter__() and __exit__() methods.
+
+The with statement in Python lets you run a block of code within a runtime context defined by a context manager object.
+
+Once the block of code has finished executing, the context manager object will take care of tearing down any external resources that are no longer needed.
+
+So, you have rewritten the entire try...except...finally ladder within two lines of code using the with statement and a context manager
+
+=> Almost everything done with a context manager can be done with try: ... finally: ... but context managers are nicer to use, more comfortable, more readable and by implementing __enter__ and __exit__ provide an easy to use interface.
+
+=> In any programming language, the usage of resources like file operations or database connections is 
+very common. But these resources are limited in supply. Therefore, the main problem lies in making sure 
+to release these resources after usage. If they are not released then it will lead to resource leakage 
+and may cause the system to either slow down or crash. It would be very helpful if users have a mechanism 
+for the automatic setup and teardown of resources. In Python, it can be achieved by the usage of context 
+managers which facilitate the proper handling of resources.
+
+********************************************************************************************************
+Creating a Context Manager: When creating context managers using classes, user need to ensure that the 
+class has the methods: __enter__() and __exit__(). The __enter__() returns the resource that needs to be 
+managed and the __exit__() does not return anything but performs the cleanup operations.
+
+
+"""
+# implementing context manager using class, __enter__ and __exit__ methods for file handling
+
+class FileManager(object):
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def __enter__(self):
+        self.file = open(self.filename, self.mode)
+        return self.file
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):  # exit takes 4 args, exc_type, exc_value, exc_traceback
+        self.file.close()
+
+
+with FileManager('mohan.txt', 'w') as file:
+    file.write('This is line number 1 \nThis is line number 2\n')
+
+print('File closed : {}'.format(file.closed))    
+
+
+# Database connection management using context manager:
+
+#Therefore context managers are helpful in managing connections to the database as there could be chances that the programmer may forget to close the connection
+
+
+from pymongo import MongoClient
+
+class MongoDBConnectionManager():
+
+    def __init__(self, hostname, port):
+        self.hostname = hostname
+        self.port = port
+
+    def __enter__(self):
+        self.connection = MongoClient(self.hostname, self.port)
+        return self.connection 
+
+    def __exit__(self):
+        self.connection.close()
+
+# connecting with localhost
+with MongoDBConnectionManager('localhost', '27017') as mongo:
+    collection = mongo.db.test_collection
+    data  = collection.find({'_id': 1})
+    print(data.get('name'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def create_files(number=1000):
+#     """Create n number of files """
+#     file_descriptors = []
+#     for i in range(number):
+#         #filename = 'file_{}.txt'.format(i)
+#         file = open('file.txt', 'w')
+#         file_descriptors.append(file)
+
+# if __name__ == '__main__':
+#     create_files(1000)        
