@@ -1,0 +1,93 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: docker:25.0.5
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi
+    command:
+    - sleep
+    args:
+    - infinity
+    volumeMounts:
+    - mountPath: /x/eng/cvs_qa/hosts/
+      name: cvs-qa-host
+    - mountPath: /var/run/docker.sock
+      name: sock
+  volumes:
+  - name: cvs-qa-host
+    hostPath:
+      path: /x/eng/cvs_qa/hosts/
+  - name: sock
+    hostPath:
+      path: /var/run/docker.sock
+'''
+    defaultContainer 'shell'
+        }
+    }
+    
+     environment {
+        registryName = 'docker.repo.eng.netapp.com'
+     }
+
+
+options {
+    timestamps ()
+    buildDiscarder(
+        logRotator(
+            numToKeepStr:'20', daysToKeepStr: '180', artifactDaysToKeepStr: '180', artifactNumToKeepStr: '20'
+        )
+    )
+}
+    
+    stages {
+        
+        stage('Checkout') {
+            steps {
+                sh 'hostname'
+                checkout scmGit(branches: [[name: '*/gcp_container_script_changes']], extensions: [cloneOption(depth: 1, noTags: false, reference: '', shallow: true)], userRemoteConfigs: [[credentialsId: 'TmpGitHubRead', url: 'https://github.com/greenqloud/cvs-qa.git']])
+            }
+        }
+        stage('Main') {
+            steps {
+                sh 'hostname'
+            }
+        }
+        stage('Build docker image And push to NetApp docker repo'){
+           when { 
+               anyOf {
+                    changeset "**/containerized_infra/gcp/requirements.txt"
+                    changeset "**/containerized_infra/gcp/Dockerfile"
+               }
+               
+           } 
+              steps {
+                 script {
+                  def now = new Date()
+                  def timestamp_format = now.format("yyyyMMddHHmmss", TimeZone.getTimeZone('UTC'))
+                   echo  "Formatted timestamp is : ${timestamp_format}"
+                 }
+                  sh 'echo Dockerfile or requirements.txt file got changed'
+                  withCredentials([usernamePassword(credentialsId: 'cituser_account_id', passwordVariable: 'cituser_pass', usernameVariable: 'cituser_name')]) {
+                   sh """
+                    cd ./cbsqa/containerized_infra/
+                    docker login -u ${cituser_name} -p ${cituser_pass} ${registryName}
+                    docker build -t docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:timestamp_format .
+                    docker push docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:timestamp_format
+
+                   """
+                  }
+            }
+        }
+    }
+}
