@@ -1,0 +1,42 @@
+# Below are list of python packages
+argcomplete==1.8.1
+setuptools-rust==1.1.2
+robotframework==4.1.3      # robot framework version
+requests==2.32.2
+robotframework-requests==0.5.0
+pyyaml==6.0
+robotframework-debuglibrary==1.1.4
+robotframework-pabot==0.53
+selenium==3.141.0
+robotframework-seleniumlibrary==3.3.1
+robotframework-selenium2library==3.0.0
+paramiko==3.4.0
+psutil==5.9
+Ipy==1.0
+fabric==2.7.0
+pymysql==1.1.1
+pymongo==4.6.3
+kubernetes==11.0.0
+azure==4.0.0
+azure-cli-core==2.20.0
+azure-core==1.24.2
+azure-identity==1.16.1
+azure-mgmt-netapp==11.0.0
+azure-mgmt-resource==2.2.0
+haikunator==2.1.0
+netapp-ontap==9.7.2
+robotframework-datadriver==0.3.6
+#robotframework-datadriver[XLS]==0.3.6
+#Install Jenkins/qtest related library
+qasymphony-qtest-library==0.2.1
+xmltodict==0.12.0
+yq==2.9.2
+jq==1.1.2
+nulltype==2.3.1
+psycopg2==2.9.7
+essential_generators==1.0
+google-api-python-client==2.52.0
+google-cloud-kms==2.11.2
+google-cloud-monitoring==2.19.0
+google-cloud-compute==1.14.1
+pandas==2.0.3
