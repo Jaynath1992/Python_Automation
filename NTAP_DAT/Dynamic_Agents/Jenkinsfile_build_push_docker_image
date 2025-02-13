@@ -1,0 +1,52 @@
+pipeline {
+    agent {label  'jaynath-u20-01'}
+    
+     environment {
+        registryName = 'docker.repo.eng.netapp.com'
+     }
+
+
+options {
+    timestamps ()
+    buildDiscarder(
+        logRotator(
+            numToKeepStr:'20', daysToKeepStr: '180', artifactDaysToKeepStr: '180', artifactNumToKeepStr: '20'
+        )
+    )
+}
+    
+    stages {
+        
+        stage('Checkout') {
+            steps {
+                sh 'hostname'
+                checkout scmGit(branches: [[name: '*/master']], extensions: [cloneOption(depth: 1, noTags: false, reference: '', shallow: true)], userRemoteConfigs: [[credentialsId: 'TmpGitHubRead', url: 'https://github.com/greenqloud/cvs-qa.git']])
+            }
+        }
+        stage('Main') {
+            steps {
+                sh 'hostname'
+            }
+        }
+        stage('Build docker image'){
+           when { 
+               anyOf {
+                    changeset "**/requirements.txt"
+                    changeset "**/Dockerfile"
+               }
+               
+           } 
+              steps {
+                  sh 'echo Dockerfile or requirements.txt file got changed'
+                  withCredentials([usernamePassword(credentialsId: 'jaynath_controller_vm', passwordVariable: 'jaynath_controller_pass', usernameVariable: 'jaynath_controller_user')]) {
+                   sh """
+                    cd ./cbsqa
+                    docker login -u ${jaynath_controller_user} -p ${jaynath_controller_pass} ${registryName}
+                    docker build -t docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:v3 .
+                    docker push docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:v3
+                   """
+                  }
+            }
+        }
+    }
+}
