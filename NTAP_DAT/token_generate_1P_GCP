@@ -1,0 +1,65 @@
+from os import path
+import sys
+import time
+import json
+from google.oauth2 import service_account
+from googleapiclient import discovery
+import argparse
+# import google.auth
+import google.auth.transport.requests as auth
+ 
+ 
+class Token:
+    def __init__(self):
+        self.auth_dir = "auth_json"
+    @staticmethod
+    def get_ccfe_token(json_file=None):
+        try:
+            scopes = ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/cloud-platform",
+                      "https://www.googleapis.com/auth/appengine.admin", "https://www.googleapis.com/auth/compute"]
+            credentials = service_account.Credentials.from_service_account_file(
+                f"{json_file}",
+                scopes=scopes)
+ 
+            auth_req = auth.Request()
+            # Request refresh tokens
+            credentials.refresh(auth_req)
+            # now we can print the access token
+            return credentials.token.split('...')[0]
+        except Exception as e:
+            return str(e)
+ 
+    @staticmethod
+    def get_cvp_token(project_no, cred_file):
+        try:
+            credentials = service_account.Credentials.from_service_account_file(
+                path.join(auth_dir, cred_file+ ".json"))
+            iam = discovery.build('iam', 'v1', credentials=credentials)
+            iat = round(time.time())
+            exp = iat + 3600
+            with open(path.join(auth_dir, cred_file + ".json"), 'r') as f:
+                data = f.read()
+            json_data = json.loads(data)
+            client_email = json_data["client_email"]
+            iam = discovery.build('iam', 'v1', credentials=credentials)
+            audience_url = "https://dev-cloudvolumesgcp-api.netapp.com"
+ 
+            iat = int(time.time())
+            payload = "{\"sub\": \" " + client_email + "\",\"aud\": \"" + audience_url + "\",\"iss\": \"" + client_email + "\",\"iat\": " + str(
+                iat) + ",\"Google\": {\"project_number\": " + project_no + "}}"
+ 
+            req = iam.projects().serviceAccounts().signJwt(
+                name=f"projects/-/serviceAccounts/{client_email}",
+                body={"payload": payload})
+ 
+            return req.execute().get('signedJwt')
+        except Exception as e:
+            return str(e)
+ 
+ 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--project', default='g1p-functional-ap-tst-cit-01.json',help="Pass absolute/relate path of project name with json extension for which you want to generate token")
+    args = vars(parser.parse_args())
+    token = Token.get_ccfe_token(json_file=args['project'])
+    print(token)
