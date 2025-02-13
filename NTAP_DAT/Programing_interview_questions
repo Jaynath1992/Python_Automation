@@ -858,3 +858,57 @@ if __name__ == '__main__':
     out_dict = obj1.append_input()
     print('Output dict is : {}'.format(out_dict))
 
+
+def reverse_line_in_file(file1, file2):
+    """reverse line in a file"""
+
+    with open(file1, 'r') as file:
+        lines = file.readlines()
+        output_lines = []
+        for line in lines:
+            out_line = ' '.join([word[::-1] for word in line.strip().split(' ')])
+            output_lines.append(out_line + '\n')
+
+    # write data
+    with open("file2.txt", 'w') as file2:
+        file2.writelines(output_lines)
+
+
+# search all word and their count in a file
+
+def search_word_and_their_count_in_file(file1):
+    """Search word in their file"""
+    with open(file1, 'r') as file:
+        text = file.read()
+        words = text.split()
+        word_count_dict = {item:words.count(item) for item in words}
+        sorted_word_count_dict = sorted(word_count_dict.items(), key=lambda x: x[1], reverse=True )
+        print(sorted_word_count_dict)
+        highest_word_count = sorted_word_count_dict[0]
+        return highest_word_count
+
+
+def get_occurrence_of_word_from_file(filename, word):
+    with open(filename, 'r') as file:
+        text = file.read()
+        words = text.split()
+        word_count = words.count(word)
+    return word_count
+
+# Example usage
+# if __name__ == '__main__':
+#     filename = 'file1.txt'
+#     word = 'Bengaluru'
+#     count = get_occurrence_of_word_from_file(filename, word)
+#     print(f"The word '{word}' occurs {count} times in the file '{filename}'.")
+
+
+if __name__ == '__main__':
+    input_file = 'file1.txt'
+    output_file = 'file2.txt'
+    reverse_line_in_file(input_file, output_file)
+
+    out = search_word_and_their_count_in_file(input_file)
+    print(out)
+
+
