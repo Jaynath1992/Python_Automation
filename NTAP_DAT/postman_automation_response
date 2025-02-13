@@ -1,0 +1,87 @@
+
+################Step 1 ###################################
+
+if (pm.response.code==200){
+
+    // Get the operation id value from json response
+    var jsonData = pm.response.json();
+    name_value = jsonData['name']
+    console.log(name_value)
+    split_names_array = name_value.split('/')
+    console.log(split_names_array)
+    operation_id = split_names_array[split_names_array.length -1]
+    entity = split_names_array[split_names_array.length -2]
+    if (entity == 'operations') {
+        pm.environment.set("operation_id", operation_id);
+    }
+
+    // Get the pool name value from json response
+
+    target_value = jsonData['metadata']['target']
+    console.log(target_value)
+    target_array = target_value.split('/')
+    pool_name = target_array[target_array.length -1]
+    entity =  target_array[target_array.length -2]
+    if (entity == 'storagePools'){
+        pm.environment.set("pool_id", pool_name);
+    }
+
+}
+
+#############################Step 2 ##################################
+
+if (pm.response.code==200){
+
+    // Get the operation id value from json response
+    var jsonData = pm.response.json();
+    name_value = jsonData['name']
+    console.log(name_value)
+    split_names_array = name_value.split('/')
+    console.log(split_names_array)
+    operation_id = split_names_array[split_names_array.length -1]
+    entity = split_names_array[split_names_array.length -2]
+    if (entity == 'operations') {
+        pm.environment.set("operation_id", operation_id);
+    }
+
+    // Get the pool name value from json response
+
+    target_value = jsonData['metadata']['target']
+    console.log(target_value)
+    target_array = target_value.split('/')
+    pool_name = target_array[target_array.length -1]
+    entity =  target_array[target_array.length -2]
+    if (entity == 'storagePools'){
+        pm.environment.set("pool_id", pool_name);
+    }
+
+}
+
+
+########################Step 3 ######################
+
+if (pm.response.code==200) {
+
+    // set operation id
+    var jsonData = JSON.parse(responseBody);
+    name_value = jsonData['name']
+    console.log(name_value)
+    split_names_array = name_value.split('/')
+    console.log(split_names_array)
+    operation_id = split_names_array[split_names_array.length -1]
+    pm.environment.set("operation_id", operation_id);
+
+    // set pool id
+
+    target_value = jsonData['metadata']['target']
+    console.log(target_value)
+    target_array = target_value.split('/')
+    pool_name = target_array[target_array.length -1]
+    pm.environment.set("pool_id", pool_name);
+
+}
+
+
+
+
+
