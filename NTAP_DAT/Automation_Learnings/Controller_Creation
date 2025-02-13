@@ -1,0 +1,529 @@
+New controller : 04 August 2023 :
+
+cvs-k8s-jaynath-18 @ 10.193.226.66
+
+
+The permission of this /u/jaynath directory should be : 755 or 700
+
+root@cvs-k8s-jaynath-02:/u# ls -l /u/
+total 4
+drwxr-sr-x 19 jaynath dip 4096 Aug  7 11:48 jaynath
+
+jaynath-19 New controller : 07 August 2023
+
+cvs-k8s-jaynath-19 @ 10.193.227.200
+<SSO>
+
+
+10.193.232.33  -jaynath-02 node test controller
+
+=> To setup controller, first you need to install all python packages using this confluence below :
+
+https://confluence.ngage.netapp.com/pages/viewpage.action?pageId=467141790
+
+
+
+
+
+
+Adding sso user to someone's else machine : sudo usermod -aG sudo <sso user name >
+
+# From robot_install.sh file, we can first install below packages on our test controller machine :
+
+# snap install jq  => ensure jq is installed as part of apt repo on ubuntu machine
+# jq should be also installed as ubuntu package not only pip3 python package 
+
+PACKAGE_LIST_UBUNTU=(
+            python-setuptools
+            python3-dev
+            build-essential
+            python3-pip
+            stgit
+            python3-simplejson
+            python3-testresources)
+				
+=> First install below packages from ubuntu repository on your test controller machine, fire below command as it is :
+
+# sudo apt-get update && sudo apt-get install python-setuptools python3-dev build-essential python3-pip stgit python3-simplejson python3-testresources -y 
+
+
+# After executing above command just check python3 and pip3 version installed.
+# python3 -V
+Python 3.6.9
+# pip3 -V
+pip 9.0.1 from /usr/lib/python3/dist-packages (python 3.6)
+
+=> Now if you want you can upgrade your pip3 to newer version, better do this using below command :
+
+# pip3 install --upgrade pip
+
+root@cvs-k8s-jaynath-12:~# pip3 install --upgrade pip
+Collecting pip
+  Downloading https://files.pythonhosted.org/packages/a4/6d/6463d49a933f547439d6b5b98b46af8742cc03ae83543e4d7688c2420f8b/pip-21.3.1-py3-none-any.whl (1.7MB)
+    100% |████████████████████████████████| 1.7MB 753kB/s
+Installing collected packages: pip
+  Found existing installation: pip 9.0.1
+    Not uninstalling pip at /usr/lib/python3/dist-packages, outside environment /usr
+Successfully installed pip-21.3.1
+
+=> Check pip version is upgraded now
+
+# python3 -m pip -V
+
+pip 21.3.1 from /usr/local/lib/python3.6/dist-packages/pip (python 3.6)
+
+************************************************************************************
+
+# Now get whatever mentioned in requirements.txt file in this folder, copy all that and create requirements.txt file on your test controller machine
+
+# vim requirements.txt  (copy below line from 48-80 and create requirements.txt file on test controller machine)
+
+paramiko==2.7.2
+argcomplete==1.8.1
+setuptools-rust==1.1.2
+robotframework==4.1.3
+requests==2.27.1
+robotframework-requests==0.5.0
+pyyaml==6.0
+robotframework-debuglibrary==1.1.4
+robotframework-pabot==0.53
+selenium==3.141.0
+robotframework-seleniumlibrary==3.3.1
+robotframework-selenium2library==3.0.0
+psutil==5.9
+Ipy==1.0
+fabric==2.7.0
+pymysql==0.9.3
+pymongo==3.7.2
+kubernetes==11.0.0
+azure==4.0.0
+azure-cli-core==2.20.0
+azure-core==1.24.2
+azure-mgmt-netapp==0.10.0
+azure-mgmt-resource==2.2.0
+haikunator==2.1.0
+netapp-ontap==9.7.2
+robotframework-datadriver==0.3.6
+#robotframework-datadriver[XLS]==0.3.6
+#Install Jenkins/qtest related library
+qasymphony-qtest-library==0.2.1
+xmltodict==0.12.0
+yq==2.9.2
+jq==1.1.2
+nulltype==2.3.1
+psycopg2==2.7.7
+
+
+# (Now added this one )pip3 install psycopg2  => if this is missed in install then add this manually on controller vm, otherwise jenkins throws error.
+
+=> All packages list and it's version should be same as what it is mentioned above, don't change anything here
+
+=> Now install requirements.txt using pip3 command : (all package version should be same as what mentioned in file)
+
+# pip3 install -r requirements.txt
+
+=> If you get below error while installing PyYaml package, then follow below steps to solve this :
+
+ERROR: Cannot uninstall 'PyYAML'. It is a distutils installed project and thus we cannot accurately determine which files belong to it which would lead to only a partial uninstall.
+
+# pip3 install --ignore-installed PyYAML
+
+
+=> Now again try to install only PyYAML package with below command(--ignore-installed)
+
+# pip3 install --ignore-installed PyYAML
+
+Output :
+WARNING: pip is being invoked by an old script wrapper. This will fail in a future version of pip.
+Please see https://github.com/pypa/pip/issues/5599 for advice on fixing the underlying issue.
+To avoid this problem you can invoke Python with '-m pip' instead of running pip directly.
+Collecting PyYAML
+  Using cached PyYAML-6.0-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl (603 kB)
+Installing collected packages: PyYAML
+Successfully installed PyYAML-6.0
+
+=> Now again install requirements.txt file, this time most of the packages it will take from cached
+
+# pip3 install -r requirements.txt
+
+
+=> Now you will not get any error.
+
+# You can list all python packagesand it's dependent packages as shown below :
+
+# pip3 list
+
+WARNING: pip is being invoked by an old script wrapper. This will fail in a future version of pip.
+Please see https://github.com/pypa/pip/issues/5599 for advice on fixing the underlying issue.
+To avoid this problem you can invoke Python with '-m pip' instead of running pip directly.
+Package                               Version
+------------------------------------- -------------------
+adal                                  1.2.7
+applicationinsights                   0.11.10
+argcomplete                           1.8.1
+asn1crypto                            0.24.0
+attrs                                 17.4.0
+Automat                               0.6.0
+azure                                 4.0.0
+azure-applicationinsights             0.1.1
+azure-batch                           4.1.3
+azure-cli-core                        2.20.0
+azure-cli-telemetry                   1.0.6
+azure-common                          1.1.28
+azure-core                            1.24.2
+azure-cosmosdb-nspkg                  2.0.2
+azure-cosmosdb-table                  1.0.6
+azure-datalake-store                  0.0.52
+azure-eventgrid                       1.3.0
+azure-graphrbac                       0.40.0
+azure-keyvault                        1.1.0
+azure-loganalytics                    0.1.1
+azure-mgmt                            4.0.0
+azure-mgmt-advisor                    1.0.1
+azure-mgmt-applicationinsights        0.1.1
+azure-mgmt-authorization              0.50.0
+azure-mgmt-batch                      5.0.1
+azure-mgmt-batchai                    2.0.0
+azure-mgmt-billing                    0.2.0
+azure-mgmt-cdn                        3.1.0
+azure-mgmt-cognitiveservices          3.0.0
+azure-mgmt-commerce                   1.0.1
+azure-mgmt-compute                    4.6.2
+azure-mgmt-consumption                2.0.0
+azure-mgmt-containerinstance          1.5.0
+azure-mgmt-containerregistry          2.8.0
+azure-mgmt-containerservice           4.4.0
+azure-mgmt-core                       1.3.2
+azure-mgmt-cosmosdb                   0.4.1
+azure-mgmt-datafactory                0.6.0
+azure-mgmt-datalake-analytics         0.6.0
+azure-mgmt-datalake-nspkg             3.0.1
+azure-mgmt-datalake-store             0.5.0
+azure-mgmt-datamigration              1.0.0
+azure-mgmt-devspaces                  0.1.0
+azure-mgmt-devtestlabs                2.2.0
+azure-mgmt-dns                        2.1.0
+azure-mgmt-eventgrid                  1.0.0
+azure-mgmt-eventhub                   2.6.0
+azure-mgmt-hanaonazure                0.1.1
+azure-mgmt-iotcentral                 0.1.0
+azure-mgmt-iothub                     0.5.0
+azure-mgmt-iothubprovisioningservices 0.2.0
+azure-mgmt-keyvault                   1.1.0
+azure-mgmt-loganalytics               0.2.0
+azure-mgmt-logic                      3.0.0
+azure-mgmt-machinelearningcompute     0.4.1
+azure-mgmt-managementgroups           0.1.0
+azure-mgmt-managementpartner          0.1.1
+azure-mgmt-maps                       0.1.0
+azure-mgmt-marketplaceordering        0.1.0
+azure-mgmt-media                      1.0.1
+azure-mgmt-monitor                    0.5.2
+azure-mgmt-msi                        0.2.0
+azure-mgmt-netapp                     0.10.0
+azure-mgmt-network                    2.7.0
+azure-mgmt-notificationhubs           2.1.0
+azure-mgmt-nspkg                      3.0.2
+azure-mgmt-policyinsights             0.1.0
+azure-mgmt-powerbiembedded            2.0.0
+azure-mgmt-rdbms                      1.9.0
+azure-mgmt-recoveryservices           0.3.0
+azure-mgmt-recoveryservicesbackup     0.3.0
+azure-mgmt-redis                      5.0.0
+azure-mgmt-relay                      0.1.0
+azure-mgmt-reservations               0.2.1
+azure-mgmt-resource                   2.2.0
+azure-mgmt-scheduler                  2.0.0
+azure-mgmt-search                     2.1.0
+azure-mgmt-servicebus                 0.5.3
+azure-mgmt-servicefabric              0.2.0
+azure-mgmt-signalr                    0.1.1
+azure-mgmt-sql                        0.9.1
+azure-mgmt-storage                    2.0.0
+azure-mgmt-subscription               0.2.0
+azure-mgmt-trafficmanager             0.50.0
+azure-mgmt-web                        0.35.0
+azure-nspkg                           3.0.2
+azure-servicebus                      0.21.1
+azure-servicefabric                   6.3.0.0
+azure-servicemanagement-legacy        0.20.7
+azure-storage-blob                    1.5.0
+azure-storage-common                  1.4.2
+azure-storage-file                    1.4.0
+azure-storage-queue                   1.4.0
+bcrypt                                4.0.1
+blinker                               1.4
+cachetools                            4.2.4
+certifi                               2018.1.18
+cffi                                  1.15.1
+chardet                               3.0.4
+charset-normalizer                    2.0.12
+click                                 6.7
+cloud-init                            22.4.2
+colorama                              0.4.5
+command-not-found                     0.3
+configobj                             5.0.6
+constantly                            15.1.0
+cryptography                          3.3.2
+distro-info                           0.18ubuntu0.18.04.1
+docutils                              0.18.1
+fabric                                2.7.0
+google-auth                           2.16.0
+haikunator                            2.1.0
+httplib2                              0.9.2
+humanfriendly                         9.2
+hyperlink                             17.3.1
+idna                                  2.6
+incremental                           16.10.1
+invoke                                1.7.3
+IPy                                   1.0
+isodate                               0.6.1
+Jinja2                                2.10
+jmespath                              0.10.0
+jq                                    1.1.2
+jsonpatch                             1.16
+jsonpointer                           1.10
+jsonschema                            2.6.0
+keyring                               10.6.0
+keyrings.alt                          3.0
+knack                                 0.8.0rc2
+kubernetes                            11.0.0
+language-selector                     0.1
+linecache2                            1.0.0
+MarkupSafe                            1.0
+marshmallow                           3.14.1
+msal                                  1.20.0
+msrest                                0.7.1
+msrestazure                           0.6.4
+netapp-ontap                          9.7.2
+netifaces                             0.10.4
+nulltype                              2.3.1
+oauthlib                              3.2.2
+PAM                                   0.4.2
+paramiko                              2.7.2
+pathlib2                              2.3.7.post1
+pbr                                   3.1.1
+pexpect                               4.2.1
+pip                                   21.3.1
+pkginfo                               1.9.6
+portalocker                           1.7.1
+prompt-toolkit                        1.0.18
+psutil                                5.9.0
+pyasn1                                0.4.2
+pyasn1-modules                        0.2.1
+pycparser                             2.21
+pycrypto                              2.6.1
+Pygments                              2.14.0
+PyGObject                             3.26.1
+PyJWT                                 1.7.1
+pymongo                               3.7.2
+PyMySQL                               0.9.3
+PyNaCl                                1.5.0
+pyOpenSSL                             17.5.0
+pyserial                              3.4
+python-apt                            1.6.5+ubuntu0.7
+python-dateutil                       2.8.2
+python-debian                         0.1.32
+pyxdg                                 0.25
+PyYAML                                6.0
+qasymphony-qtest-library              0.2.1
+requests                              2.27.1
+requests-oauthlib                     1.3.1
+requests-unixsocket                   0.1.5
+robotframework                        4.1.3
+robotframework-datadriver             0.3.6
+robotframework-debuglibrary           1.1.4
+robotframework-pabot                  0.53
+robotframework-requests               0.5.0
+robotframework-selenium2library       3.0.0
+robotframework-seleniumlibrary        3.3.1
+robotremoteserver                     1.1.1
+rsa                                   4.9
+SecretStorage                         2.3.1
+selenium                              3.141.0
+semantic-version                      2.10.0
+service-identity                      16.0.0
+setuptools                            59.6.0
+setuptools-rust                       1.1.2
+simplejson                            3.13.2
+six                                   1.16.0
+sos                                   4.4
+ssh-import-id                         5.7
+systemd-python                        234
+tabulate                              0.8.10
+testresources                         2.0.0
+traceback2                            1.4.0
+Twisted                               17.9.0
+typing_extensions                     4.1.1
+ubuntu-advantage-tools                27.12
+ufw                                   0.36
+unattended-upgrades                   0.1
+unittest2                             1.1.0
+urllib3                               1.26.14
+wcwidth                               0.2.6
+websocket-client                      1.3.1
+wheel                                 0.30.0
+xmltodict                             0.12.0
+yq                                    2.9.2
+zope.interface                        4.3.2
+
+
+
+#Now verify everything is working correctly
+
+=> Download code rom bitbucket repo : https://bitbucket.ngage.netapp.com/scm/cbs-bb/cbs-qa.git
+
+# git clone https://bitbucket.ngage.netapp.com/scm/cbs-bb/cbs-qa.git
+username : jaynath-12
+password: 
+
+=> Verify token gets generated on the OpenLab controller, Once clone is completed, try to generate token for your GCP project, whether it works or not.
+# cd ./cbs-qa/cbsqa/lib/tools/cvp
+
+python3 root/cbs-qa/cbsqa/lib/tools/cvp/JWT_TokenGeneration.py <path_to_service_account_json_file>
+
+# sudo python3 /root/cbs-qa/cbsqa/lib/tools/cvp/JWT_TokenGeneration.py /root/hst/cvs_systemic_qa2.json
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IjE2MWYwYTVhMGEyZWQ4NTBmYjFmNjc2MGI3NDkxYmM3YzJhYWVlMTMifQ.eyJpc3MiOiJjaXQtZ2NwLXJlZ3Jlc3Npb24tc2VydmljZS1hY2NAY3ZzLXN5c3RlbWljLXFhLTIuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJzdWIiOiJjaXQtZ2NwLXJlZ3Jlc3Npb24tc2VydmljZS1hY2NAY3ZzLXN5c3RlbWljLXFhLTIuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJhdWQiOiJodHRwczovL2Rldi1jbG91ZHZvbHVtZXNnY3AtYXBpLm5ldGFwcC5jb20iLCJpYXQiOjE2NzM4MDU4ODMsImV4cCI6MTY3MzgwOTQ4M30.JCZW5THC6JPvidyh4ITDjC60WlJKNRBj6S1bOZAkkL9Rt-pz_curARrPdgahsOfk3aQKIQHqLGVqZTLr3mKQ-DeUcAwKpLrTAuKiN8ycrf2rAv-73GLeviPXJOgI35pi5QERpvPfG3BObnJik0hhcLYWfq1xYlypdmBCDZOaTeuycnxg5vumvkAcsOHQZi0UZlpVvhA09cC2cSngGt_KP12YDC7F-u7wIZwtqUXumFNC8Rvg8KdlfCCSdbFDY0HAzKZq_5ZjMcP1UQ17fq-EW4_nkvZwuV6Dl8QG0c-WkrJMuOww4J_JAEzA_eCKOm738cYw3aQ9h01gDhw8gug1Cw
+
+
+
+
+Push Result to QTest command:
+
+python3 /home/cbs/workspace/GCP_Sanity/CIT_GCP_dual_protocol/cbsqa/lib/qtestmanage/qtest_result_push_version.py --bearer_token=0e6246a5-a1e7-4283-b17d-90e1001bd6b5 --project_id=104 --testsuite_name=gcp_dual_protocol --hyperscalar_name=GCP --rp_or_sde_version=2023.01.0 --xunit_xml_path=/home/cbs/workspace/GCP_Sanity/CIT_GCP_dual_protocol/build_log_175/xunit --jenkin_logs=https://cvscit-team-jenkins.daas.netapp.com/job/GCP_Sanity/job/CIT_GCP_dual_protocol/175//console
+
+
+
+
+To fix this issue on test controller :
+**********************************************
+
+When you try to install or check pip3 version, then get this error :
+------------------------------------------------------------------------
+ File "<frozen importlib._bootstrap>", line 626, in _load_backward_compatible
+  File "/usr/share/python-wheels/urllib3-1.22-py2.py3-none-any.whl/urllib3/contrib/pyopenssl.py", line 46, in <module>
+  File "/usr/local/lib/python3.6/dist-packages/OpenSSL/__init__.py", line 8, in <module>
+    from OpenSSL import SSL, crypto
+  File "/usr/local/lib/python3.6/dist-packages/OpenSSL/SSL.py", line 19, in <module>
+    from OpenSSL.crypto import (
+  File "/usr/local/lib/python3.6/dist-packages/OpenSSL/crypto.py", line 3261, in <module>
+    name="load_pkcs7_data",
+TypeError: deprecated() got an unexpected keyword argument 'name'
+
+
+Follow this step to fix this (remove pyopenssl related packages from /usr/local/lib) :
+*********************************
+sudo rm -rf /usr/local/lib/python3.6/dist-packages/OpenSSL
+sudo rm -rf /usr/local/lib/python3.6/dist-packages/pyOpenSSL-22.1.0.dist-info/
+
+
+pip3 install pyOpenSSL==22.0.0
+
+
+
+# Rerun failed tc's in jenkins from previous jenkins build :
+
+
+robot --rerunfailed /root/workspace/GCP_ATOM/Legacy_Atom_sqa/build_log_18/output-20230128-095428.xml \
+--output ${LOGDIR}/output_snaspot_rerun.xml -T --nostatusrc -b debug.out -d ${LOGDIR} -x ${LOGDIR}/xunit/xunit.xml \
+-v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:$TESTDIR
+
+
+# Rerun all failed tc's from previous run
+robot --rerunfailed /root/workspace/GCP_ATOM/Atom-RegionalHA_SQA/build_log_2/output-20230128-030323.xml \
+--output ${LOGDIR}/rerun_failed_snapshot_revert.xml -T --nostatusrc -b debug.out -d ${LOGDIR} -x ${LOGDIR}/xunit/xunit.xml \
+-v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:$TESTDIR \
+-i atom-beta --suite regularVol.snapshotRevert ${WORKSPACE}/cbsqa/atom_testsuite/
+
+robot --rerunfailed /root/workspace/GCP_ATOM/Atom-RegionalHA_SQA/build_log_2/output-20230128-050407.xml \
+--output ${LOGDIR}/rerun_failed_volume_resize.xml -T --nostatusrc -b debug.out -d ${LOGDIR} -x ${LOGDIR}/xunit/xunit.xml \
+-v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:$TESTDIR \
+-i atom-beta --suite regularVol.volumeResize ${WORKSPACE}/cbsqa/atom_testsuite/
+
+
+
+**Issue : No module name google-api-python-client
+
+# pip3 install google-api-python-client
+
+Error : Found existing installation: httplib2 0.9.2
+ERROR: Cannot uninstall 'httplib2'. It is a distutils installed project and thus we cannot accurately determine which files belong to it which would lead to only a partial uninstall.
+
+
+# Fire this command then :
+
+#pip3 install --ignore-installed httplib2
+
+# then again try to install this google-api-python-client package
+# pip3 install google-api-python-client
+
+
+Authentication Exception issue while running jenkins job:
+*************************************************************
+
+15:31:06.684	INFO	Creating ssh object to client	
+15:31:07.265	FAIL	AuthenticationException: Authentication failed.
+
+To fix this issue :
+********************
+
+=> Go to /root/.ssh/ directory and get the content of id_rsa.pub file, 
+=> copy it in /u/<sso_user>/.ssh/authorized_keys  file
+=> Now check whether passwordless ssh from root to your sso user is setup on that machine
+=> To verify this fire this command from root user shell : # ssh <sso_user>@<controller_ip>
+=> It should not ask for any password => if it still asks for password then that means it is a issue still
+
+
+** Also better do same other way :
+**********************************
+=> fire this command : ssh-keygen (on your % prompt, for your sso user like /u/<sso_user>)
+=> Get the content of /u/jaynath/.ssh/id_rsa.pub file
+=> Paste this content in /root/.ssh/authorized_keys file
+=> try to make sure you can access without password from % prompt using : ssh root@<machine_ip>
+=> this should not ask for password when login
+	
+
+Setup passwordless ssh from your controller to windows client :
+***************************************************************
+
+=> Get the content of /root/.ssh/id_rsa.pub file and copy it into windows machine at location : /home/Administrator/authorized_keys
+
+=> Open Cygwin terminal on your windows machine and type : pwd
+=> For your user for which you want to setup passwordless ssh, copy the id_rsa.pub of your controller machine into /home/Administrator/authorized_keys
+
+=> Now verify whether passwordless ssh is setup : ssh Administrator@<windows_ip>
+	
+
+=> Issues related to psycopg2 module :
+*****************************************
+=> 18:41:38 /usr/local/lib/python3.7/dist-packages/psycopg2/__init__.py:144: UserWarning: The psycopg2 wheel package will be renamed from release 2.8; in order to keep installing from binary please use "pip install psycopg2-binary" instead. For details see: <http://initd.org/psycopg/docs/install.html#binary-install-from-pypi>.
+
+
+
+Flush DNS on windows AD machine :
+
+[8:18 PM] Tiwari, Sunil
+https://answers.microsoft.com/en-us/windows/forum/all/my-dns-server-keeps-loosing-its-connection-how-do/607f8d99-bfbe-4506-894d-331517295fb8
+Redirecting
+
+C:\Users\Administrator>ipconfig /flushdns
+
+Windows IP Configuration
+
+Successfully flushed the DNS Resolver Cache.
+
+
+=> ipconfig /flushdns
+
+If you get this error while creating SMB volume :
+*****************************************************
+Error when creating - Could not query DNS server. Verify that the network configuration is correct and that DNS servers are available.
+
+
+=> Please check that private service connection of that peered vpc for sqa and tst environment is added into firewall list
+
+
+Issues :
+
+/usr/local/lib/python3.6/dist-packages/paramiko/client.py:837: UserWarning: Unknown ssh-ed25519 host key for 35.245.236.230: b'cc9c82b8aa61f13812e2034b4110a20f'
