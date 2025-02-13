@@ -1,0 +1,131 @@
+Useful Links : 
+
+Report Portal : https://reportportal.io/
+
+Report Portal Documentation : https://reportportal.io/docs/
+
+Report Portal Installation : https://reportportal.io/installation
+
+Robot python agent for ReportPortal : https://github.com/reportportal/agent-Python-RobotFramework
+
+Report Portal Srikant Confluence :
+
+Report Portal Server : http://10.193.XXX.XXX:8080/ui/#login
+ 
+Username : superadmin    
+Password : *****
+
+Step 1 : How to Install Report Portal on your controller machine :
+
+=> First install report portal on your test controller using below command:
+
+# pip3 install robotframework-reportportal
+
+Step 2 : How to create a particular project on ReportPortal 
+
+Step 1 :  Click on SuperAdmin link at the bottom left of reportportal dashboard page
+Step 2 : Click on Add New project link in the top right corner
+Step 3: Enter Project Name, and click on Add
+Step 4: Then you will see project settings, (Name, Launch Inactivity timeout, Keep launches, keep logs, Keep attachments)
+        -> Launch Inactivity timeout : if for some reason if build gets stuck then how long you want to keep inactivity timeout
+        -> Keep launches: How long you want to keep all launches, means historical view
+        -> Keep logs : 90 days
+        -> Keep attachments : 14 days
+        => For now just select and keep all default values 
+        
+Step 5: Explore others tabs like : Integrations, Notifications, Defect Types, Auto-Analysis, Pattern Analysis, Demo data
+
+Step 6: Go to Defect types tab, and you will see Product bugs group, Automation bugs group, System issues group, No defect group, To investigate group.
+  -> So in this tab, you can add your defect types as per your project, and save it,
+  
+Step 7: Auto-Analysis :  By default keep the auto-analysis as on.
+    -> Auto-Analysis : ON
+    -> Base for Auto Analysis : All launches
+    -> Minimum should match : 95 % (based on historical and current run, if it finds more than 95 % word match, then )
+    -> Number of log lines : All
+    -> All logs with 3 or more rows should match : 
+    
+Step 8: Pattern Analysis : System can analyze the test results automatically, by comparing test result stack trace with saved pattern.
+if you have certain pattern in your project, and that AI/ML is not able to catch, so you can create your own pattern and save that.Step 9: Demo Data : ignore this for now.
+
+Once you submit then , Project will get created.
+
+Step 3:  Create Dashboard and Add widgets in Report portal 
+
+=> Go to your Project in report portal and add dashboard :
+
+-> Add a new Dashboard
+     -> Name : GCP Hardware Protocol Dashboard
+     -> Description : GCP hardware protocol dashboard with all automation runs
+     -> Share : keep ON 
+
+-> Add New widgets to your dashboard : Choose widget type from thelist below : ()you can add as may as widgets
+    -> Overall statistics
+-> Create Filter :  You can create filter of different types by your own
+
+-> Panel View -> All launches
+
+-> Widget Name : GCP Protocol All runs result, you can add multiple widgets one by one.
+
+Step 3 : Jenkins Job configuration for Report Portal :
+
+→ First let's create a RP_Launch in jenkins execute build section :
+
+export RP_LAUNCH_NAME="gcp_1p_sanity_${BUILD_NUMBER}"
+
+echo "RP Launch name: - " ${RP_LAUNCH_NAME}
+
+
+
+=> Then you need to give these additional parameters in jenkins job while running test suites  :
+
+--listener robotframework_reportportal.listener  --variable RP_UUID:'ba8d82fb-b32a-4443-baf3-dff3b97728a4' --variable RP_ENDPOINT:'http://10.193.237.145:8080' --variable RP_LAUNCH:${RP_LAUNCH_NAME} --variable RP_PROJECT:'gcp_1p'
+
+Note : In the above command you can set your own RP_project
+
+
+
+Explanation of above command : 
+
+=> First parameter is robotframework report-portal listener, we should add this listener so that rresult should be pushed into format that report portal expects.
+
+=> Then you have uuid number : which is configured for your project in report portal
+=> RP_ENDPOINT => this would remain same for all project and runs (CIT server address)
+=> RP_LAUNCH_NAME :  launch name which you configured in jenkins
+=> RP_PROJECT : project name which you get from report portal
+
+
+
+Sample Jenkins command for running test suites :
+
+In Jenkins you can setup your job with parameters (boolean type) , name : configure_report_portal, and based on that value try to execute the suite :
+
+Here i have put sample jenkins command to run the suites for GCP 1P. you can do the changes for your suites execution.
+
+Below is the sample command for running with report portal options :
+
+python3 -m robot -T --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+    --listener robotframework_reportportal.listener  --variable RP_UUID:'ba8d82fb-b32a-4443-baf3-dff3b97728a4' --variable RP_ENDPOINT:'http://10.193.237.145:8080' --variable RP_LAUNCH:${RP_LAUNCH_NAME} --variable RP_PROJECT:'gcp_1p' \
+    --suite cit_cvp_testsuite.TCASE-9571  ${WORKSPACE}/cbsqa/gnftestsuite/3P_ported
+
+Below is the command when you want to configure jenkins job with additonal parameter configure_report_portal, then use below command, otherwise use above command
+
+
+if $configure_report_portal
+then
+    # Run GCP 1P Sanity Suites testcases
+    python3 -m robot -T --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+    --listener robotframework_reportportal.listener  --variable RP_UUID:'ba8d82fb-b32a-4443-baf3-dff3b97728a4' --variable RP_ENDPOINT:'http://10.193.237.145:8080' --variable RP_LAUNCH:${RP_LAUNCH_NAME} --variable RP_PROJECT:'gcp_1p' \
+    --suite cit_cvp_testsuite.TCASE-9571  ${WORKSPACE}/cbsqa/gnftestsuite/3P_ported
+else
+    python3 -m robot -T --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+    --suite cit_cvp_testsuite  ${WORKSPACE}/cbsqa/gnftestsuite/3P_ported
+     
+fi
+
+Verify that results are getting pushed and update in Report Portal :
+
+→ Once your Jenkins build runs completes, verify that results are getting pushed to ReportPortal server in your respective project.
+
+→ For any failures, analyze that failure and determine what kind of defect(product bug, automation bug, system bug,...) it is ..so that from next time report portal will do auto analysis for that bug.
+
