@@ -13,7 +13,7 @@ robotframework-selenium2library==3.0.0
 psutil==5.9
 Ipy==1.0
 fabric==2.7.0
-pymysql==0.9.3
+pymysql==1.1.1
 pymongo==3.7.2
 kubernetes==11.0.0
 azure==4.0.0
