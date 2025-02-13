@@ -1,0 +1,525 @@
+First and foremost steps is to prepare a 5 node Kubernetes cluster (1 master + 4 worker nodes)
+
+Section 1. Steps to setup Kubernetes cluster  :
+
+Request 5 ubuntu VM for k8s cluster setup : Send out a mail to enghelp+cag-labs@netapp.com and request a 5 node Kubernetes cluster from CAG Lab team. (They do not need configuration details).  
+
+When you are installing k8s for first time on your CAG LAB VM, then do not require to do any cleanup or uninstallation , but if VM's were part of any other existing k8s cluster, then first do uninstallation on all 5 VM's by executing script :#  ./uninstall.sh  (For fresh k8s setup installation this step is not required)
+Now identify any one of your VM's (out of 5 provided VM) as a master for k8s cluster and execute script master-k8s.sh on master node  : # ./master-k8s.sh 
+Collect and Update the kubeadm join command after master-k8s.sh script completes with the text in red below
+
+>> kubeadm join 10.xx.xx.xxx:6443 --token xxxxxxxx --discovery-token-ca-cert-hash xxxxx 
+
+Login to  remaining 4 worker node one by one and  execute worker-k8s.sh script : # ./worker-k8s.sh 
+Join all worker nodes to k8s master node by following below steps :
+Run kubeadm join command on all worker nodes (which you got when you installed Kubernetes on master node, make sure to add --ignore-prefilght-errors field)
+
+ex: kubeadm join 10.xx.xx.xxx:6443 --token xxxxxxxx --discovery-token-ca-cert-hash xxxxx  --ignore-preflight-errors=ALL
+
+Wait for all nodes to be in a ready state. run “kubectl get nodes” on Master node (All 5 nodes of k8s cluster should be displayed and it should be in healthy state)
+
+Once all 5 nodes (1 master + 4 worker nodes ) are in healthy state, then first check that all pods are in healthy state under kube-system namespace.
+List all namespaces : # kubectl get ns
+See the health of all pods in kube-system namespace, all pods should be in running state and they should be healthy
+# kubectl get pods -n kube-system 
+Since weave-net , kube-proxy and kube-flannel are kubernets object of type daemonset, since these all are related to configuring networking in k8s. so make sure their pods are up and running.
+If any of the pods status is in error state (Error: ImagePullBackOff) in kube-system namespace, then first change the imagePullPolicy to IfNotPresent from Always, using below command :
+kubectl edit ds  -n kube-system
+In this daemonset yml file, change the all occurrences of imagePullPolicy from Always to IfNotPresent and then save this file
+ Then do docker login with command on all nodes : # docker login -u <jaynath120>  (you can use your dockerhub username and password for login)
+Now delete the pod which are in unhealthy state using command : # kubectl delete pod <pod_name> n kube system
+Automatically all pods will come up in sometime, if not comes up then, describe that pod using : # kubectl describe pod <pod_name> and see the error, if related to image pull issue, then pull that docker image on all nodes one by one, and again restart that pod by deleting that pod.
+Check everything is up and ready till here in all namespaces using command : # kubectl get all --all-namespaces (or # kubectl get all -A)
+Important : at this point of time there won't be any storage class, persistent volume or persistent volume claim resources in k8s cluster, as you can check below :
+
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get pv -A
+No resources found
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get pvc -A
+No resources found in default namespace.
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get sc -A    (A- for all namespaces)
+
+
+Note : After Setting up Kubernetes cluster, all pods in all namespaces should be running state like below :
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get ns
+NAME              STATUS   AGE
+default           Active   47h
+kube-flannel      Active   47h
+kube-node-lease   Active   47h
+kube-public       Active   47h
+kube-system       Active   47h
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -A
+NAMESPACE      NAME                                         READY   STATUS    RESTARTS   AGE
+kube-flannel   kube-flannel-ds-57xvm                        1/1     Running   0          47h
+kube-flannel   kube-flannel-ds-kpz47                        1/1     Running   0          46h
+kube-flannel   kube-flannel-ds-rwx9z                        1/1     Running   0          46h
+kube-flannel   kube-flannel-ds-sx5bs                        1/1     Running   0          46h
+kube-flannel   kube-flannel-ds-tv4c9                        1/1     Running   0          46h
+kube-system    coredns-558bd4d5db-ljgms                     1/1     Running   0          47h
+kube-system    coredns-558bd4d5db-tfn6s                     1/1     Running   0          47h
+kube-system    etcd-cvs-k8s-jaynath-07                      1/1     Running   0          47h
+kube-system    kube-apiserver-cvs-k8s-jaynath-07            1/1     Running   0          47h
+kube-system    kube-controller-manager-cvs-k8s-jaynath-07   1/1     Running   20         47h
+kube-system    kube-proxy-48v74                             1/1     Running   0          46h
+kube-system    kube-proxy-hv62t                             1/1     Running   0          46h
+kube-system    kube-proxy-lztxm                             1/1     Running   0          47h
+kube-system    kube-proxy-mgmhj                             1/1     Running   0          46h
+kube-system    kube-proxy-x9g8q                             1/1     Running   0          46h
+kube-system    kube-scheduler-cvs-k8s-jaynath-07            1/1     Running   19         47h
+kube-system    weave-net-2pbhd                              2/2     Running   1          46h
+kube-system    weave-net-d7lcb                              2/2     Running   2          46h
+kube-system    weave-net-f2mhc                              2/2     Running   1          46h
+kube-system    weave-net-fw698                              2/2     Running   1          46h
+kube-system    weave-net-zvvgq                              2/2     Running   1          46h
+
+
+Section 2 : Setup Local-path-provisioner :
+
+Now Setup Local-path-provisioner : Steps to setup Local-path-provisioner for creating storage class, Persistent Volume and Persistent Volume Claim
+Initially by default there won't be any storage class, or pv or pvc existing in your cluster. You need to configure it manually. Now setup persistent volumes, you need to create storage class where you can create PV and PVC which will be allocated to containers for volume read/write of data. Before deployment of any pod using helm install/upgrade command, this step is mandatory otherwise containers within pod won't be in started state. they will go in pending state because volume would be in pending state, and we want volume to be in bound state.
+Now let's create storage class using following steps, remember storage class is a global entity/objects in k8s, though you can create multiple storage class in k8s cluster, but in pv/pvc yaml file it needs to be mentioned from which storage class it should create pv and pvc, so it will pickup from there, if it is not mentioned then it will pickup from default storage class which we don't want. When we create storage class we specify which storage class should be considered as default one.
+Steps for setting up local-path-provisioner
+
+For creating storage class, you need to define local-path-provisioner storage configuration. Create default storage class on master node of k8s cluster
+Clone this code : # git clone https://github.com/rancher/local-path-provisioner.git (you can clone this in any directory, better clone in /root/k8s_install directory which you have created previously)
+
+if you downloaded this above files from git, then go and check in directory (./local-path-provisioner/deploy/local-path-storage.yaml) : # vim ./local-path-provisioner/deploy/local-path-storage.yaml
+In YML file search for section (kind: StorageClass) as you can see below, we need to add annotations under metadata section, just below name section as you can see below :
+# Add this line after name section of kind: StorageClass
+
+annotations:
+        storageclass.kubernetes.io/is-default-class: "true"
+ 
+# After modifying , section would look like this as below :
+ 
+# vim ./local-path-provisioner/deploy/local-path-storage.yaml
+ 
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+  annotations:
+        storageclass.kubernetes.io/is-default-class: "true"
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+
+After above changes, it would become default storage class, Then apply that local-path-storage configuration using below command :
+# kubectl apply -f ./local-path-provisioner/deploy/local-path-storage.yaml
+root@cvs-k8s-jaynath-01:~# kubectl apply -f local-path-provisioner/deploy/local-path-storage.yaml
+namespace/local-path-storage created
+serviceaccount/local-path-provisioner-service-account created
+clusterrole.rbac.authorization.k8s.io/local-path-provisioner-role unchanged
+clusterrolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind unchanged
+deployment.apps/local-path-provisioner created
+storageclass.storage.k8s.io/local-path unchanged
+configmap/local-path-config created
+Now local-path-provisioner-XXXX  pod would be running in local-path-storage namespace
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -n local-path-storage
+ 
+NAME                                      READY   STATUS    RESTARTS   AGE
+local-path-provisioner-849cb58dff-88sfs   1/1     Running   0          4m2s
+ 
+Now you can see storage class created , and this is default one
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get sc
+NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  4m53s
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pv
+No resources found
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+No resources found in default namespace.
+ 
+At this point there won't be any pv or pvc, only storage class would be created,
+
+Important : test creation of PV and PVC to ensure things are working before going for sde installation:
+
+But if you want to test whether you are able to create pv or pvc in that storage class you can check using below commands, this is just for testing purpose, in real time by default pv and pvc would be created when containers would run.
+Fire this command to create pvc : # kubectl apply -f local-path-provisioner/examples/pvc/pvc.yaml
+persistentvolumeclaim/local-path-pvc created
+# vim local-path-provisioner/examples/pvc/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+name: local-path-pvc
+spec:
+accessModes:
+- ReadWriteOnce
+storageClassName: local-path
+resources:
+requests:
+storage: 128Mi
+As you can see above in yml, volumes of size 128 mb would be created and attached to pods/containers later in next step
+
+Create a volume-test pod to check, pod is creating pvc internally
+#  kubectl apply -f local-path-provisioner/examples/pod/pod.yaml
+pod/volume-test created (default name space)
+ 
+# kubectl get pvc
+=> output should have the pvc for volume-test pod, and pvc state should be in bound state
+we are just created a pod with name volume-test in default namespace, just to check if pvc is getting attached to that pods or not which we have defined above.
+ 
+ 
+# vim local-path-provisioner/examples/pod/pod.yaml
+ 
+apiVersion: v1
+kind: Pod
+metadata:
+  name: volume-test # this is name of pod volume-test
+spec:
+  containers:
+  - name: volume-test
+    image: nginx:stable-alpine
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: volv
+      mountPath: /data
+    ports:
+    - containerPort: 80
+  volumes:
+  - name: volv
+    persistentVolumeClaim:
+      claimName: local-path-pvc # This is the name of pvc local-path-pvc which created earlier and attaching to pod
+ 
+Note : All persistent volumes state should be in bound state, if it goes into any other state like pending, then please fix it before going further.
+
+Note : The above steps creating local-path-pvc and volume-test pod is just for testing purpose, mandatorily not required to be performed , if you want you can skip this as well. but better create pvc and pod for testing purpose to ensure things are working correctly before proceeding further.
+
+After setting up local-path-provisioner, All k8s resources in all namespaces should be like below :
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get ns
+NAME                 STATUS   AGE
+default              Active   47h
+kube-flannel         Active   47h
+kube-node-lease      Active   47h
+kube-public          Active   47h
+kube-system          Active   47h
+local-path-storage   Active   2m21s
+ 
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -A
+NAMESPACE            NAME                                         READY   STATUS    RESTARTS   AGE
+kube-flannel         kube-flannel-ds-57xvm                        1/1     Running   0          47h
+kube-flannel         kube-flannel-ds-kpz47                        1/1     Running   0          46h
+kube-flannel         kube-flannel-ds-rwx9z                        1/1     Running   0          46h
+kube-flannel         kube-flannel-ds-sx5bs                        1/1     Running   0          46h
+kube-flannel         kube-flannel-ds-tv4c9                        1/1     Running   0          46h
+kube-system          coredns-558bd4d5db-ljgms                     1/1     Running   0          47h
+kube-system          coredns-558bd4d5db-tfn6s                     1/1     Running   0          47h
+kube-system          etcd-cvs-k8s-jaynath-07                      1/1     Running   0          47h
+kube-system          kube-apiserver-cvs-k8s-jaynath-07            1/1     Running   0          47h
+kube-system          kube-controller-manager-cvs-k8s-jaynath-07   1/1     Running   20         47h
+kube-system          kube-proxy-48v74                             1/1     Running   0          46h
+kube-system          kube-proxy-hv62t                             1/1     Running   0          46h
+kube-system          kube-proxy-lztxm                             1/1     Running   0          47h
+kube-system          kube-proxy-mgmhj                             1/1     Running   0          46h
+kube-system          kube-proxy-x9g8q                             1/1     Running   0          46h
+kube-system          kube-scheduler-cvs-k8s-jaynath-07            1/1     Running   19         47h
+kube-system          weave-net-2pbhd                              2/2     Running   1          46h
+kube-system          weave-net-d7lcb                              2/2     Running   2          46h
+kube-system          weave-net-f2mhc                              2/2     Running   1          46h
+kube-system          weave-net-fw698                              2/2     Running   1          46h
+kube-system          weave-net-zvvgq                              2/2     Running   1          46h
+local-path-storage   local-path-provisioner-849cb58dff-88sfs      1/1     Running   0
+
+Section 3 : Install Helm :
+
+Step1 : Get helm3 from this location and download it using curl command mentioned below :
+
+# curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+Above command will download helm3 executable file from that url and save it as output in get_helm.sh
+After that change executable permission of get_helm3.sh file as 777 (chmod 777 get_helm.sh)
+Execute that get_helm.sh file to install helm3  : # sudo ./get_helm.sh
+
+
+root@cvs-k8s-jaynath-12:~# sudo ./get_helm.sh
+Downloading https://get.helm.sh/helm-v3.11.2-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+helm installed into /usr/local/bin/helm
+
+Check helm version : # helm version
+root@cvs-k8s-jaynath-12:~# helm version
+version.BuildInfo{Version:"v3.11.2", GitCommit:"912ebc1cd10d38d340f048efaf0abda047c3468e", GitTreeState:"clean", GoVersion:"go1.18.10"}
+
+6. List helm repositories and after that add "stable" and "testing" repositories , Initially after helm installation, there won't be any helm repository, it would show empty list, later you can add stable and testing repositories like show below
+
+Command 1 : root@cvs-k8s-jaynath-07:~/k8s_install# helm ls     (list helm deployments)
+NAME NAMESPACE REVISION UPDATED STATUS CHART APP VERSION
+ 
+Command 2 : root@cvs-k8s-jaynath-07:~/k8s_install# helm repo ls   (list helm repositories)
+Error: no repositories to show
+Setup/Init helm, Add stable and testing repo of helm
+ 
+Command 3 : # helm repo add stable https://charts.helm.sh/stable   (Add stable repository)
+"stable" has been added to your repositories
+ 
+Command 4 : # helm repo add testing https://helmcharts.qstack.com/testing   (Add testing repository)
+"testing" has been added to your repositories
+ 
+Command 5 : root@cvs-k8s-jaynath-12:~# helm repo ls
+NAME    URL
+stable  https://charts.helm.sh/stable
+testing https://helmcharts.qstack.com/testing
+ 
+Command 6 : # helm repo update  (update helm repositories)
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "stable" chart repository
+...Successfully got an update from the "testing" chart repository
+Update Complete. ⎈Happy Helming!⎈
+
+Section 4 : Install timescaledb : 
+
+Note : You can install timescaledb either in default namespace or in sde namespace, it completely depends on you , you can choose any namespace, few parameters will change accordingly in helm install/upgrade command while installing sde
+
+
+
+Steps for installing timescaledb in sde namespace :
+
+Step 1 : First create sde namespace in order to install timescaledb in sde namespace using command : # kubectl create ns sde
+
+Step 2 : Now in sde namespace installl timescaledb by following below steps  :
+
+Command 1 : Add timescaledb repo o helm repositories
+ 
+# helm repo add timescaledb 'https://charts.timescale.com/'
+"timescaledb" has been added to your repositories
+ 
+Command 2 : This below command will fetch timescaledb tgz file with version 0.7.1 into your current working directory from where you fired this command. # helm fetch command will only download that chart to your local machine from helm repository in current directory
+ 
+# helm fetch timescaledb/timescaledb-single --version=0.7.1
+ 
+Command 3 :  Extract this timescaledb-single-0.7.1.tgz file into your current working directory itself
+ 
+# tar -xvzf timescaledb-single-0.7.1.tgz
+ 
+=> Once you extract this file timescaledb-single-0.7.1.tgz, then you will see a directory with name timescaledb-single, all files are present inside this directory
+ 
+Command 4 : Navigate to timescaledb-single directory
+# cd timescaledb-single
+root@cvs-k8s-jaynath-12:~/timescaledb-single# ls
+admin-guide.md  generate_kustomization.sh  README.md          templates         values
+Chart.yaml      kustomize                  requirements.yaml  upgrade-guide.md  values.yaml
+ 
+Command 5 : Change permission 777 to file generate_kustomization.sh inside timescaledb-single
+# chmod 0777 generate_kustomization.sh
+ 
+Before running command 6 : if you list all files in ./timescaledb-single/kustomize directory then it would only show example and example2 file
+root@cvs-k8s-jaynath-12:~/timescaledb-single/kustomize# ls
+example  example2
+ 
+Command 6 : Execute this below script : It will generate timescaledb-certificate, timescaledb-credentials, timescaledb-pgbackrest secrets in default namespace (later we can delete these secrets from default namespace and instakll it under sde namespace)
+# root@cvs-k8s-jaynath-12:~/timescaledb-single# ./generate_kustomization.sh timescaledb
+Can't load /root/.rnd into RNG
+140455196070336:error:2406F079:random number generator:RAND_load_file:Cannot open file:../crypto/rand/randfile.c:88:Filename=/root/.rnd
+Generating a RSA private key
+................................................++++
+..................................................................................................................................................................................................................................................................++++
+writing new private key to './kustomize/timescaledb/tls.key'
+-----
+Do you want to configure the backup of your database to S3 (compatible) storage? (y/n)
+n
+ 
+Generated a kustomization named timescaledb in directory ./kustomize/timescaledb.
+ 
+ 
+WARNING: The generated certificate in this directory is self-signed and is only
+         fit for development and demonstration purposes.
+         The certificate should be replaced by a signed certificate, signed by
+         a Certificate Authority (CA) that you trust.
+ 
+ 
+You may now wish to (p)review the files that have been created and further edit
+them before deployment.
+ 
+ 
+To preview the deployment of the secrets:
+ 
+    kubectl kustomize "./kustomize/timescaledb"
+ 
+Or you may want to install the secrets directly? (y/n)
+y
+Installing secrets...
+secret/timescaledb-certificate created
+secret/timescaledb-credentials created
+secret/timescaledb-pgbackrest created
+ 
+Command 7 : Now after execution of above command it will generate a directory timescaledb under ./timescaledb-single/kustomize directoryt, Navigate to directory ./timescaledb-single/kustomize/timescaledb
+root@cvs-k8s-jaynath-12:~/timescaledb-single/kustomize# cd timescaledb/
+root@cvs-k8s-jaynath-12:~/timescaledb-single/kustomize/timescaledb# ls
+credentials.conf  kustomization.yaml  pgbackrest.conf  tls.crt  tls.key
+ 
+=> You can see above , it has generated these files (credentials.conf  kustomization.yaml  pgbackrest.conf  tls.crt  tls.key)
+ 
+Command 8 : Command 6 will generate secrets for timescaledb in default namespace , so let's delete that first using command :
+ 
+# kubectl delete secret timescaledb-certificate
+# kubectl delete secret timescaledb-credentials
+# kubectl delete secret timescaledb-pgbackrest
+ 
+Command 9: Let's generate these secrets in sde namespace now : Navigate to directory ./timescaledb-single/kustomize/timescaledb
+# kubectl kustomize ./ > timescaledbMap.yaml    (This command combines all secrets file, which we can apply and create secrets in sde namespace)
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single/kustomize/timescaledb# kubectl apply -f timescaledbMap.yaml -n sde
+secret/timescaledb-certificate created
+secret/timescaledb-credentials created
+secret/timescaledb-pgbackrest created
+ 
+root@cvs-k8s-jaynath-12:~/timescaledb-single/kustomize/timescaledb# kubectl get secrets -n sde
+NAME                      TYPE                                  DATA   AGE
+default-token-p6tp8       kubernetes.io/service-account-token   3      97m
+timescaledb-certificate   kubernetes.io/tls                     2      2m2s
+timescaledb-credentials   Opaque                                3      2m2s
+timescaledb-pgbackrest    Opaque                                0      2m2s
+ 
+ 
+Command 10 :  Install timescaldb deployment through helm command into sde namespace
+ 
+# Go to parent directory of k8s_install directory where timescaledb is present, make sure you are in timescaledb-single directory
+ 
+root@cvs-k8s-jaynath-12:~# helm install timescaledb-single --name-template=timescaledb -n sde
+NAME: timescaledb
+LAST DEPLOYED: Sat Mar 18 10:25:10 2023
+NAMESPACE: sde
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+TimescaleDB can be accessed via port 5432 on the following DNS name from within your cluster:
+timescaledb.sde.svc.cluster.local
+ 
+To get your password for superuser run:
+ 
+    # superuser password
+    PGPASSWORD_POSTGRES=$(kubectl get secret --namespace sde timescaledb-credentials -o jsonpath="{.data.PATRONI_SUPERUSER_PASSWORD}" | base64 --decode)
+ 
+    # admin password
+    PGPASSWORD_ADMIN=$(kubectl get secret --namespace sde timescaledb-credentials -o jsonpath="{.data.PATRONI_admin_PASSWORD}" | base64 --decode)
+ 
+To connect to your database, chose one of these options:
+ 
+1. Run a postgres pod and connect using the psql cli:
+    # login as superuser
+    kubectl run -i --tty --rm psql --image=postgres \
+      --env "PGPASSWORD=$PGPASSWORD_POSTGRES" \
+      --command -- psql -U postgres \
+      -h timescaledb.sde.svc.cluster.local postgres
+ 
+    # login as admin
+    kubectl run -i --tty --rm psql --image=postgres \
+      --env "PGPASSWORD=$PGPASSWORD_ADMIN" \
+      --command -- psql -U admin \
+      -h timescaledb.sde.svc.cluster.local postgres
+ 
+2. Directly execute a psql session on the master node
+ 
+   MASTERPOD="$(kubectl get pod -o name --namespace sde -l release=timescaledb,role=master)"
+   kubectl exec -i --tty --namespace sde ${MASTERPOD} -- psql -U postgres
+ 
+Command 11 : See the helm deployment for timescaledb
+root@cvs-k8s-jaynath-12:~# helm ls -n sde
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                        APP VERSION
+timescaledb     sde             1               2023-03-18 10:25:10.984452991 +0000 UTC deployed        timescaledb-single-0.7.1
+ 
+Command 12 : All pods for timescaledb should be up and running in sde namespace, before proceeding for sde installation please check this
+ 
+root@cvs-k8s-jaynath-12:~# kubectl get pods -n sde
+NAME            READY   STATUS    RESTARTS   AGE
+timescaledb-0   1/1     Running   0          37m
+timescaledb-1   1/1     Running   0          36m
+timescaledb-2   1/1     Running   0          35m
+ 
+ 
+ 
+Just for information purpose , Some basic command related to timescaledb/postgres :
+ 
+=> Command to get the master timescaledb pod name :
+# kubectl get pods -n sde -l release=timescaledb,role=master -o name
+ 
+=> Command to execute psql commands on timescaledb-0 pod :
+# kubectl exec -it timescaledb-0 -n sde -- psql -U postgres
+ 
+=> Command to get the decoded value of PATRONI_SUPERUSER_PASSWORD for timescaledb/postgres login
+# kubectl get secret timescaledb-credentials -n sde  -o jsonpath="{.data.PATRONI_SUPERUSER_PASSWORD}" | base64 --decode
+ 
+=> Command to see the timescaledb-credentials secret (PATRONI_SUPERUSER_PASSWORD)
+root@cvs-k8s-jaynath-12:~# kubectl get secrets timescaledb-credentials -n sde -o yaml
+
+How to fix issues related to timescaledb statefulset if any comes :
+
+root@cvs-k8s-jaynath-12:~# kubectl get pods -n sde
+NAME READY STATUS RESTARTS AGE
+timescaledb-0 1/1 Running 0 29m
+timescaledb-1 1/1 Running 0 28m
+timescaledb-2 1/1 Running 0 27m
+
+if you see any pods in errimagepull or imagepullbackoff , then edit the statefulset using command : # kubectl edit sts timescaledb  and then change imagePullPolicy to IfNotPresent from Always on all occurrences.
+
+# Also do docker login on all nodes and pull that image which is failed to pull in # kubectl describe pod <podname> command
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get svc
+NAME                  TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes            ClusterIP      10.96.0.1       <none>        443/TCP          2d1h
+timescaledb           LoadBalancer   10.107.56.225   <pending>     5432:31816/TCP   13m
+timescaledb-config    ClusterIP      None            <none>        8008/TCP         13m
+timescaledb-replica   ClusterIP      10.103.61.82    <none>        5432/TCP         13m
+ 
+# change timescaledb service type from loadbalancer to NodePort
+# kubectl edit svc timescaledb
+ 
+in above command change type: LoadBalancer to NodePort and save it .
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get svc
+NAME                  TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes            ClusterIP   10.96.0.1       <none>        443/TCP          2d1h
+timescaledb           NodePort    10.107.56.225   <none>        5432:31816/TCP   22m
+timescaledb-config    ClusterIP   None            <none>        8008/TCP         22m
+timescaledb-replica   ClusterIP   10.103.61.82    <none>        5432/TCP         22m
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+NAME                           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+local-path-pvc                 Bound    pvc-912d9bf6-7e09-44a3-b0b4-03fdd6b1171e   128Mi      RWO            local-path     86m
+storage-volume-timescaledb-0   Bound    pvc-36f46354-4342-430a-87d8-6fbf0382a2cb   2Gi        RWO            local-path     13m
+storage-volume-timescaledb-1   Bound    pvc-055644d9-acfd-4a14-92c3-b7b8f31c66e0   2Gi        RWO            local-path     11m
+storage-volume-timescaledb-2   Bound    pvc-050bd70e-e69c-4b4d-887c-49c81613f4c9   2Gi        RWO            local-path     4m37s
+wal-volume-timescaledb-0       Bound    pvc-1ce8b732-fb40-42f9-9b5f-715ee6827bf1   1Gi        RWO            local-path     13m
+wal-volume-timescaledb-1       Bound    pvc-c9529e2e-c4ec-42fd-ba34-812896cfd0fd   1Gi        RWO            local-path     11m
+wal-volume-timescaledb-2       Bound    pvc-9f2faf37-cd36-421f-9629-a33c28a28271   1Gi        RWO 
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods
+NAME            READY   STATUS    RESTARTS   AGE
+timescaledb-0   1/1     Running   0          4m32s
+timescaledb-1   1/1     Running   0          5m40s
+timescaledb-2   1/1     Running   0          5m10s
+volume-test     1/1     Running   0          92m
+ 
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get secrets
+NAME                                TYPE                                  DATA   AGE
+default-token-jvrqr                 kubernetes.io/service-account-token   3      2d1h
+sh.helm.release.v1.timescaledb.v1   helm.sh/release.v1                    1      17m
+timescaledb-certificate             kubernetes.io/tls                     2      27m
+timescaledb-credentials             Opaque                                3      27m
+timescaledb-pgbackrest              Opaque                                0      27m
+timescaledb-token-p5vdj             kubernetes.io/service-account-token   3      17m
+
+
+Section 5 : SDE Installation Steps :
+
+Now once your timescaledb pods are up and running then we can proceed with sde installation through helm install command, but before that please check following :
+
+All pods should be in running state in kube-system namespace: # kubectl get pods n kube system
+All pods for timescaledb in sde namespace should be in running state : # kubectl get pods -n sde
+
+Step 1 : REGION & ZONE Creation : Since all Atom test suite runs in us-east4 region, and we have 3 different zone in this region(us-east4-a, us-east4-b, us-east4-c), so let's first create these zone and region
+
+Login into mysql-0 database and insert region and zone into that. For region add us-east4 and for zone add us-east4-a, us-east4-b, us-east4-c into mysql-0 database.
+Login to mysql-0 pod using command : # kubectl exec -n sde mysql-0 -it bash -n sde
+Connect to mysql database server using command : # mysql -p$MYSQL_ROOT_PASSWORD
+Connect to storage database using command : # use storage;
+Add us-east4 into region table : # insert into region(uuid,created_at,name) values (uuid(),now(),'us-east4');
+ Check whether region got created # Select * from region ;
+Check zone table , if it's empty then we need to add all zones : # select * from zone;
+Insert zones :  # insert into zone(uuid,created_at,name,timezone,region_id) values (uuid(),now(),'<zone name>','GMT',<region_id>);
+
+
