@@ -1,0 +1,99 @@
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:v1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi
+    command:
+    - sleep
+    args:
+    - infinity
+    volumeMounts:
+    - mountPath: /x/eng/cvs_qa/hosts/
+      name: cvs-qa-host
+  volumes:
+  - name: cvs-qa-host
+    hostPath:
+      path: /x/eng/cvs_qa/hosts/
+'''
+    defaultContainer 'shell'
+        }
+    }
+    
+options {
+    
+    buildDiscarder(
+        logRotator(
+            numToKeepStr:'20', daysToKeepStr: '180', artifactDaysToKeepStr: '180', artifactNumToKeepStr: '20'
+        )
+    )
+}
+    
+    environment {
+        LOGDIR = "${WORKSPACE}/build_log_${BUILD_NUMBER}"
+        TESTDIR = "/x/eng/cvs_qa/hosts/cbsqa/testbed/cvp/ap1_cit01_east4_ldap_attribute_change.hst"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                sh 'hostname'
+                checkout scmGit(branches: [[name: '*/master']], extensions: [cloneOption(depth: 1, noTags: false, reference: '', shallow: true)], userRemoteConfigs: [[credentialsId: 'TmpGitHubRead', url: 'https://github.com/greenqloud/cvs-qa.git']])
+            }
+        }
+        stage('Bild - Test Execution '){
+            steps{
+                sh '''
+                BUILD_ID=allow_to_run_as_daemon
+
+                whoami
+                
+                cat $TESTDIR
+                touch ${WORKSPACE}/env.properties
+
+                rm -rf $WORKSPACE/build_log/
+                mkdir -p $WORKSPACE/build_log/
+
+                # Get the env details like SDE build version and API Version
+                mkdir -p $LOGDIR
+                touch  ${LOGDIR}/env_details.txt
+
+                SDE_VERSION=`curl --location 'https://cloudvolumesgcp-api-autopush-tst.gcp.netapp.com/v2/projects/37212674861/locations/us-east4/version' | jq -r '.sdeVersion'`
+                echo "SDE_VERSION=$SDE_VERSION" >> ${LOGDIR}/env_details.txt
+                export SDE_VERSION=$SDE_VERSION
+
+                API_VERSION=`curl --location 'https://cloudvolumesgcp-api-autopush-tst.gcp.netapp.com/v2/projects/37212674861/locations/us-east4/version' | jq -r '.apiVersion'`
+
+                echo "API_VERSION=$API_VERSION" >> ${LOGDIR}/env_details.txt
+                
+                export API_VERSION=$API_VERSION
+                '''
+                withCredentials([usernamePassword(credentialsId: 'linux_nfs_client', passwordVariable: 'linux_pass', usernameVariable: 'linux_user'), usernamePassword(credentialsId: 'windows_ad_client', passwordVariable: 'windows_ad_pass', usernameVariable: 'windows_ad_user'), file(credentialsId: 'AutoPush1_TST_Env', variable: 'ap1_tst_cit01_json'), file(credentialsId: 'g1p-functional-ap-tst-cit-02', variable: 'ap1_tst_cit02_json'), usernamePassword(credentialsId: 'jaynath_controller_vm', passwordVariable: 'jaynath_controller_pass', usernameVariable: 'jaynath_controller_user')]) {
+                    sh '''
+                    #python3 -m robot -T --loglevel TRACE --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b ${LOGDIR}/debug_jobID_logs.out -d ${LOGDIR}  -v LIB:./cbsqa/lib/ -v TESTBED:$TESTDIR --listener ./cbsqa/lib/cbs_listener.py --suite ldap_attribute_change_suite  ./cbsqa/gnftestsuite/
+                    
+                    # Run one speicific testcase
+                    python3 -m robot -T --loglevel TRACE --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b ${LOGDIR}/debug_jobID_logs.out -d ${LOGDIR}  -v LIB:./cbsqa/lib/ -v TESTBED:$TESTDIR --listener ./cbsqa/lib/cbs_listener.py --suite ldap_attribute_change_suite.TCASE-29911  ./cbsqa/gnftestsuite/
+                    '''
+                 }
+            }
+        }
+     
+    }
+    post { 
+        always { 
+            robot archiveDirName: 'robot-plugin', outputPath: '${LOGDIR}', outputFileName: '*.xml', reportFileName: 'report*.html', logFileName: 'log*.html', passThreshold: 0.0, unstableThreshold: 0.0, overwriteXAxisLabel: '', otherFiles : "*.txt"
+        }
+    }
+}
