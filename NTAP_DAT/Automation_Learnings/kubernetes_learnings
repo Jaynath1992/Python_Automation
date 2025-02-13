@@ -709,3 +709,327 @@ secret/timescaledb-credentials created
 secret/timescaledb-pgbackrest created
 
 
+
+root@cvs-k8s-jaynath-07:~/k8s_install# helm install timescaledb-single --name-template=timescaledb
+NAME: timescaledb
+LAST DEPLOYED: Sat Jan 14 19:29:20 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+TimescaleDB can be accessed via port 5432 on the following DNS name from within your cluster:
+timescaledb.default.svc.cluster.local
+
+To get your password for superuser run:
+
+    # superuser password
+    PGPASSWORD_POSTGRES=$(kubectl get secret --namespace default timescaledb-credentials -o jsonpath="{.data.PATRONI_SUPERUSER_PASSWORD}" | base64 --decode)
+
+    # admin password
+    PGPASSWORD_ADMIN=$(kubectl get secret --namespace default timescaledb-credentials -o jsonpath="{.data.PATRONI_admin_PASSWORD}" | base64 --decode)
+
+To connect to your database, chose one of these options:
+
+1. Run a postgres pod and connect using the psql cli:
+    # login as superuser
+    kubectl run -i --tty --rm psql --image=postgres \
+      --env "PGPASSWORD=$PGPASSWORD_POSTGRES" \
+      --command -- psql -U postgres \
+      -h timescaledb.default.svc.cluster.local postgres
+
+    # login as admin
+    kubectl run -i --tty --rm psql --image=postgres \
+      --env "PGPASSWORD=$PGPASSWORD_ADMIN" \
+      --command -- psql -U admin \
+      -h timescaledb.default.svc.cluster.local postgres
+
+2. Directly execute a psql session on the master node
+
+   MASTERPOD="$(kubectl get pod -o name --namespace default -l release=timescaledb,role=master)"
+   kubectl exec -i --tty --namespace default ${MASTERPOD} -- psql -U postgres
+
+
+
+### # superuser password
+    PGPASSWORD_POSTGRES=$(kubectl get secret --namespace default timescaledb-credentials -o jsonpath="{.data.PATRONI_SUPERUSER_PASSWORD}" | base64 --decode)
+	
+# To get timescaledb secrets
+# kubectl get secret --namespace default timescaledb-credentials -o jsonpath="{.data.PATRONI_SUPERUSER_PASSWORD}" | base64 --decode
+
+
+# kubectl get pods
+
+if you see any pods in errimagepull or imagepullbackoff , then edit the statefiulset and change imagePullPolicy to IfNotPresent from Always on all occurences.
+
+# also do docker login on all nodes and pull that image which is failed to pull in # kubectl describe pod <podname> command
+
+# kubectl edit sts timescaledb 
+
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get svc
+NAME                  TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes            ClusterIP      10.96.0.1       <none>        443/TCP          2d1h
+timescaledb           LoadBalancer   10.107.56.225   <pending>     5432:31816/TCP   13m
+timescaledb-config    ClusterIP      None            <none>        8008/TCP         13m
+timescaledb-replica   ClusterIP      10.103.61.82    <none>        5432/TCP         13m
+
+# change timescaledb service type from loadbalancer to NodePort
+# kubectl edit svc timescaledb
+
+in above command change type: LoadBalancer to NodePort and save it 
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get svc
+NAME                  TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kubernetes            ClusterIP   10.96.0.1       <none>        443/TCP          2d1h
+timescaledb           NodePort    10.107.56.225   <none>        5432:31816/TCP   22m
+timescaledb-config    ClusterIP   None            <none>        8008/TCP         22m
+timescaledb-replica   ClusterIP   10.103.61.82    <none>        5432/TCP         22m
+
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+NAME                           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+local-path-pvc                 Bound    pvc-912d9bf6-7e09-44a3-b0b4-03fdd6b1171e   128Mi      RWO            local-path     86m
+storage-volume-timescaledb-0   Bound    pvc-36f46354-4342-430a-87d8-6fbf0382a2cb   2Gi        RWO            local-path     13m
+storage-volume-timescaledb-1   Bound    pvc-055644d9-acfd-4a14-92c3-b7b8f31c66e0   2Gi        RWO            local-path     11m
+storage-volume-timescaledb-2   Bound    pvc-050bd70e-e69c-4b4d-887c-49c81613f4c9   2Gi        RWO            local-path     4m37s
+wal-volume-timescaledb-0       Bound    pvc-1ce8b732-fb40-42f9-9b5f-715ee6827bf1   1Gi        RWO            local-path     13m
+wal-volume-timescaledb-1       Bound    pvc-c9529e2e-c4ec-42fd-ba34-812896cfd0fd   1Gi        RWO            local-path     11m
+wal-volume-timescaledb-2       Bound    pvc-9f2faf37-cd36-421f-9629-a33c28a28271   1Gi        RWO            local-path     4m37s
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods
+NAME            READY   STATUS    RESTARTS   AGE
+timescaledb-0   1/1     Running   0          4m32s
+timescaledb-1   1/1     Running   0          5m40s
+timescaledb-2   1/1     Running   0          5m10s
+volume-test     1/1     Running   0          92m
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get secrets
+NAME                                TYPE                                  DATA   AGE
+default-token-jvrqr                 kubernetes.io/service-account-token   3      2d1h
+sh.helm.release.v1.timescaledb.v1   helm.sh/release.v1                    1      17m
+timescaledb-certificate             kubernetes.io/tls                     2      27m
+timescaledb-credentials             Opaque                                3      27m
+timescaledb-pgbackrest              Opaque                                0      27m
+timescaledb-token-p5vdj             kubernetes.io/service-account-token   3      17m
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get secrets timescaledb-credentials -o yaml
+
+apiVersion: v1
+data:
+  PATRONI_REPLICATION_PASSWORD: SXJuZ2JnV0xKTXYzcXdsWVZxVUpJOEVPcXBnenhoS1U=
+  PATRONI_SUPERUSER_PASSWORD: SU5IQlFFbnA4Nm1aZlVINjJSNXlDcm5NVDY0elV5ZlA=
+  PATRONI_admin_PASSWORD: NVRIS3liRE1Sa2FiSkxMVTFQRGpMZVliMXNwcW1nTGs=
+kind: Secret
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+
+  creationTimestamp: "2023-01-14T19:19:34Z"
+  labels:
+    app: timescaledb-timescaledb
+    cluster-name: timescaledb
+  name: timescaledb-credentials
+  namespace: default
+  resourceVersion: "281166"
+  uid: 011f20f3-0e01-413e-8aee-37f0716ca098
+type: Opaque
+
+
+
+
+# get that PATRONI_SUPERUSER_PASSWORD  password, this would be in encoded format and decode that value using command :
+
+# echo SU5IQlFFbnA4Nm1aZlVINjJSNXlDcm5NVDY0elV5ZlA= | base64 -d
+
+
+# echo SU5IQlFFbnA4Nm1aZlVINjJSNXlDcm5NVDY0elV5ZlA= | base64 -d
+
+INHBQEnp86mZfUH62R5yCrnMT64zUyfP		=> This is decoded password
+
+or you can decode that password using command :
+# kubectl get secret --namespace default timescaledb-credentials -o jsonpath="{.data.PATRONI_SUPERUSER_PASSWORD}" | base64 --decode
+
+
+INHBQEnp86mZfUH62R5yCrnMT64zUyf
+
+
+***************************************************************************************
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get all
+NAME                READY   STATUS    RESTARTS   AGE
+pod/timescaledb-0   1/1     Running   0          19m
+pod/timescaledb-1   1/1     Running   0          20m
+pod/timescaledb-2   1/1     Running   0          20m
+pod/volume-test     1/1     Running   0          107m
+
+NAME                          TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+service/kubernetes            ClusterIP   10.96.0.1       <none>        443/TCP          2d1h
+service/timescaledb           NodePort    10.107.56.225   <none>        5432:31816/TCP   29m
+service/timescaledb-config    ClusterIP   None            <none>        8008/TCP         29m
+service/timescaledb-replica   ClusterIP   10.103.61.82    <none>        5432/TCP         29m
+
+NAME                           READY   AGE
+statefulset.apps/timescaledb   3/3     29m
+
+
+INHBQEnp86mZfUH62R5yCrnMT64zUyfProot@cvs-k8s-jaynath-07:~/k8s_install# kubectl get cm
+NAME                     DATA   AGE
+kube-root-ca.crt         1      2d1h
+timescaledb-patroni      1      32m
+timescaledb-pgbackrest   1      32m
+timescaledb-scripts      8      32m
+
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# helm ls
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                      APP VERSION
+timescaledb     default         1               2023-01-14 19:29:20.207952058 +0000 UTC deployed        timescaledb-single-0.7.1
+
+
+# If you want to install in sde namespace then follow this :
+
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single# ./generate_kustomization.sh timescaledb
+
+# above command will generate secrets automatically in default namespace like timescaledb-certificate, timescaledb-credentials, timescaledb-pgbackrest, timescaledb-token-p5vdj
+
+# If you want all secrets to be generated in sde namespace, then edit ./generate_kustomization.sh, and change in this file like below :
+
+ To install these secrets, execute:
+
+    kubectl apply -k "${KUSTOMIZE_DIR}" -n sde   => add this namespace sde in all occurences in that file for kubectl 
+
+__EOT__
+}
+
+install_secrets() {
+    echo "Installing secrets..."
+    kubectl apply -k "${KUSTOMIZE_DIR}" -n sde		=> Add this sde namespace
+}
+
+# You can also see that after executing command ./generate_kustomization.sh timescaledb, if will generate below files in that directory mentioned : timescaledb-single/kustomize/timescaledb
+
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single/kustomize/timescaledb# ls
+credentials.conf  kustomization.yaml  pgbackrest.conf  tls.crt  tls.key
+
+# and then helm install in sde namespace for timescaledb
+~/k8s_install.#  helm install timescaledb-single --name-template=timescaledb
+
+# The other way you can generate those secrets in sde namespace is using below mentioned method
+
+# This below command will customize all files credentials.conf, kustomization.yml, pgbackrest.conf, tls.crt, tls.key into one single file named timescaledbMap.yaml (kubectl kustomize ./ > timescaledbMap.yaml)
+
+# we are just merging all files into single yaml file using command, kubectl kustomize
+
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single/kustomize/timescaledb# kubectl kustomize ./ > timescaledbMap.yaml
+
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single/kustomize/timescaledb# kubectl kustomize ./ > timescaledbMap.yaml
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single/kustomize/timescaledb# ls
+credentials.conf  kustomization.yaml  pgbackrest.conf  timescaledbMap.yaml  tls.crt  tls.key
+
+# Then apply using below command to generate secrets in sde namespace
+
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single/kustomize/timescaledb# kubectl apply -f timescaledbMap.yaml -n sde
+
+~/k8s_install# helm install timescaledb-single --name-template=timescaledb -n sde
+
+**********************************************************************************************************************
+***********************************************************************************************************************
+
+# After doing all this proceed with helm installation command :
+
+# This is the repo where helm charts are present like nfsaas-deployment, https://helmcharts.qstack.com/testing/
+# nfsaas-deployment-2023.1.0-RC09.tgz
+
+Helm chart name which we want to install is : nfsaas-deployment-<release_version_with_date>.tgz
+
+
+
+--set-string pgbouncer-kubernetes.global.postgresHost="timescaledb.default.svc.cluster.local"
+-- set-string pgbouncer-kubernetes.global.managedPostgresHost="timescaledb.default.svc.cluster.local"
+
+
+
+# Troubleshooting issues and pod containers :
+
+
+issue 1: if after all sde pods comes up, and after that when you check sde version deployed on your cluster using below curl requests and if it timedout, then may be some problem with your pods running in kube-system namespace, so see helath status of all pods there in kube-system namespace. and fix all those pods to make in healthy state.
+
+# curl http://10.193.227.49:30957/v2/projects/725117389761/locations/us-east4/version
+curl: (28) Failed to connect to 10.193.227.49 port 30957 after 21031 ms: Timed out
+
+
+Make sure all pods are healthy in kube-system namespace, specially weave net, coredns, kube-proxy pods,resolve these issues and then your curl command will work. If not work then follow below steps again, restart coredns, weave-net and kube-proxy in kube-system namespace
+
+# kubectl rollout restart deploy coredns -n kube-system
+deployment.apps/coredns restarted
+
+# kubectl rollout restart daemonset weave-net -n kube-system
+daemonset.apps/weave-net restarted
+
+# kubectl rollout restart daemonset kube-proxy -n kube-system
+daemonset.apps/kube-proxy restarted
+
+# Now restart cloud-volumes-proxy pod again by deleting that :
+
+# kubectl delete pod cloud-volumes-proxy-5bd84f8867-fxkjm -n sde
+
+# Now check curl command output , it should work
+# curl http://10.193.227.49:30865/v2/projects/725117389761/locations/us-east4/version
+
+{"apiVersion":"1.4.0","sdeVersion":"2023.1.0-RC09"}
+
+
+Issue2: Fixing rabbitmq issues : (may be issue with busybox image, so pull on all nodes, # docker pull busybox)
+
+=> if nfsaas-rabbitmq pods goes into pending state, then follow below steps to fix that
+	1. Check the rabbitmq pvc status : kubectl get pvc -n sde | grep rabbitmq
+	2. If PVC state is pending , then delete that pvc , kubectl delete pvc command
+	3. Then check all pods in local-path-storage namespace, kubectl get pods -n local-path-storage
+
+root@cvs-k8s-jaynath-07:~# kubectl get pods -n local-path-storage
+NAME                                      READY   STATUS    RESTARTS   AGE
+local-path-provisioner-849cb58dff-88sfs   1/1     Running   0          19h 
+	
+There would be helper pod in local-path-storage,some thing like this name helper-pod-create-pvc-0f0dcf23-ca74-4203-b657-c43bcd136b30
+
+# describe that pod and see what errors coming there :
+
+kubectl describe pod helper-pod-create-pvc-0f0dcf23-ca74-4203-b657-c43bcd136b30 -n local-path-storage
+
+----     ------          ----                ----     -------
+  Normal   SandboxChanged  100s                kubelet  Pod sandbox changed, it will be killed and re-created.
+  Normal   BackOff         25s (x6 over 98s)   kubelet  Back-off pulling image "busybox"
+  Warning  Failed          25s (x6 over 98s)   kubelet  Error: ImagePullBackOff
+  Normal   Pulling         11s (x4 over 101s)  kubelet  Pulling image "busybox"
+  Warning  Failed          11s (x4 over 101s)  kubelet  Failed to pull image "busybox": rpc error: code = Unknown desc = Error response from daemon: toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
+  Warning  Failed          11s (x4 over 101s)  kubelet  Error: ErrImagePull
+
+
+
+If above errors comes, then pull busybox image on that nodes first using : docker pull busybox
+
+# Now delete that rabbitmq pod : 
+
+# kubectl delete pod nfsaas-rabbitmq-1 -n sde
+
+#kubectl get pods -n sde  (now rabbitmq should be in healthy state)
+
+Issue 3: 
+
+=> Authentication failure error after upgrading SDE, then you need to change in  nfsaas-configmap, change gcpPartnerService value there from cloudvolumesgcp-api.netapp.com  to  dev-cloudvolumesgcp-api.netapp.com
+
+# kubectl edit cm -n sde nfsaas-configmap     (change gcpPartnerService value as mantioned below)
+
+Solution: Execute "kubectl edit cm -n sde nfsaas-configmap"
+then update gcpPartnerService: dev-cloudvolumesgcp-api.netapp.com
+
+after that restart the cloud volumes service deployment : 
+# kubectl rollout restart deploy cloud-volumes-service -n sde
+
+=> After that Authentication failure erroors should be gone.
+
