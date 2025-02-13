@@ -1,0 +1,251 @@
+Report Portal Learnings :
+*******************************
+
+https://confluence.ngage.netapp.com/display/~srikkant/Report+Portal
+
+CIT team servr for report-portal : http://10.193.237.145:8080/ui/#login
+
+Username : superadmin	
+Password : erebus
+
+Report Portal server has been set on one of the VM for CIT team : 10.193.237.145
+Port : 8080
+
+
+Report Portal Introduction :
+
+=> This is developed by EPAM solution, free and open source
+
+-> reporting and triaging, to assess the health of our products.
+-> uses AI/ML for easy triaging for test failures.
+-> Categorize issues based on product/automation/envrionmet issues.
+
+->Based on previous runs, it will analyze the failures at its own. 
+
+Problem Statements :
+************************
+-> Execution of suites is a timetaking process. Without so many moving components/services-triaging, and reporting results for suites also takes a lot of time.
+
+-> 
+
+Points :
+------------
+
+Report Portal helps in reporting results across all executions / launches of a particular suite.
+Report portal uses AI/ML for easy triaging of test failures.
+
+Categorize issues based on product/automation/environment issues.
+
+Build dashboards based on custom filters.
+
+Integration with Jenkins :
+-------------------------------
+
+Steps to install report-portal :
+**********************************
+
+1. => First install report portal on your test controller :
+
+# pip3 install robotframework-reportportal
+
+
+=> ABove package will create listener, which will help us to pish the results to report portal.
+root@cvs-k8s-jaynath-02:~# pip3 install robotframework-reportportal
+Collecting robotframework-reportportal
+  Downloading robotframework_reportportal-5.3.2-py3-none-any.whl (26 kB)
+Requirement already satisfied: python-dateutil>=2.8.1 in /usr/local/lib/python3.6/dist-packages (from robotframework-reportportal) (2.8.2)
+Requirement already satisfied: six>=1.15.0 in /usr/local/lib/python3.6/dist-packages (from robotframework-reportportal) (1.16.0)
+Requirement already satisfied: robotframework in /usr/local/lib/python3.6/dist-packages (from robotframework-reportportal) (4.1.3)
+Collecting reportportal-client==5.3.0
+  Downloading reportportal_client-5.3.0-py2.py3-none-any.whl (54 kB)
+     |████████████████████████████████| 54 kB 4.3 MB/s
+Collecting aenum
+  Downloading aenum-3.1.12-py3-none-any.whl (131 kB)
+     |████████████████████████████████| 131 kB 21.1 MB/s
+Requirement already satisfied: requests>=2.23.0 in /usr/local/lib/python3.6/dist-packages (from reportportal-client==5.3.0->robotframework-reportportal) (2.27.1)
+Collecting delayed-assert
+  Downloading delayed_assert-0.3.6-py3-none-any.whl (4.7 kB)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/lib/python3/dist-packages (from requests>=2.23.0->reportportal-client==5.3.0->robotframework-reportportal) (2018.1.18)
+Requirement already satisfied: urllib3<1.27,>=1.21.1 in /usr/local/lib/python3.6/dist-packages (from requests>=2.23.0->reportportal-client==5.3.0->robotframework-reportportal) (1.24.3)
+Requirement already satisfied: charset-normalizer~=2.0.0 in /usr/local/lib/python3.6/dist-packages (from requests>=2.23.0->reportportal-client==5.3.0->robotframework-reportportal) (2.0.12)
+Requirement already satisfied: idna<4,>=2.5 in /usr/lib/python3/dist-packages (from requests>=2.23.0->reportportal-client==5.3.0->robotframework-reportportal) (2.6)
+Installing collected packages: delayed-assert, aenum, reportportal-client, robotframework-reportportal
+Successfully installed aenum-3.1.12 delayed-assert-0.3.6 reportportal-client-5.3.0 robotframework-reportportal-5.3.2
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+
+
+
+Step 2. Create Project and Filters in report portal
+
+Step 3. Configure Jenkins :
+
+configure additional parameters to jenkins job to report results to ReportPortal
+
+		- RP_UUID, RP_ENDPOINT, RP_LAUNCH, RP_PROJECT	
+
+4. Create Dashboard to monitor suites in Report Portal
+
+Report Portal address  for CIT team : http://10.193.237.145:8080/ui/#superadmin_personal/dashboard
+
+
+
+
+How to create a particular project on ReportPortal :
+******************************************************
+
+Step 1 :  Click on SuperAdmin link at the bottom left of reportportal dashboard page
+Step 2 : Click on Add New project link in the top right corner
+Step 3: Enter Project Name, and click on Add
+Step 4: Then you will see project settings, (Name, Launch Inactivity timeout, Keep launches, keep logs, Keep attachments)
+		-> Launch Inactivity timeout : if for some reason if build gets stuck then how long you want to keep inactivity timeout
+		-> Keep launches: How long you want to keep all launches, means historical view
+		-> Keep logs : 90 days
+		-> Keep attachments : 14 days
+		=> For now just select and keep all default values 
+		
+Step 5: Explore others tabs like : Integrations, Notifications, Defect Types, Auto-Analysis, Pattern Analysis, Demo data
+
+Step 6: Go to Defect types tab, and you will see Product bugs group, Automation bugs group, System issues group, No defect group, To investigate group.
+  -> So in this tab, you can add your defect types as per your project, and save it,
+  
+Step 7: Auto-Analysis :  By default keep the auto-analysis as on.
+    -> Auto-Analysis : ON
+	-> Base for Auto Analysis : All launches
+	-> Minimum should match : 95 % (based on historical and current run, if it finds more than 95 % word match, then )
+	-> Number of log lines : All
+	-> All logs with 3 or more rows should match : 
+	
+Step 8: Pattern Analysis : System can analyze the test results automatically, by comparing test result stack trace with saved pattern.
+if you have certain pattern in your project, and that AI/ML is not able to catch, so you can create your own pattern and save that.
+
+
+Step 9: Demo Data : ignore this for now.
+
+Once you submit then , Project will get created.
+
+
+Next Step is to integrate with jenkins :
+**********************************************
+
+=> You need 4 parameters for integrating with jenkins :
+
+Go to profile section (Click on SuperAdmin) at the bottom.
+
+REQUIRED
+rp.endpoint = http://10.193.237.145:8080     (endpoint, where report portal servr is installed)
+
+rp.uuid = ba8d82fb-b32a-4443-baf3-dff3b97728a4  (uuid id)
+
+rp.launch = superadmin_TEST_EXAMPLE   (launch name, this we would be parameterizing from Jenkins itself)
+
+rp.project = gcp_1  (this one is the suite name, so for this particular project, this is the suite name)
+
+
+Go to your jenkins job and configure for report portal:
+------------------------------------------------------------
+=> You need to give launch name in jenkins :
+
+
+export RP_LAUNCH_NAME="gcp-1p-sanity-"${BUILD_NUMBER}-$SDE_VERSION"
+
+echo "RP Launch Name - {RP_LAUNCH_NAME}"
+
+=> Then in jenkins job for running suites , you need to give these parameters :
+
+--listener robotframework_reportportal.listener  --variable RP_UUID:'ba8d82fb-b32a-4443-baf3-dff3b97728a4' --variable RP_ENDPOINT:'http://10.193.237.145:8080' --variable RP_LAUNCH:${RP_LAUNCH_NAME} --variable RP_PROJECT:'gcp_1p'
+
+
+
+Explanation of above command : 
+
+=> First parameter is robotframework report-portal listener, we should add this listener so that rresult should be pushed into format that report portal expects.
+
+=> Then you have uuid number : which is configured for your project in report portal
+=> RP_ENDPOINT => this would remain same for all project and runs (CIT server address)
+=> RP_LAUNCH_NAME :  launch name which you configured in jenkins
+=> RP_PROJECT : project name which you get from report portal
+
+
+
+before --suite, keep all these values
+
+
+
+=> Go to your Project in report portal and add dahboard :
+-------------------------------------------
+
+-> Add a new Dashboard
+     -> Name : GCP Hardware Protocol Dashboard
+	 -> Description : GCP hardware protocol dashboard with all automation runs
+	 -> Share : keep ON 
+
+-> Add New widgets to your dashboard : Choose widget type from thelist below : ()you can add as may as widgets
+    -> Overall statistics
+-> Create Filter : 
+
+-> Panel View -> All launches
+
+-> Widget Name : GCP Protocol All runs result
+
+
+
+Jenkins job configure :
+****************************
+******************************
+
+BUILD_ID=allow_to_run_as_daemon
+export LOGDIR=$WORKSPACE/build_log_${BUILD_NUMBER}
+
+
+
+export TESTDIR=/root/hst/gcp_1p/autopush1/g1p-functional-ap-tst-cit-01/east4_sanity.hst
+
+whoami
+cat /root/hst/gcp_1p/autopush1/g1p-functional-ap-tst-cit-01/east4_sanity.hst
+touch ${WORKSPACE}/env.properties
+
+rm -rf $WORKSPACE/build_log/
+mkdir -p $WORKSPACE/build_log/
+
+export RP_LAUNCH_NAME="gcp_1p_sanity_${BUILD_NUMBER}"
+
+echo "RP Launch name: - " ${RP_LAUNCH_NAME}
+
+#export LOGDIR=$WORKSPACE/build_log_${BUILD_NUMBER}
+#export HST_FILE=/root/hst/gcp_1p/autopush1/g1p-functional-ap-tst-cit-01/east4_sanity.hst
+#cat /root/hst/gcp_1p/autopush1/g1p-functional-ap-tst-cit-01/east4_sanity.hst
+
+
+#export HST_FILE=/x/eng/cvs_qa/hosts/cbsqa/testbed/gcp_1p/east4_sanity.hst
+#cat /x/eng/cvs_qa/hosts/cbsqa/testbed/gcp_1p/east4_sanity.hst
+
+# Run GNF 1P Sanity testcases
+
+if $configure_report_portal
+then
+    # Run GCP 1P Sanity Suites testcases
+    python3 -m robot -T --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+    --listener robotframework_reportportal.listener  --variable RP_UUID:'ba8d82fb-b32a-4443-baf3-dff3b97728a4' --variable RP_ENDPOINT:'http://10.193.237.145:8080' --variable RP_LAUNCH:${RP_LAUNCH_NAME} --variable RP_PROJECT:'gcp_1p' \
+    --suite cit_cvp_testsuite.TCASE-9571  ${WORKSPACE}/cbsqa/gnftestsuite/3P_ported
+else
+    python3 -m robot -T --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+    --suite cit_cvp_testsuite  ${WORKSPACE}/cbsqa/gnftestsuite/3P_ported
+    
+fi
+
+
+# Push result to QTest
+#python3.6 ${WORKSPACE}/cbsqa/lib/qtestmanage/qtest_result_push_version.py  --bearer_token="0e6246a5-a1e7-4283-b17d-90e1001bd6b5" --project_id=104  --testsuite_name=gcp_1p_sanity  --rp_or_sde_version=2023.5.0  --xunit_xml_path=${LOGDIR}/xunit --jenkin_logs=${BUILD_URL}/console --hyperscalar_name=GCP
+
+
+
+Running testcase single for GCP 1P :
+
+    python3 -m robot -T --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+    --listener robotframework_reportportal.listener  --variable RP_UUID:'ba8d82fb-b32a-4443-baf3-dff3b97728a4' --variable RP_ENDPOINT:'http://10.193.237.145:8080' --variable RP_LAUNCH:${RP_LAUNCH_NAME} --variable RP_PROJECT:'gcp_1p' \
+    --suite cit_cvp_testsuite.TCASE-9571  ${WORKSPACE}/cbsqa/gnftestsuite/3P_ported
+
+
+
+		
