@@ -1033,3 +1033,348 @@ after that restart the cloud volumes service deployment :
 
 => After that Authentication failure erroors should be gone.
 
+https://www.velotio.com/engineering-blog/kubernetes-python-client
+*************************************************************************
+
+The Kubernetes library comes to our aid with quite a few modules, the ones featured in this article are client and config modules from the package; we will be using these two heavily. So, let’s install the Kubernetes Python Client:
+
+
+root@cvs-k8s-jaynath-02:/u/jaynath/.ssh# pip show kubernetes
+Name: kubernetes
+Version: 11.0.0
+Summary: Kubernetes python client
+Home-page: https://github.com/kubernetes-client/python
+Author: Kubernetes
+Author-email:
+License: Apache License Version 2.0
+Location: /usr/local/lib/python3.6/dist-packages
+Requires: certifi, google-auth, python-dateutil, pyyaml, requests, requests-oauthlib, setuptools, six, urllib3, websocket-client
+Required-by:
+
+
+Now that we have the python-kubernetes package installed, we can import it as:
+
+from kubernetes import client, config
+
+Loading cluster configurations :
+
+config.load_kube_config()  # for local environment
+# or
+config.load_incluster_config()
+
+Executing this will load the configurations for your clusters from your local or remote .kube/config file.
+
+Interacting with Kubernetes Resources
+
+
+Now that we have loaded the configurations, we can use the client module to interact with the resources.
+
+In Python, we instantiate CoreV1Api class from client module:
+
+v1 = client.CoreV1Api()
+
+v1.list_node()
+v1.list_namespace()
+
+Similarly, we can list all the resources or resources in a particular namespace.
+
+For example, to list pods in all namespaces:
+
+v1.list_pod_for_all_namespaces()
+v1.list_persistent_volume_claim_for_all_namespaces()
+
+For all the resources that can be group within a given namespace, we can use:
+
+# v1.list_namespaced_pod(<namespace>)
+v1.list_namespaced_pod(namespace=’default’)
+
+# v1.list_namespaced_service(<namespace>)
+v1.list_namespaced_service(namespace=’default’)
+
+We create a container using:
+
+# container1 = client.V1Container(<name>, <image>) e.g:
+container1 = client.V1Container(‘my_container’, ‘nginx’)
+
+
+‍3. V1PodSpec: Depending on the component we are working on, the class for its spec and params change. For a pod, we can use V1PodSpec as:
+
+# pod_spec = client.V1PodSpec(<containers_list>)
+pod_spec = client.V1PodSpec(containers=containers)
+
+Now that we have both metadata and spec, let’s construct the pod’s body:
+
+pod_body = client.V1Pod(metadata=metadata, spec=pod_spec, kind='Pod', api_version='v1')
+
+
+Using Python:
+
+pod_logs = v1.read_namespaced_pod_log(<pod_name>, <namespace>)
+pod_logs = v1.read_namespaced_pod_log(name=’my-app’, namespace=’default’)
+
+#v1.delete_namespaced_pod(<pod_name>, <namespace>)
+v1.delete_namespaced_pod(name=’my-app’, namespace=’default’)
+
+
+
+Complete Example for creating a Kubernetes Pod: 
+
+
+
+from kubernetes import client, config
+	
+config.load_kube_config()
+v1 = client.CoreV1Api()
+	
+namespaces_list = v1.list_namespace()
+namespaces = [item.metadata.name for item in namespaces_list.items]
+	
+pods_list = v1.list_namespaced_pod(namespace=’default’)
+pods = [item.metadata.name for item in pod_list.items]
+
+containers = []
+container1 = client.V1Container(name=’my-nginx-container’, image=’nginx’)
+containers.append(container1)
+	
+pod_spec = client.V1PodSpec(containers=containers)
+pod_metadata = client.V1ObjectMeta(name=’my-pod’, namespace=’default’)
+
+pod_body = client.V1Pod(api_version=’v1’, kind=’Pod’, metadata=pod_metadata, spec=pod_spec)
+	
+v1.create_namespaced_pod(namespace=’default’, body=pod_body)
+	
+pod_logs = v1.read_namespaced_pod_log(name=’my-pod’, namespace='default')
+
+v1.delete_namespaced_pod(namespace=’default’, name=’my-pod’)
+
+
+How to check SDE installed and do cleanup if not :
+****************************************************************
+
+https://confluence.ngage.netapp.com/display/CLOUDVOL/New+Member+Ramp-up+Plan – K8S, SDE and connect to Ontap 
+https://confluence.ngage.netapp.com/display/CLOUDVOL/VP+VSIM – OpenLab VSIM creation/configuration and installation. 
+https://confluence.ngage.netapp.com/display/CLOUDVOL/CVS+CIT+troubleshooting+tips
+
+Ratom_2022.09x-6534281-non-debug
+
+kubectl edit cm nfsaas-configmap -n sde   (change quark version as above one)
+kubectl edit cm -n sde cloud-volumes-sds-configmap
+
+
+1. how to check SDE installed properly
+                All pods(Mysql-x, CVI, CVS, mongodb, pgbouncer, heidall, meteorqloud, drp[ANF], VPS, RT, GS), ignore if(qstack, statistics collector, telemetry upload failure, if you are not working with metrics)
+                Next add ONTAP to SDE, refresh RT etc and you can crate volumes 
+
+2. how to cleanup correct
+                1. unistall kubernetes - reinstalling it
+                2. cleanup up resource - PV, PVC, pods, SVC, STS, namespace, SA, deployments etc
+                steps:
+                sudo kubectl get svc | grep -v NAME | awk '{print "sudo kubectl delete svc "$1}' | bash
+                sudo kubectl get cm | grep -v NAME | awk '{print "sudo kubectl delete cm "$1}' | bash
+                sudo kubectl get secret | grep -v NAME | awk '{print "sudo kubectl delete secret "$1}' | bash
+                sudo kubectl get deployment | grep -v NAME | awk '{print "sudo kubectl delete deployment "$1}' | bash
+                sudo kubectl get serviceaccount | grep -v NAME | awk '{print "sudo kubectl delete serviceaccount "$1}' | bash
+                sudo kubectl get pvc | grep -v NAME | awk '{print "sudo kubectl delete pvc "$1}' | bash
+                sudo kubectl get job | grep -v NAME | awk '{print "sudo kubectl delete job "$1}' | bash
+                sudo kubectl get pods | grep -v NAME | awk '{print "sudo kubectl delete pods --grace-period=0 --force "$1}' | bash
+                kubectl delete cronjob cloud-volumes-telemetry-exporter-spooler --force --grace-period=0
+                kubectl delete cronjob cloud-volumes-telemetry-exporter-anf-reporter --force --grace-period=0
+                kubectl delete pvc datadir-mysql-0 —force --grace-period=0
+
+                  "kubectl get all --all-namespaces"
+
+                  catch here to cleanup PVC's and any hung namespaces:
+                                add finalizers as null and then delete them
+                                ex: 
+                                1> add finalizer
+                                kubectl patch pvc <PVC_NAME>  -p '{"metadata":{"finalizers":null}}'  --type=merge 
+                                 or
+                                kubectl patch pvc <PVC_NAME> -p '{"metadata":{"finalizers": []}}' --type=merge  
+                                2> Then delete
+                                kubectl delete pvc data-vp-rabbitmq-0  --grace-period=0 --force    
+
+
+3. how to fix the failed step/pod
+                a. PVC failures - PVC not bound etc 
+                                > first check if your local-path-storage namespace active(kubectl get ns)
+                                > if you volume-test pod is running, if not running coredns or weavepod issue - troubleshoot look into logs/describe and fixit
+                b. PVC is fine, pods are not coming-up
+                                you have to delete you PVC and delete pod, PVC will comeup properly and then pods will also run fine. 
+                c. rate limit issues - try again, or use local docker copy (you have to copy the image locally and then try restart the pod)
+                                https://confluence.ngage.netapp.com/display/CBS/Fix+Imagepullbackoff+due+to+limit+reached
+                d. rabbit-mq issues: 
+                e. ONTAP issues - we have identify the issue and manually fix it, 
+                                mostly disks, storage space, scrathpad issue with VSIM 
+
+4. run sanity cases in local test bed:
+                Create a jenkins job or use robot scripts to run automation from the controller machine for SSO enabled env, we have to add below steps
+                Automation: SSO enabled/ passwordless SSO - creating private/public using rsa-keygen - solution for this is present. 
+                                kubectl commands from automation, it will not work. 
+                                mkdir-p $HOME/.kube
+                                sudo cp-i /etc/kubernetes/admin.conf $HOME/.kube/config
+                                sudo chown$(id-u):$(id-g) $HOME/.kube/config
+                                sudo chmod 777 .kube/config
+                
+                Manually: 1. "sudo su" and execute commands
+                                                  others to use cluster: usermod -aG sudo <sso_user>
+                                                  mkdir-p $HOME/.kube
+                                                sudo cp-i /etc/kubernetes/admin.conf $HOME/.kube/config
+                                                sudo chown$(id-u):$(id-g) $HOME/.kube/config
+                                                sudo chmod 777 .kube/config
+
+5. fixing PVC issues - local-path-storage
+                > first check if your local-path-storage namespace active(kubectl get ns)
+                > if you volume-test pod is running, if not running coredns or weavepod issue - troubleshoot look into logs/describe and fixit
+
+6. details about local-path storage for manual installation
+local-path-storage:
+Create default storage class on master
+git clone https://github.com/rancher/local-path-provisioner.git
+make below changes to local-path-provisioner/deploy/local-path-storage.yaml
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+ annotations:                                             <-- add this
+      storageclass.kubernetes.io/is-default-class: "true"    <-- add this
+
+kubectl apply -f local-path-provisioner/deploy/local-path-storage.yaml
+kubectl -n local-path-storage get pod
+kubectl create -f local-path-provisioner/examples/pvc/pvc.yaml
+kubectl create -f local-path-provisioner/examples/pod/pod.yaml
+kubectl get pv
+kubectl get pvc
+
+Helpful links:
+kubernetes SDE installation guide: https://confluence.ngage.netapp.com/display/CLOUDVOL/New+Member+Ramp-up+Plan
+troubleshooting guide: https://confluence.ngage.netapp.com/display/CLOUDVOL/Internal+Troubleshooting+Guide+CVS+QA
+mysql pod issues: https://confluence.ngage.netapp.com/display/ANF/MySQL+disaster+recovery+when+mysql-0+is+unable+to+start
+
+Some Helpful kubernetes commands:
+Pod related:
+1. kubectl get pods -n <namespace> 
+ or kubectl get pods (if default namespace)
+2. kubectl get pods | grep <podname>
+3. kubectl describe pod <podname> -n namespace 
+or kubectl describe pod <podname>  (if default namespace)
+4. kubectl logs pod -n namespace 
+or kubectl logs pod (if default namespace)
+5. kubectl exec -it <podname> sh
+exp: kubectl exec -it mysql-0 sh
+6. kubectl get nodes -o wide   (with ip and label details of nodes)
+7. kubectl get all --all-namepaces
+8. kubectl get cm <configmapname>
+9. kubectl get deployments
+10. kubectl edit deployment <deploymentname>
+11. kubectl get sts  - statefulsets
+12. kubectl edit sts <stsname>
+13. kubectl get svc -n namespace
+or kubectl get svc   (if default namespace)
+14. kubectl get svc | grep <svcname>
+15. kubectl scale deployment --replicas=x -n namespace
+or  kubectl scale deployment --replicas=x   (if default namespace)
+16. kubectl get pv
+17. kubectl delete pod <podname>
+18. kubectl delete pvc <pvcname>
+19. kubectl delte pv <pvname>
+20. kubectl expose pod <podname> -n namespace --type=NodePort   - for exposing a pod as NodePort
+or   kubectl expose pod <podname> --type=NodePort  (if default namespace)
+Reply if you need more information.
+
+
+Kubernetes networking services :
+***************************************
+Kubernetes Networking, Services, NodePort & Volumes :
+
+=> Containers within a pod use networking to communicate via loopback
+
+=> Cluster Networking provides communication between different pods
+
+=> The service resources lets you expose on application running in pods to be reachable from outside your cluster
+
+=> You can also use services to publish services only for consumption inside your cluster
+
+=> Container to container communication on same pod happens through localhost within the containers
+
+
+Scenario 1: How 2 containers within same pod communicates :
+
+# Container to container communication within same pod:
+
+# vi pod.yaml
+
+kind: pod
+apiVersion: v1
+metadata:
+  name: testpod
+spec:
+  containers:
+    - name: c00
+      image: ubuntu
+      command: ["/bin/bash", "-c", "while true;do echo Jaynath Kumar;sleep 5s; done"]
+    - name: c01
+      image: httpd
+      ports:
+        - containerPort: 80
+
+root@cvs-k8s-jaynath-01:/jaynath_dummy# kubectl apply -f pod.yaml
+pod/testpod created
+
+
+root@cvs-k8s-jaynath-01:/jaynath_dummy# kubectl get pods
+NAME            READY   STATUS    RESTARTS   AGE
+testpod         2/2     Running   0          12s
+
+=> Login inside container c00 and try to access container c01 through localhost and port number
+root@cvs-k8s-jaynath-01:/jaynath_dummy# kubectl exec -it testpod bash -c c00
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+root@testpod:/# curl http://localhost:80
+<html><body><h1>It works!</h1></body></html>
+root@testpod:/#
+
+Scenario 2:  Now try to establish communication between 2 different pods within same machine
+
+=> Pod to pod communication on same worker node happens through pod ip
+
+=> By default pods IP will not be accessible outside the node.
+
+root@cvs-k8s-jaynath-01:/jaynath_dummy# kubectl get pods -o wide
+NAME            READY   STATUS    RESTARTS   AGE     IP             NODE                 NOMINATED NODE   READINESS GATES
+testpod1        1/1     Running   0          10m     10.244.5.9     cvs-k8s-jaynath-03   <none>           <none>
+testpod2        1/1     Running   0          3m8s    10.244.5.10    cvs-k8s-jaynath-03   <none>           <none>
+
+
+Object Services :
+-----------------------
+=> Each pod gets it's own ip address, however in a deployment, the set of pods running in one moment in time could be different from the set of pod running that application a moment later.
+
+=> Service object is an logical bridge between pods and end users which provided virtual IP
+
+
+Although each pod has a unique ip address, those IP's are not exposed outside the cluster
+
+Services helps to expose the VIP mapped to the pods & allows application to receive traffic
+
+Creating a servie will create endpoint to access the pods/application in it.
+
+
+
+Services can be exposed in different ways by specifying a type in the service spec:
+
+-> Cluster IP
+-> Node Port
+-> LoadBalancer : created by cloud providers that will route external traffic to every node on the nodeport (e.g ELB or AWS)
+
+NodePort service can run between nodeport : 30,000 - 32767
+
+Headless -> creates several endpoints that are used to produce DNS records, each dns record is bound to a pod.
+
+=> If pod1 of node1 wants to establish communication with pod2 of node2, then you need to use ClusterIP port
+
+ClusterIp will be mapped to each node of your cluster
+
+
+
+
+
