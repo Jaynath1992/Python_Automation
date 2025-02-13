@@ -1,0 +1,39 @@
+Process to Install Rabbitmq in separate namespace from release onwards :
+
+Step 1 : First create a namespace with name rabbitmq
+root@cvs-k8s-jaynath-01:~# kubectl create ns rabbitmq
+namespace/rabbitmq created
+
+Step 2 : Install rabbitmq v1.2.48 version in rabbitmq namespace 
+
+Note : In below command just use your imagepull.username and imagepull.password value
+
+root@cvs-k8s-jaynath-01:~# helm install rabbitmq -n rabbitmq https://repository.qstack.com/helmcharts/testing/rabbitmq-v1.2.48.tgz --set imagepull.username=jaynathkumar,imagepull.password=<password> --set global.imageRegistry=ghcr.io --set global.imageRegistryPath=greenqloud
+ 
+NAME: rabbitmq
+LAST DEPLOYED: Mon Apr  3 06:50:47 2023
+NAMESPACE: rabbitmq
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+
+Step 3 : Check this command whether rabbitmq got successfully deployed
+root@cvs-k8s-jaynath-01:~# helm ls -n rabbitmq
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART               APP VERSION
+rabbitmq        rabbitmq        1               2023-04-03 06:50:47.331761961 +0000 UTC deployed        rabbitmq-v1.2.48    3.9.8
+
+Step 4 :  Check all pods has come up into running state in rabbitmq namespace
+
+
+root@cvs-k8s-jaynath-07:~# kubectl get pods -n rabbitmq
+NAME                                                READY   STATUS    RESTARTS   AGE
+rabbitmq-0                                          1/1     Running   0          2m
+rabbitmq-1                                          1/1     Running   0          84s
+rabbitmq-2                                          1/1     Running   0          47s
+rabbitmq-prometheus-alertmanager-575d8965bb-6p56b   2/2     Running   0          2m
+rabbitmq-prometheus-server-595bd597-swf55           2/2     Running   0          2m
+
+Step 5: Modify helm upgrade command with below parameters for rabbitmq pointing to separate namespace(rabbitmq)  (just append these parameters to your existing helm upgrade command)
+
+--set reuseValues=true,nfsaas-rabbitmq.rabbitmq-migrator.enabled=true,rabbitmq.host=rabbitmq,rabbitmq.namespace=rabbitmq,rabbitmq.embedded=false --debug=True
+
