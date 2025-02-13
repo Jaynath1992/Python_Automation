@@ -1,0 +1,217 @@
+
+Below are the node details for forming 5 node cluster:
+-------------------------------------------------------
+VM's Name    		  IP Address
+-------------       :     ------------
+
+
+Below machine is getting used as test controller :
+-------------------------------------------------
+
+
+
+To set up local k8s cluster and to install SDE on local setup:
+--------------------------------------------------------------
+Scripts location in shared NFS location: copy these all files from shares NFS directory of Rahul Sreenivasa to your machine using command :
+-------------------------------------------
+/u/rsreeniv/kubernetes_install_1_21_14		
+/u/rsreeniv/sde_install				
+/u/rsreeniv/cbs_install				
+/u/rsreeniv/link_ontap_2_sde			
+
+This is the main directory : /u/rsreeniv/kubernetes_install_1_21_14  : where you need to go and perform installation of k8s cluster setup
+
+This is how you can copy all files from RahulSrinivasa machine to your's first VM i.e. which you want to keep as master
+
+# mkdir /root/k8s_install; cd /root/k8s_install      ( on master & all worker nodes copy these files this way)
+
+# cp -r /u/rsreeniv/kubernetes_install_1_21_14 /root/k8s_install
+# cp -r /u/rsreeniv/sde_install /root/k8s_install
+# cp -r /u/rsreeniv/cbs_install /root/k8s_install
+# cp -r /u/rsreeniv/link_ontap_2_sde /root/k8s_install
+
+
+# cd /etc/cni/net.d (after k8s install this directory contains cni related configuration files) 
+# ls /etc/cni/net.d/
+10-flannel.conflist  10-weave.conflist    (only these 2 files should be here on all nodes of k8s cluster, if anything else then remove that)
+
+
+# To check ubuntu version on machine : lsb_release -d
+# To get the ip address of linux machine : ifconfig ens192 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*'     (ifconfig <network_interface_name>)
+# To get public and local ip of host, use command : hostname -I
+# To see the hostname or server name use this command : hostname or check in this file: cat /etc/hosts
+# To check free memory usage, use command : free
+# To get cpu usage, use top command : top -d 5 | head -n 15
+# To get uptime of machine, use command : uptime -s
+# To check if you are root user, use this command : # id -u     , if o/p of this command is greater than 0, then that meansnon-root user, else 0 means root user
+
+Steps to install k8s :
+-------------------------
+# First run master-k8s.sh file on master node
+
+#./master-k8s.sh
+
+once this script executes successfully then pods status check in kube-system namespace, by default all pods would be in kube-system namespace, in kube-flannel you can see some other pods :
+
+# Check all available namespaces in k8s cluster :
+----------------------------------------------------
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get ns
+NAME              STATUS   AGE
+default           Active   4m53s
+kube-flannel      Active   4m7s
+kube-node-lease   Active   4m55s
+kube-public       Active   4m55s
+kube-system       Active   4m55s
+
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get pods -n kube-system
+NAME                                         READY   STATUS                  RESTARTS   AGE
+coredns-558bd4d5db-ljgms                     1/1     Running                 0          87s
+coredns-558bd4d5db-tfn6s                     1/1     Running                 0          87s
+etcd-cvs-k8s-jaynath-07                      1/1     Running                 0          93s
+kube-apiserver-cvs-k8s-jaynath-07            1/1     Running                 0          93s
+kube-controller-manager-cvs-k8s-jaynath-07   1/1     Running                 0          93s
+kube-proxy-lztxm                             1/1     Running                 0          87s
+kube-scheduler-cvs-k8s-jaynath-07            1/1     Running                 0          93s
+weave-net-lgxkp                              0/2     Init:ImagePullBackOff   0          87s
+
+
+
+
+
+# if weave-net pod goes into init:ImagePullBackOff state, then describe that pod using below command :
+
+# kubectl describe pod weave-net-lgxkp -n kube-system
+
+If you see the issue like (Error: ImagePullBackOff) below in pod describe command output then fix this by following steps below :
+
+Events:
+  Type     Reason     Age                  From               Message
+  ----     ------     ----                 ----               -------
+  Normal   Scheduled  2m31s                default-scheduler  Successfully assigned kube-system/weave-net-lgxkp to cvs-k8s-jaynath-07
+  Normal   Pulling    56s (x4 over 2m29s)  kubelet            Pulling image "weaveworks/weave-kube:latest"
+  Warning  Failed     56s (x4 over 2m29s)  kubelet            Failed to pull image "weaveworks/weave-kube:latest": rpc error: code = Unknown desc = Error response from daemon: toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
+  Warning  Failed     56s (x4 over 2m29s)  kubelet            Error: ErrImagePull
+  Warning  Failed     42s (x6 over 2m28s)  kubelet            Error: ImagePullBackOff
+  Normal   BackOff    28s (x7 over 2m28s)  kubelet            Back-off pulling image "weaveworks/weave-kube:latest"
+
+steps to fix this issue :
+
+Since weave-net and kube-proxy and kube-flannel are kubernets object of type daemonset, since these all are related to configuring networking in k8s.
+
+# kubectl edit ds weave-net -n kube-system   (fire this command)
+# change imagepullPolicy to ifNotPresent from Always in daemonset edit file, so replace Always with ifNotPresent text on all occurences in that file
+# Then do docker login with command on master node : docker login -u <jaynath120>   (password is : JayPatel#...)
+# and now pull that image locally on your master : docker pull weaveworks/weave-kube:2.8.1
+
+# in weave-net daemonset, edit the image name version from latest to 2.8.1  (better is lower version 2.8.1)
+
+# kubectl edit ds weave-net -n kube-system     (in this weave-net ds config yaml file, change image version from latest to 2.8.1 ), otherwise if you want to
+# go with latest version of weave-net image then do : docker pull weaveworks/weave-kube:latest, if you pull latest image then don't need to modify in weave-net cds config yaml file
+ 
+spec:
+      containers:
+      - command:
+        - /home/weave/launch.sh
+        env:
+        - name: INIT_CONTAINER
+          value: "true"
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: weaveworks/weave-kube:2.8.1       # change here in weave-net config yaml file of daemonset
+
+	image: weaveworks/weave-npc:2.8.1
+	
+inti containers section :
+image: weaveworks/weave-kube:2.8.1
+
+#In this file kubectl edit ds weave-net -n kube-system , make changes at 3 places as mentioned above, change latest to specific version 2.8.1
+
+
+# pull these 2 image on master node from docker manually for fixing weave-netpod issue, also pull these 2 images on all worker nodes as well after worker-k8s.sh installation
+# docker login - jaynath120               (fire 3 below commands on all worker nodes as well as master)
+# docker pull weaveworks/weave-npc:2.8.1
+# docker pull weaveworks/weave-kube:2.8.1
+
+weaveworks/weave-npc                             2.8.1               
+weaveworks/weave-kube                            2.8.1 
+
+# after making above change fire this command again to see the weave-net pod status :
+
+# # kubectl get pods -n kube-system
+
+Automatically after making changes in daemonset yml file of weave-net,once you save that file after chnages, then weave-net pod will come up in 20-30 seconds
+# make sure all pods including, coredns, weave-net are running fine.
+
+# Run worker-k8s.sh file on each node of cluster
+
+# Join all worker nodes to master using below command :
+
+# kubeadm token create --print-join-command    (use this command to generate token)
+
+kubeadm join 10.193.227.49:6443 --token pzacwn.z49ayvj1ta56q519 --discovery-token-ca-cert-hash sha256:b460aba74c656e7f97cdb37434cb2fdb37ddde37eade2bb4f77166dd5b313302
+
+Once token is generated, copy this kubeadm command and execute on all worker nodes
+
+#fire this command to check all nodes joined :
+
+# kubectl get nodes
+NAME                 STATUS     ROLES                  AGE   VERSION
+cvs-k8s-jaynath-07   Ready      control-plane,master   58m   v1.21.14
+cvs-k8s-jaynath-08   Ready      <none>                 40s   v1.21.14
+cvs-k8s-jaynath-09   Ready      <none>                 28s   v1.21.14
+cvs-k8s-jaynath-10   NotReady   <none>                 13s   v1.21.14
+cvs-k8s-jaynath-11   NotReady   <none>                 4s    v1.21.14
+
+
+# kubectl get all --all-namespaces orkubectl get all -A   (to get all resources in all namespace)  check everything is up and ready till here 
+
+NAMESPACE      NAME                                             READY   STATUS    RESTARTS   AGE
+kube-flannel   pod/kube-flannel-ds-57xvm                        1/1     Running   0          59m
+kube-flannel   pod/kube-flannel-ds-kpz47                        1/1     Running   0          88s
+kube-flannel   pod/kube-flannel-ds-rwx9z                        1/1     Running   0          79s
+kube-flannel   pod/kube-flannel-ds-sx5bs                        1/1     Running   0          115s
+kube-flannel   pod/kube-flannel-ds-tv4c9                        1/1     Running   0          103s
+kube-system    pod/coredns-558bd4d5db-ljgms                     1/1     Running   0          59m
+kube-system    pod/coredns-558bd4d5db-tfn6s                     1/1     Running   0          59m
+kube-system    pod/etcd-cvs-k8s-jaynath-07                      1/1     Running   0          59m
+kube-system    pod/kube-apiserver-cvs-k8s-jaynath-07            1/1     Running   0          59m
+kube-system    pod/kube-controller-manager-cvs-k8s-jaynath-07   1/1     Running   0          59m
+kube-system    pod/kube-proxy-48v74                             1/1     Running   0          115s
+kube-system    pod/kube-proxy-hv62t                             1/1     Running   0          88s
+kube-system    pod/kube-proxy-lztxm                             1/1     Running   0          59m
+kube-system    pod/kube-proxy-mgmhj                             1/1     Running   0          79s
+kube-system    pod/kube-proxy-x9g8q                             1/1     Running   0          103s
+kube-system    pod/kube-scheduler-cvs-k8s-jaynath-07            1/1     Running   0          59m
+kube-system    pod/weave-net-2pbhd                              2/2     Running   1          88s
+kube-system    pod/weave-net-d7lcb                              2/2     Running   2          115s
+kube-system    pod/weave-net-f2mhc                              2/2     Running   1          17m
+kube-system    pod/weave-net-fw698                              2/2     Running   1          79s
+kube-system    pod/weave-net-zvvgq                              2/2     Running   1          103s
+
+NAMESPACE     NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)                  AGE
+default       service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP                  60m
+kube-system   service/kube-dns     ClusterIP   10.96.0.10   <none>        53/UDP,53/TCP,9153/TCP   60m
+
+NAMESPACE      NAME                             DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-flannel   daemonset.apps/kube-flannel-ds   5         5         5       5            5           <none>                   59m
+kube-system    daemonset.apps/kube-proxy        5         5         5       5            5           kubernetes.io/os=linux   60m
+kube-system    daemonset.apps/weave-net         5         5         5       5            5           <none>                   60m
+
+NAMESPACE     NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+kube-system   deployment.apps/coredns   2/2     2            2           60m
+
+NAMESPACE     NAME                                 DESIRED   CURRENT   READY   AGE
+kube-system   replicaset.apps/coredns-558bd4d5db   2         2         2       59m
+
+
+
+## Important : at this point of time there won't be any storage class, persistent volume or persistent volume claim resources in k8s cluster, as you can check below :
+
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get pv -A
+No resources found
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get pvc -A
+No resources found in default namespace.
+root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get sc -A    (A- for all namespaces)
