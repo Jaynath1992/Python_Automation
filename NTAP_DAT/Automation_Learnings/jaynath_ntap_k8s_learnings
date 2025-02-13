@@ -1,0 +1,718 @@
+Traditional deployment method : where you are pushing out the code to physical servers in a data center and you are managing the operating system and code that's acually running on eachof these servers
+
+Major issues :
+-> Resource allocations and contention
+-> Requires to deploy applications on different physical servers results in under utilisation of resources.
+-> Expensive and difficult to maintain. 
+-> No load balancing
+->
+
+There can be a time where one application may take up entire resource allocation, which may result in underutilization of resources and increase the cost.
+
+
+Virtualized Deployment: As a result of which virtualization was introduced which allows to run multiple Virtual Machines(VMs) on a single physical server’s CPU.
+This is where virtual machines became very popular.
+
+Virtual Machine provides an abstraction of the physical hardware. A Hypervisor allows multiple Virtual Machines (VM) to run on a single server. Each VM has a full copy of OS, app binaries, and libraries
+
+another method : deploying code to virtual machines
+
+virtual machine are preferred as they have better resource utilization, better sclability , less cost and much more.
+
+-> allows us to run multiple piece of VM;s on single piece of hardware
+-> 
+
+pros :
+-> Isolation between applications running on different VMs on same physical server
+-> Secure as information on one application(running on VM1)cannot be accesses by another application(running on VM2).
+-> Better resource utilisation and scalable.
+-> Reduced hardware Costs
+
+
+problems :
+
+-> high cost of implementation
+
+
+Containers provide abstraction at the application layer. Code and all dependencies are packaged together so that an application can run across platforms such as desktop, data center, and cloud. Each container runs as an isolated process while sharing the same OS kernel.
+
+
+
+How about Kubernetes ?
+
+-> It works with container deployment
+-> is a tool that allows you to manage containerized applications
+
+Finally the Containerisation era stepped-in and here are we with the following benefits:
+
+Containers are similar to VMs, except they share the OS among applications and hence light-weight. They are decoupled from underlying infrastructure and are portable across clouds and OS distributions.
+
+
+Ease of application creation and deployment.
+
+2. Separation of concerns between Dev and Ops.
+
+3. Observability offers at application level , not confined to Os-level info.
+
+4. Consistency across Environment.
+
+5. Resource isolation and utilization.
+
+6. Loosely coupled, distributed, elastic, liberated micro-services unlike monolithic stack on one big single-purpose machine.
+
+
+
+
+
+=> kubectl run --image=httpd:latest myapache  => /var/www/html
+=> kubectl run --image=nginx:latest myweb     => /usr/share/nginx/html
+
+
+
+kubectl run --image=tomcat:latest my-tomcat
+kubectl get pods
+kubectl expose pod my-tomcat --port=8080 --target-port=8080 --type=NodePort
+kubectl get svc
+<MAster pub IP>:<NodePort>  or   <Any Worker Node>:<NodePort>
+
+
+Setup Pod and Service :
+----------------------------
+
+
+
+
+Services :
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: myweb-service
+  labels:
+    user: jaynath
+    env: dev
+    app: nginx-demo-service
+spec:
+  selector:
+    app: nginx-demo
+    user: jaynath
+  ports:
+  - name: nginx-port
+    protocol: TCP
+    port: 8081       -> Service Port
+    targetPort: 80   -> ContainerPort
+  type: ClusterIP/NodePort/LoadBalancer
+
+How traffic would flow :
+-> When user hit requests through nodeport, then request will be routed to service Port annd then service port will route to container port
+-> targetPort in service yaml must match the containerPort in pod yaml , the port at which container is listening at.
+
+When you expose service at nodeport level, then you can access the application using 3 ways from outside and within cluster
+
+1. http://<Node_IP>:<Node_Port>
+2. http://<Service_IP>:<Service_Port>
+3. http://<Pod_IP>:<Pod_Port>
+
+=> multi port service will require multiple port matching to targetPort which is container port
+
+HOw pod to pod communication happens : it happens via <ServiceName or ServiceIP>: <Service_Port>
+
+
+
+Headless Service(statefulset) :
+
+-> Client wants to communicate with 1 specific pod directly
+-> Pod want to talk directly with specific pod
+-> so not randomly selected
+-> use Cases like: stateful applications like databases mysql, timescaledb, mongodb, elasticsearch
+-> Pod replicas are not identical rather each one has individual state and characteristics
+-> One would be master and other replicas would be worker
+-> master would be only allowed to perform read/write operations, worker would be allowed for reading the data only.
+
+
+
+Types of network solution provided by kubernetes :
+
+1. Container to container communication 
+=> All containers within the same pod will share the same ip addresses, but their port would be different, so we containers can communication with each other via localhost:<port>
+2. Pod to pod communication
+	-> intra-node pod network
+	-> inter-node pod network
+3. Pod to Service Communication
+4. External to Service communication(Cluster IP, NodePort, LoadBalancer, Ingress)
+
+
+
+Kubernetes volumes explained :
+---------------------------------
+How to perist data in kubernetes using volumes
+-> persistent volume
+-> persistent volume claim
+-> Storage Class
+
+
+=> When we have application or service running inside pods which writes data to certain location inside pod, now if pods gets deleted then our data would be lost, so we need to store that data on somewhere like permanent storage before the pods gets deleted.
+
+=> SO we can mount the data on k8s cluster node,if pods gets deleted it will store all data on host node, but there is also a problem while storaing data on node, if pods gets deleted and nexct time scheduled on new node then pods would not be able to access previous data.
+
+=> That means it would be better to store the data somewhere outside the cluster, so that all the data would be present. so we can store the data on cloud provided storage like AWS EBS, EFS
+
+=> So we need to ensure that how much size of storage is reuired for pod to write data.
+
+=> so how we will bind that storage to pod, so here it comes the concept of PV and PVC.
+
+=> Persistent Volumes : cluster administrator provisioins multiple pieces of persistent volumes.
+
+=> PV is representation of storage that we created on cloud or node.
+
+
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-1
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  awsElasticBlockStore:
+    volumeID: "<volume_id>"
+    fsType: ext
+
+
+
+root@cvs-u20-jaynath-03:~/k8s_talk/pvs# cat nfs_pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-1
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /tmp   # path of nfs server
+    server: 172.17.0.2  # ip of nfs server
+
+
+PVC :
+
+once pvc gets created, then whichever pv matches the specification of that pvc , it binds to that pv, and our pods gets attached to that pvc to store data.
+
+Kubernetes on which basis binds PVc To PV ??
+=> before binding pvc to pv , k8s looks for storage and accessmode
+
+=> k8s automatcially binds the pvc to pv based on matching criteria of size and accessmodes, so whichever pv is natching to pvc specification, it binds to that PV.
+
+
+Access modes : 
+1. ReadWriteOnce => one pod will use that storge to read and write data
+2. ReadOnlyMany  => multiple pods will use that pvc to read the data
+3. ReadWriteMany => multiple pods will use that pvc to read and write data both
+ 
+
+=> We can define accessModes on PV as well as PVC's
+
+=> k8s will bind pv and pvc only when their accessModes are matching.
+
+ReclaimPolicy : if pvc get deleted that means pod does not have requirement to store data, then what do we want to do with the data, so either we can Retain or Delete that data.
+
+=> if pvc and pods get deleted, then if we want thedata to be also deleted, then we can put ReclaimPolicy as Delete.
+
+=> one pvc will only gets bind to 1 PV, so if you have pv size of 10Gb, but you have pvc size of 1 Gib which got bind to pv of 10 Gb size, then remaining storage space of pv will get wasted.
+
+
+
+Static and Dynamic Provisioning :
+------------------------------------
+
+static provisioning : where cluster Administrator is manually creating pv of different size, and then we are creating pvc of size as per pod requirement.
+this is called static provisioning.
+
+in this case there may be scaenario that, use created pvc but there is no space in any of pv present in cluster, so we have to ask administrator to provision more PV.
+
+
+Dynamic Provisioning :
+-------------------------
+
+=> we use storage class, and already created in cluster.
+=> here storage class will automatically create dynamically PV's based on requirement.
+
+how do we create storage class :
+=> This is the yaml file for storage class
+
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: kubernetes.io/aws-ebs   (on which cloud we want to provision the storage space, for aws this is)
+parameters:
+  type: gp2   # this is storage type
+reclaimPolicy: Retain
+
+
+=> user creates pvc using yaml of size as per pod requirement. in pvc's yaml file we need to mention storage class Name. 
+
+=> once pvc's get created, then storage class creates storage of mention size on cloud provider.and also it creates Pv by it's own.and then k8s binds that pvc's to PV.and then our poid starts storing databon that pvc
+
+
+Kubernetes dynamic Volume Provisioning :
+-------------------------------------------
+
+# vim local_storage_class.yaml
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+
+First, a StorageClass should be created that sets volumeBindingMode: WaitForFirstConsumer to enable volume topology-aware scheduling. This mode instructs Kubernetes to wait to bind a PVC until a Pod using it is scheduled.
+
+
+
+
+
+
+
+
+
+Kubernetes supports two volume modes of persistent volumes. A valid value for volume mode can be either Filesystem or Block. Filesystem is the default mode if the volume mode is not defined.
+
+ReadOnlyMany(ROX) allows being mounted by multiple nodes in read-only mode.
+ReadWriteOnce(RWO) allows being mounted by a single node in read-write mode.
+ReadWriteMany(RWX) allows multiple nodes to be mounted in read-write mode.
+
+
+Retain - meaning the PV, until deleted, is kept alive.
+Recycle - meaning the data can be restored later after getting scrubbed.
+Delete - associated storage assets (such as AWS EBS, GCE PD, Azure Disk, and OpenStack Cinder volumes) are deleted.
+Currently, only NFS and hostPath support the Recycle policy. AWS EBS, GCE PD, Azure Disk, and Cinder volumes support the Delete policy.
+
+
+gcePersistentDisk,awsElasticBlockStore,AzureDisk,NFS,RBD (Rados Block Device), CephFS, Cinder (OpenStack volume storage), Glusterfs
+
+
+
+
+
+
+Persistent Volumes and Persistent Volumes claim :
+
+Persistent Volumes (PV):
+Volumes help you persist data even if your container restarts/deleted 
+Admin can create PersistentVolume (static provisioning) and developer just use the volume through PVC without understanding of infrastructure
+PersistentVolumes are a cluster-level resource like nodes, which don’t belong to any namespace
+
+Features of Persistent Volume :
+Capacity : PV will specify storage capacity
+Volume Modes : Kubernetes supports two volume modes of persistent volumes. A valid value for volume mode can be either Filesystem or Block. Filesystem is the default mode if the volume mode is not defined.
+Access Modes : Persistent Volumes support various access modes, allowing multiple pods to read and write data simultaneously. A volume can only be mounted using one access mode at a time, even if it supports many access modes.
+ReadOnlyMany(ROX)  - allows being mounted by multiple nodes in read-only mode.
+ReadWriteOnce(RWO) - allows being mounted by a single node in read-write mode.
+ReadWriteMany(RWX) - allows multiple nodes to be mounted in read-write mode.
+Reclaim Policy : When the node no longer needs persistent storage, the reclaiming strategies that can be used include
+Retain - meaning the PV, until deleted, is kept alive.
+Recycle - meaning the data can be restored later after getting scrubbed.
+Delete - associated storage assets (such as AWS EBS, GCE PD, Azure Disk, and OpenStack Cinder volumes) are deleted.
+Currently, only NFS and hostPath support the Recycle policy. AWS EBS, GCE PD, Azure Disk, and Cinder volumes support the Delete policy.
+Mount Options : Kubernetes administrators can specify mount options for mounting persistent volumes on a node. Not all PV types support mount options.
+gcePersistentDisk,awsElasticBlockStore,AzureDisk,NFS,RBD (Rados Block Device), CephFS, Cinder (OpenStack volume storage), Glusterfs
+
+
+
+
+Features of Persistent Volume :
+Capacity : PV will specify storage capacity
+Volume Modes : Kubernetes supports two volume modes of persistent volumes. A valid value for volume mode can be either Filesystem or Block. Filesystem is the default mode if the volume mode is not defined.
+Access Modes : Persistent Volumes support various access modes, allowing multiple pods to read and write data simultaneously. A volume can only be mounted using one access mode at a time, even if it supports many access modes.
+ReadOnlyMany(ROX)  - allows being mounted by multiple nodes in read-only mode.
+ReadWriteOnce(RWO) - allows being mounted by a single node in read-write mode.
+ReadWriteMany(RWX) - allows multiple nodes to be mounted in read-write mode.
+Reclaim Policy : When the node no longer needs persistent storage, the reclaiming strategies that can be used include
+Retain - meaning the PV, until deleted, is kept alive.
+Recycle - meaning the data can be restored later after getting scrubbed.
+Delete - associated storage assets (such as AWS EBS, GCE PD, Azure Disk, and OpenStack Cinder volumes) are deleted.
+Currently, only NFS and hostPath support the Recycle policy. AWS EBS, GCE PD, Azure Disk, and Cinder volumes support the Delete policy.
+Mount Options : Kubernetes administrators can specify mount options for mounting persistent volumes on a node. Not all PV types support mount options.
+gcePersistentDisk,awsElasticBlockStore,AzureDisk,NFS,RBD (Rados Block Device), CephFS, Cinder (OpenStack volume storage), Glusterfs
+
+
+indicate its storage size in the Capacity attribute
+
+
+Provisioner
+The provisioner determines the volume plug-in used by the storageClass. Several plug-ins such as AWS EBS and GCE PD are available for different storage providers.
+
+
+
+
+
+
+API Server
+When you interact with your Kubernetes cluster using the kubectl command-line interface, you are actually communicating with the master API Server component.
+
+The API Server is the main management point of the entire cluster. In short, it processes REST operations, validates them, and updates the corresponding objects in etcd.
+
+he API Server is the only Kubernetes component that connects to etcd; all the other components must go through the API Server to work with the cluster state.
+
+The API Server is also responsible for the authentication and authorization mechanism. All API clients should be authenticated in order to interact with the API Server.
+
+
+
+
+# Kubernetes nodeSelector, taint and untaint nodes :
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-demo-pod
+  labels:
+    user: jaynath
+    app: nginx-demo
+    env: dev
+    tier: frontend
+spec:
+  containers:
+    - name: nginx-con1
+      image: nginx:latest
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 80
+  nodeSelector:
+    kubernetes.io/hostname: cvs-u20-jaynath-03
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      #operator: Equal
+      #value: cvs-u20-jaynath-03
+      effect: NoSchedule
+
+
+
+=> kubectl taint node <node name> kubernetes.io/hostname=cvs-u20-jaynath-04:NoSchedule
+=> To get list of tainted nodes in cluster
+
+kubectl get nodes -o json | jq '.items[].spec.taints'
+
+=> if you want auto-healing and auto-scaling of your application in k8s, then you need deployment because pod can't do that.
+
+=> if you want to deploy your application with zero downtime then you would require deployment
+
+
+=> Even if you delete one pod , then intrnally replica set will automatically create that pod to ensure that required number of pods are always running,
+
+********************************************************************************************************************************************************
+
+
+Advanced Scheduling Techiniques in Kubernetes :
+------------------------------------------------
+
+-> From kubernetes 1.6, it offers 4 advanced scheduling features :
+
+-> Node Selector
+-> Node Affinity
+-> Pod Affinity/ Anti-Affinity
+-> Taints and Tolerations
+
+
+Node Affinity :
+
+=> Similar to nodeSelector
+-> Allows to constrain based on labels on the node
+-> Types of node Affinity :
+   1. preferredDuringSchedulingIgnoredDuringExecution  - soft one, 
+   2. requiredDuringSchedulingIgnoredDuringExecution - hard rule that is mandatory to be met, if not met then pod will go in pending state.
+
+my pod would be required to be placed on specific labels of node
+
+ 
+=> constraints for pod placement, 
+
+nodeSelector :
+=> nodeSelector is the simplest recommended form of node selection constraint. nodeSelector is a field of PodSpec. It specifies a map of key-value pairs. For the pod to be eligible to run on a node, the node must have each of the indicated key-value pairs as labels (it can have additional labels as well).
+
+
+=> Difference between nodeSelector and node affinity :
+
+-> nodeSelector only selects nodes with all the specified labels. Affinity/anti-affinity gives you more control over the selection logic. You can indicate that a rule is soft or preferred, so that the scheduler still schedules the Pod even if it can't find a matching node.
+
+
+**********************************************************************************************************************************************************
+
+
+# Kubernetes nodeSelector, taint and untaint nodes :
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-demo-pod
+  labels:
+    user: jaynath
+    app: nginx-demo
+    env: dev
+    tier: frontend
+spec:
+  containers:
+    - name: nginx-con1
+      image: nginx:latest
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 80
+  nodeSelector:
+    kubernetes.io/hostname: cvs-u20-jaynath-03
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      #operator: Equal
+      #value: cvs-u20-jaynath-03
+      effect: NoSchedule
+
+
+
+=> kubectl taint node <node name> kubernetes.io/hostname=cvs-u20-jaynath-04:NoSchedule
+=> To get list of tainted nodes in cluster
+
+kubectl get nodes -o json | jq '.items[].spec.taints'
+
+=> if you want auto-healing and auto-scaling of your application in k8s, then you need deployment because pod can't do that.
+
+=> if you want to deploy your application with zero downtime then you would require deployment
+
+
+=> Even if you delete one pod , then intrnally replica set will automatically create that pod to ensure that required number of pods are always running,
+
+
+
+
+
+
+** Kubernetes Pod Scheduling: How to manipulate Kube-scheduler to work on specific nodes.
+-------------------------------------------------------------------------------------------
+=> when we apply a deployment file with many replicas or when we create just a single pod, kube-scheduler is immediately alerted. Because it is the duty of the kube-scheduler to make the optimal decision to assign the pods to the nodes.
+
+=> When making the decision,kube-scheduler checks for available resources as well as the pod requirements. After carefully examining all these factors, pods are assigned to nodes.
+
+=> By default, we cannot determine which nodes will get the new pods. But the kube-scheduler can!. However, there is a way for us to determine which nodes get which pods
+
+=> Scheduling Pods to Nodes :
+
+1. Using Node Name (nodeName) :
+
+=> When we work with nodes, each node has a name in the Cluster, using that nodename we can specify, on which node, pod will get placed on.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      nodeName: cvs-u20-jaynath-05   # using this nodeName key we can specify node on which pod will get placed on
+
+
+2.  Using nodeSelector : nodeSelector is another option that we can use in order to manipulate pod scheduling.
+
+=> 
+nodeSelector is the simplest recommended form of node selection constraint. You can add the nodeSelector field to your Pod specification and specify the node labels you want the target node to have. Kubernetes only schedules the Pod onto nodes that have each of the labels you specify.
+
+How to add label to your node :
+=> kubectl label nodes <nodename> <key>=<value>
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+      nodeSelector:    # using this nodeSelector, specify labels of node where your pods will get placed on
+        #kubernetes.io/hostname: cvs-u20-jaynath-04
+        company: netapp
+
+
+
+3. Using nodeAffinity :
+
+=> Similar to NodeSelector but More expressive and flexible such as adding “Required” and “Preferred” Rules
+=> Node affinity rules use labels on nodes and label selectors in the pod specification file. 
+=> There are many use cases for node affinity, including placing a pod on a group of nodes with a specific CPU/GPU and placing pods on nodes in a particular availability zone.
+
+=> There are two types of Node Affinity rules:
+
+Required
+Preferred
+
+=> Required rules must always be met for the scheduler to place the pod. With preferred rules the scheduler will try to enforce the rule, but doesn’t guarantee the enforcement.
+
+
+
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - cvs-u20-jaynath-07
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
+
+
+
+=> Below example is for preferredDuringSchedulingIgnoredDuringExecution, in this case even if expression criteria are not met, scheduler will scheule those pods , this is a kind of soft rule, if expression are matched then it will schedule on that, otherwise it will auto schedule on any nodes in cluster.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      affinity:
+        nodeAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            nodeSelectorTerms:
+#            - matchExpressions:
+#              - key: kubernetes.io/hostname
+#                operator: In
+#                values:
+#                - cvs-u20-jaynath-0711
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values:
+                  - cvs-u20-jaynath-0711
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
+
+=> Pod Affinity and Pod Anti-Affinity
+
+Pod Affinity and Anti-Affinity enable the creation of rules that control where to place the pods relative to other pods. A user must label the nodes and use label selectors in pod specifications.
+
+Pod Affinity/Anti-Affinity allows a pod to specify an affinity (or anti-affinity) towards a set of pods. As with Node Affinity, the node does not have control over the placement of the pod.
+
+Affinity rules work based on labels. With an affinity rule, the scheduler can place the pod on the same node as other pods if the label on the new pod matches the label on the other pod.
+
+
+An anti-affinity rule tells the scheduler not to place the new pod on the same node if the label on the new pod matches the label on another pod. Anti-affinity allows you to keep pods away from each other. Anti-affinity is useful in cases such as: avoiding placing a pod that will interfere in the performance of an existing pod on the same node.
+
+
+High availability problem – and how to solve it with anti-affinity
+
+Sometimes, the Kubernetes scheduler might schedule the same workload replicas on the same node.
+
+That creates a high availability problem – if nodes go down, all or portion of workload replicas goes down, and that can create partial or full downtime of the application.
+
+You can solve this problem using pod anti-affinity by targeting the application name and using the hostname topology key:
+
+=> Sample nginx-pod anti-affinity demo
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - nginx
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
