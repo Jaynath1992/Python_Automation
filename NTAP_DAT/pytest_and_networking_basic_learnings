@@ -1,0 +1,306 @@
+
+"""
+conftest.py => generally we put this file in root directory of our automation folder structure
+
+
+it will contain fixtures, hooks and user defined plugins
+
+pytest fixtures sc
+"""
+import pytest
+
+"""
+
+fixtures : basically allows us to perform setup and teardown operations
+
+setup => login (url app, username/password/, login)
+teardown => (logout from app/ close the browser session)
+
+
+fixture scope => session, module, classes, functions, 
+"""
+
+def create_storage_pool(capacity):
+    pass
+
+def delete_storage_pool(pool_name):
+    pass
+
+@pytest.fixture(scope='function', autouse=True, params=['1', '2', '3'])
+def create_delete_storage_pool(request, login_user_and_logout_app):
+    """Create storage pool as part of setup and delete pool al part of teardown"""
+
+    pool_name = 'abcd'
+    # create storage pool as part of setup code
+    size = request.param
+    create_storage_pool(size)
+
+    # two separate setup and teardown code we need to follow one of the 2 approaches
+    # first way through yield statement
+    # request.addfinalizer()
+    yield None
+    # teardown code
+    delete_storage_pool(pool_name)
+    #request.addfinalizer(delete_storage_pool)
+
+# difference between yield and addfinalizer
+
+#=> addfinalizer() - if setup part fails, then it will call teardown code also
+#=> yield => if setup part fails then it will not invoke teardown code
+
+#> The main difference is if the teardown will run in case of a failure in the setup stage.
+# This is useful if there is need for cleanup even if the setup failed.
+# Without finalizer the teardown won't run if there was an exception in the setup
+
+
+def login_to_gcnv_app():
+    pass
+
+def logout_gcnv_app():
+    pass
+
+@pytest.fixture(scope='class', autouse=True)
+def login_user_and_logout_app(request):
+    gcnv_env = request.config.getoption('--gcnv_environment')
+    # login to app
+    login_to_gcnv_app()
+    request.addfinalizer(logout_gcnv_app)
+
+
+
+#> a ficxture function can call another fixture by passing itself as param into another fixyture
+
+
+#> Hooks : pytest has some inbuilt defined hooks for different purposes
+
+#> pytest -v -s -k "testcasename"
+#> pytest -v -s --html=report.html ./<dir_name> --gcnv_environment=tst/sqa  --browser=chrome
+
+def pytest_addoption(parser):
+    """responsible for receiving command line options"""
+    gcnv = parser.getgroup('GCNV env', 'GCNV application automation tests')
+    gcnv._addoption('--gcnv_environment', action='store', dest='login_user_and_logout_app', default='staging', help="By default run tests in staging env, otherwise specify Wilma env")
+
+
+def pytest_sessionstart(session):
+    """You can set the pre-requisites before session start"""
+
+def pytest_sessionfinish(session, exitstatus):
+    """at the end of session finish, you have to clean up after each test"""
+
+
+def pytest_runtest_makereport(item, call):
+    """make report after test execution"""
+
+
+"""
+#pytest.ini file => its configuration file for pytest framework
+
+[pytest]
+python_files = test_*.py
+python_classes = Test
+python_functions = test_*
+norecursedirs = _build __pycache__
+addopts = -ra -v
+log_cli = True
+log_cli_level = INFO
+log_cli_format = %(asctime)s %(levelname)s %(message)s
+log_cli_date_format = %Y-%m-%d %H:%M:%S
+log_format = %(asctime)s %(levelname)s %(message)s
+log_date_format = %Y-%m-%d %H:%M:%S
+markers =
+    smoke: require to be run for smoke test
+    small: tests last less than 1 minute
+    medium: tests last 1-3 minutes
+    large: tests last more than 3 minutes
+    basic_ui: tests under composer module can be tested in group
+    parallel_group_test_1: This is group 1 for running parallel tests
+    parallel_group_test_2: This is group 2 for running parallel tests
+    parallel_group_test_3: This is group 3 for running parallel tests
+    parallel_group_test_4: This is group 4 for running parallel tests
+    parallel_group_test_5: This is group 5 for running parallel tests
+    parallel_group_test_6: This is group 6 for running parallel tests
+    parallel_group_test_7: This is group7 for running parallel tests
+    parallel_group_test_8: This is group8 for running parallel tests
+
+"""
+#> pytest -v -s -m <marker name>
+
+#>>*******************************************************************************************
+
+"""
+OSI model : 
+
+1. Physical Layer - actual trasmission of data happens through this layer in bit format from one device to another device
+2. Data Link layer - data received in frames and sent to pysical layer for further transmission, MAC address wortks on this ;layer
+, address for NIC card, MAC card is of 48 bits (6 Bytes)
+MAC addresses are represented as pairs of hexadecimal digits. For example: B8:8D:12:58:77:32.
+3. Network layer - Contains inforomation about devices IP addresses, multiple protocol works on this layer, like IP, ARP, RARP,
+
+ARp -  address resolution protocol (does mapping between IP addresses and mac addresses)
+RARP - reverse address resoltuion protocol (mapping between mac addresses and IP addresses)
+IP - Internet Protocol helps to uniquely identify each device on the network
+ICMP - ICMP stands for Internet Control Message Protocol. ICMP is a part of IP protocol suite. ICMP is an error reporting and network diagnostic protocol. 
+
+
+Trasnport Lyer - TCP/UDP =
+
+=> TCP - transmission control protocol
+=> UDP - user datagram protocol
+
+=> difference between TCP and UDP : TCP connection orineted protocol, reliable, less faster as compared to UDP
+
+=> UDp -  connectionless, less reliable, but faster then TCP
+
+TCP - data sequence => Can sequence data (send in a specific order) => Cannot sequence or arrange data
+Slow, but complete data delivery
+
+Fast, but at risk of incomplete data delivery
+
+TCP best for :
+1. Email or texting
+2. File transfrers
+3. web browsing
+
+UDP best for :
+1. Live streaming
+2. Video chat
+3. online gaming
+
+Session layer : Establish the session between nodes and terminate it after data transfer
+Presentation Layer : 
+
+
+Application Layer : Protocls used :
+
+-> Telnet/SSH
+-> FTP
+-> SMTP
+-> DNS
+-> POP
+-> NFS
+-> SNMP - The Port number of SNMP is 161(TCP) and 162(UDP). 
+-> DHCP
+-> HTTP/HTTPS
+
+
+
+**************************
+IP - IPv4 and IPv6 addresses are represented as pairs of hexadecimal digits.
+
+IPV4 - 32 bits
+
+10.20.30.40 - class A
+
+152.255.242.123 - class B
+
+192.168.232.255 - class C
+
+class range :
+****************
+
+class A - 0-127
+class B -128-191
+class C - 192 - 223
+class D - 224-239
+class E - 240-255
+*************************
+
+
+# ifconfig -a
+
+class A - 
+
+0.0.0.0 - 127.255.255.255 => class A
+
+*******************************************
+0.0.0.0 - 127.255.255.255   => class A
+
+#=> 10.0.0.0 to 10.255.255.255 => class A  (private IP address range reserved)
+
+#=> 172.16.0.0 to 172.16.255.255 => class B
+
+#=> 192.168.0.0 to 192.168.255.255 => class C
+
+#> 224.0.0.0 to 239.255.255.255 => class D
+
+=> CIDR - classless domain routing 
+
+IPv4 address : 0.0.0.0 - 255.255.255.255 => 2 *32 - 2 (total hosts )
+
+=> 
+Classless Inter-Domain Routing (CIDR) is a method of IP address allocation and IP routing that allows for more 
+efficient use of IP addresses.
+
+10.0.0.0 - 255.255.255.0 => 
+
+10.0.0.0/24 => network bits and hosts bits
+
+10.20.30.40/16  => 2*16 -2 hosts
+10.20.40.60/24 => 2*8 -2 hosts
+
+10.30.0.0/8 => 2 *24 -2 hosts
+
+Class A network contains 224(IP addresses) or 224 - 2 Hosts,
+Class B network contains 216(IP addresses) or 216 - 2 Hosts,
+Class C network contains 28(IP addresses) or 28 - 2 Hosts 
+
+20.10.50.100/20  => 2 * 12 -2 hosts
+
+CIDR, or Classless Inter-Domain Routing, is a networking technique introduced to overcome the limitations of the traditional IP addressing system, which was based on classes. 
+CIDR allows more flexible allocation of IP addresses by eliminating the strict class-based divisions.
+
+
+Well-Known Ports (0-1023) that are reserved for reserved for standard services and protocols. They are assigned and 
+controlled by IANA (Internet Assigned Numbers Authority). It includes things such as HTTP (80), HTTPS (443), FTP (21), SSH (22),
+and SMTP (25).
+
+
+FTP - 21
+SSH - 22
+SMTP -25
+DNS - 53
+DHCP -67  Dynamic Host Configuration Protocol (DHCP) is a network management system that automatically 
+assigns IP addresses to devices on a network. 
+DHCP also assigns other configuration information, like subnet masks and default gateways. 
+
+HTTP -80
+HTTPS : 443
+POP : 110
+NFS : 2049
+
+
+
+Virtual LAN (VLAN)
+Last Updated : 24 Mar, 2023
+Virtual LAN (VLAN) is a concept in which we can divide the devices logically on layer 2 (data link layer). Generally, layer 3 devices divide the broadcast domain but the broadcast domain can be divided by switches using the concept of VLAN. 
+
+A broadcast domain is a network segment in which if a device broadcast a packet then all the devices in the same broadcast domain will receive it. The devices in the same broadcast domain will receive all the broadcast packets but it is limited to switches only as routers don’t forward out the broadcast packet. To forward out the packets to different VLAN (from one VLAN to another) or broadcast domains, inter Vlan routing is needed. Through VLAN, different small-size sub-networks are created which are comparatively easy to handle. 
+
+VLAN ranges:
+
+VLAN 0, 4095: These are reserved VLAN which cannot be seen or used.
+VLAN 1: It is the default VLAN of switches. By default, all switch ports are in VLAN. This VLAN can’t be deleted or edit but can be used.
+VLAN 2-1001: This is a normal VLAN range. We can create, edit and delete these VLAN.
+VLAN 1002-1005: These are CISCO defaults for fddi and token rings. These VLAN can’t be deleted.
+Vlan 1006-4094: This is the extended range of Vlan.
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
