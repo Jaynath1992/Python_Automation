@@ -1,0 +1,860 @@
+"""
+
+Program 1: FInd the max product of 2 elements
+Program 2: longest common prefix
+Program 3: create class and object based program
+
+
+Program 4: fiind the max. number of repeating item in list
+# may be asked
+Program 4: longest common substring
+
+
+# find non-overlapping times interval
+#
+# palindromes one, from list of strings
+
+#
+
+"""
+
+
+def longest_common_prefix(l1):
+  """longest common prefix"""
+
+
+  prefix_str = ''
+  try:
+    for i in range(len(l1)):
+      j = i+1
+      for j in range(j, len(l1)):
+        if l1[i] in l1[i][j]:
+          prefix_str = prefix_str + l1[0:i]
+    return prefix_str
+  except:
+    pass
+
+if __name__ == '__main__':
+  #print('hello')
+  l1 = ["flower", "flow", "flight"]
+  out = longest_common_prefix(l1)
+  print(out)
+
+
+class Student(object):
+
+    def __init__(self, name, age, rollno, location):
+        self.name = name
+        self.age = age
+        self.rollno = rollno
+        self.location = location
+
+    def display(self):
+        print('Student information is : name :{}, age : {}, rollno : {}, location : {}'.format(self.name, self.age,
+                                                                                               self.rollno,
+                                                                                               self.location))
+
+
+class Branch(Student):
+
+    def __init__(self, name, age, rollno, location, department):
+        super().__init__(name, age, rollno, location)
+        self.department = department
+
+    def show_dept(self):
+        super().display()
+        print('Student department is : {}'.format(self.department))
+
+
+if __name__ == '__main__':
+    b = Branch('Jaynath', 30, 12, 'Bengaluru', 'CSE')
+    b.show_dept()
+
+
+import numpy as np
+
+
+def get_transpose_matrix(l1):
+  """find tranpose of matrix"""
+  transpose_list = np.array(l1)
+  out = transpose_list.transpose()
+  return out
+
+if __name__ == '__main__':
+  mat=[[1,2,3],[4,5,6],[7,8,9]]
+  print('transpose matric is :')
+  out = get_transpose_matrix(mat)
+  print(out)
+
+
+
+def find_most_occuring_element_and_count_from_list(l1):
+  """find most occuring element and count """
+
+
+  item_count_dict = {item:l1.count(item)for item in l1}
+
+  sorted_item_count_dict = sorted(item_count_dict.items(), key=lambda x: x[1], reverse=True)
+  max_occured_element = sorted_item_count_dict[0]
+  return max_occured_element
+
+
+if __name__ == '__main__':
+  lst=[1,2,3,2,3,2,4,5,5,6,5,7,5,4,3,2,1,2,3,4,5,6,7,8]
+  output = find_most_occuring_element_and_count_from_list(lst)
+  print(output)
+
+import numpy as np
+
+
+def get_transpose_matrix(l1):
+    """find transpose of matrix"""
+    transpose_list = []
+    for i in range(len(l1)):
+        sublist = []
+        for j in range(len(l1[0])):
+            sublist.append(l1[j][i])
+        transpose_list.append(sublist)
+    return transpose_list
+
+
+if __name__ == '__main__':
+    mat = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    print('transpose matrix is :')
+    out = get_transpose_matrix(mat)
+    print(out)
+
+
+def get_transpose_matrix_l1(l1):
+    """find transpose of matrix"""
+
+    x = l1[0]
+    for i in range(len(x)):
+        for j in range(len(l1)):
+            l1[j][i] = x[j]
+    return l1
+
+if __name__ == '__main__':
+    mat = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+    print('transpose matrix is :')
+    out = get_transpose_matrix_l1(mat)
+    print(out)
+
+"""
+
+l1 = [2, 4, 12, -5, -100, 6, 12]
+
+
+"""
+
+
+def find_max_product(l1):
+    product_list = []
+    max = l1[0]
+    out = None
+    # try:
+    for i in range(len(l1)):
+        if i == len(l1):
+            break
+        for j in range(i + 1, len(l1)):
+            product = l1[i] * l1[j]
+            # product_list.append(product)
+            if product > max:
+                max = product
+        # print(product_list)
+    #     # out = max(product_list)
+    # except:
+    #     pass
+    return max
+
+
+if __name__ == '__main__':
+    l1 = [2, 4, 12, -5, -100, 6, 12, -6, -100]
+
+    out = find_max_product(l1)
+    print(out)
+
+li = [1,2,34,-12,-100,1234]
+
+max = li[0]
+for i in range(len(li)-1):
+    for j in range(i+1,len(li)):
+        if li[i]*li[j]>max:
+            max = li[i]*li[j]
+print(max)
+
+"""
+{
+  "data": [
+    {
+      "id": "1",
+      "attributes": {
+        "name": "Product A",
+        "price": 100,
+        "category": "Electronics"
+      }
+    },
+    {
+      "id": "2",
+      "attributes": {
+        "name": "Product B",
+        "price": 200,
+        "category": "Furniture"
+      }
+    },
+    {
+      "id": "3",
+      "attributes": {
+        "name": "Product C",
+        "price": 150,
+        "category": "Electronics"
+      }
+    }
+  ]
+}
+
+# output :
+
+{
+  "Electronics": 250,
+  "Furniture": 200
+}
+
+"""
+
+input_json = """{
+  "data": [
+    {
+      "id": "1",
+      "attributes": {
+        "name": "Product A",
+        "price": 100,
+        "category": "Electronics"
+      }
+    },
+    {
+      "id": "2",
+      "attributes": {
+        "name": "Product B",
+        "price": 200,
+        "category": "Furniture"
+      }
+    },
+    {
+      "id": "3",
+      "attributes": {
+        "name": "Product C",
+        "price": 150,
+        "category": "Electronics"
+      }
+    }
+  ]
+}
+"""
+
+import json
+
+
+def get_data_from_json(input_json):
+    data = json.loads(input_json)
+    json_data = data['data']
+    output_dict = dict()
+    for item in json_data:
+        item_category = item['attributes']['category']
+        item_price = item['attributes']['price']
+        if item_category in output_dict.keys():
+            output_dict[item_category] += item_price
+        else:
+            output_dict[item_category] = item_price
+    return output_dict
+
+
+if __name__ == '__main__':
+    output_dict = get_data_from_json(input_json)
+    print(output_dict)
+
+"""
+existing_dict = {'C': 10, 'A': [8, 5, 7], 'B': (4, 9)}
+
+write in a class ,
+
+user passed : input(8, 10)
+
+a = 8
+b = 10
+
+if 8 is  part of the key then dont add it else add it
+
+
+output = {'C': "10,8", 'A': [8, 5, 7, 10], 'B': (4, 9, 8, 10)}
+"""
+
+
+class AppendUserInput(object):
+
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+    def append_input(self):
+        d1 = {'C': '10', 'A': [8, 5, 7], 'B': (4, 9)}
+        for key, value in d1.items():
+            if isinstance(value, str):
+                if not value.find(str(self.a)) >= 0:
+                    d1[key] = d1[key] + ',' + str(self.a)
+                if not value.find(str(self.b)) >= 0:
+                    print(value.find(str(self.b)))
+                    d1[key] = d1[key] + ',' + str(self.b)
+            elif isinstance(value, list):
+                if self.a not in value:
+                    d1[key].append(self.a)
+                if self.b not in value:
+                    d1[key].append(self.b)
+            elif isinstance(value, tuple):
+                out = list(d1[key])
+                if self.a not in value:
+                    out.append(self.a)
+                    d1[key] = tuple(out)
+                if self.b not in value:
+                    out.append(self.b)
+                    d1[key] = tuple(out)
+        return d1
+
+
+"""
+
+num1 = 456
+num2 = 789
+
+1245
+
+out = 456 + 789
+
+
+123
+001
+
+"""
+
+
+def get_addition(num1, num2):
+    l1 = len(str(num1))
+    l2 = len(str(num2))
+
+    if l1 != l2:
+        pass
+    elif l1 == l2:
+        # perform addition through carry forward concept
+        output = list()
+        carry_forward = 0
+        for i in range(1, l1 + 1):
+
+            # print(int(str(num1)[-i]))
+            # print(int(str(num2)[-i]))
+            sum = int(carry_forward) + int(str(num1)[-i]) + int(str(num2)[-i])
+            # print(sum)
+            if sum >= 10:
+                if i == l1:
+                    output.append(str(sum))
+                else:
+                    carry_forward = str(sum)[-2]
+                    # print(carry_forward)#15
+                    out_digit = str(sum)[-1]
+                    # print(out_digit)
+                    output.append(out_digit)
+            else:
+                output.append(str(sum))
+
+        return output
+
+
+if __name__ == '__main__':
+    out = get_addition(2354, 1232)
+    out = ''.join(out[::-1])
+    print(out)
+
+
+# l1 = [2, 5, 7, 8, 3, 2, 9, 1]
+
+# k = 3
+
+# output = based on k value, it will
+# out_list = [7, 8, 8, 8, ....]
+
+
+def get_required_list(l1, k):
+    out_list = list()
+    j = 0
+    for i in range(len(l1)):
+        j = i + k
+        sub_list = l1[i:j]
+        #print(sub_list)
+        if len(sub_list) < k:
+            break
+        max_num = max(sub_list)
+        out_list.append(max_num)
+    return out_list
+
+## Srynash provided programs :
+
+"""Given an unsorted array arr of size n that contains only non negative integers, find a sub-array (continuous elements) that has sum equal to s. You mainly need to return the left and right indexes(1-based indexing) of that subarray.# In case of multiple subarrays, return the subarray indexes which come first on moving from left to right. If no such subarray exists return an array consisting of element -1.
+# Examples:# Input: arr[] = [1,2,3,7,5], n = 5, s = 12# Output: 2 4# Explanation: The sum of elements from 2nd to 4th position is 12.
+"""
+def getTheIndex(li, s):    
+  global i    
+  temp = []    
+  for i in range(len(li)):        
+    temp.append(li[i])        
+    for j in range(i + 1, len(li)):            
+      temp.append(li[j])            
+      print(temp)            
+      if sum(temp) == s:                
+        return i + 1, j + 1            
+      if sum(temp) > s:                
+        temp = []                
+        break        
+      temp = []    
+      if i == len(li)-1 and sum(temp) != s:        
+          return -1li = [1, 2, 3, 7, 5]s = 6print(getTheIndex(li, s))
+
+
+## merge 2 unsorted list
+
+a = [1,56,78,79,100]b= [0,2,88,89]c = []
+while a and b:    
+if a[0]<b[0]:        
+  c.append(a.pop(0))    
+else:        
+  x  c.append(b.pop(0))print(c+a+b)
+
+
+"""
+generate a list of data of size 10 of integers,
+value can be any random, 1-40
+"""
+import random
+
+
+def generate_list_of_integers(n):
+    max_range = 40
+    out_list = list()
+    l = list(range(max_range))
+    for i in range(n):
+        out_list.append(random.choice(l))
+    
+    return out_list
+
+
+
+def get_required_sum_from_list_pair_items(l1, expected_sum):
+    """ return items from list whose sum are equal to expected value(40)"""
+    try:
+        out_list = list()
+        for i in range(len(l1)):
+            for j in range(i+1, len(l1)):
+                if l1[i] + l1[j] == expected_sum:
+                    out_list.append([l1[i], l1[j]])
+        return out_list
+    except Exception as e:
+        pass
+
+
+
+def get_smallest_element_from_unsorted_list(l1):
+    """find the smallest element from unsorted list """
+    min = l1[0]
+    for i in range(1, len(l1)):
+        
+
+
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    n = 10
+    #out_list = generate_list_of_integers(n)
+    out_list = [17, 23, 19, 21, 40, 50, 13]
+    #print(out_list)
+    expected_sum = 40
+
+
+    out = get_required_sum_from_list_pair_items(out_list, expected_sum)
+    print(out)
+    
+
+
+
+
+
+
+"""
+generate a list of data of size 10 of integers,
+value can be any random, 1-40
+"""
+import random
+
+
+def generate_list_of_integers(n):
+    max_range = 40
+    out_list = list()
+    l = list(range(max_range))
+    for i in range(n):
+        out_list.append(random.choice(l))
+    
+    return out_list
+
+
+
+def get_required_sum_from_list_pair_items(l1, expected_sum):
+    """ return items from list whose sum are equal to expected value(40)"""
+    try:
+        out_list = list()
+        for i in range(len(l1)):
+            for j in range(i+1, len(l1)):
+                if l1[i] + l1[j] == expected_sum:
+                    out_list.append([l1[i], l1[j]])
+        return out_list
+    except Exception as e:
+        pass
+
+
+
+def get_smallest_element_from_unsorted_list(l1):
+    """find the smallest element from unsorted list """
+    min = l1[0]
+    for i in range(1, len(l1)):
+        
+
+
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    n = 10
+    #out_list = generate_list_of_integers(n)
+    out_list = [17, 23, 19, 21, 40, 50, 13]
+    #print(out_list)
+    expected_sum = 40
+
+
+    out = get_required_sum_from_list_pair_items(out_list, expected_sum)
+    print(out)
+    
+
+def getNthNumber(li,k):
+#     for i in range(k):
+#         for j in range(i,len(li)):
+#             if li[i]<li[j]:
+#                 li[i],li[j]= li[j],li[i]
+#     print(li)
+#     return li[k-1]
+
+# li = [1,2,3,34,56,45,34,23]
+# k=3
+# print(getNthNumber(li,k))
+
+
+"""
+ 
+num1 = 456
+num2 = 789
+ 
+1245
+ 
+out = 456 + 789
+ 
+ 
+123
+001
+ 
+"""
+ 
+def get_addition(num1, num2):
+    l1 = len(str(num1))
+    l2 = len(str(num2))
+    if l1 != l2:
+        pass
+    elif l1 == l2:
+        # perform addition through carry forward concept
+        output = list()
+        carry_forward = 0
+        for i in range(1, l1 + 1):
+ 
+            #print(int(str(num1)[-i]))
+            #print(int(str(num2)[-i]))
+            sum = int(carry_forward) + int(str(num1)[-i]) + int(str(num2)[-i])
+            #print(sum)
+            if sum >=10:
+                if i == l1:
+                    output.append(str(sum))
+                else:
+                    carry_forward = str(sum)[-2]
+                    #print(carry_forward)#15
+                    out_digit = str(sum)[-1]
+                    #print(out_digit)
+                    output.append(out_digit)
+            else:
+                output.append(str(sum))
+        return output
+ 
+if __name__ == '__main__':
+    out = get_addition(2354, 1232)
+    out = ''.join(out[::-1])
+    print(out)
+
+# l1 = [2, 5, 7, 8, 3, 2, 9, 1]
+ 
+# k = 3
+ 
+#output = based on k value, it will 
+# out_list = [7, 8, 8, 8, ....]
+ 
+ 
+def get_required_list(l1, k):
+    out_list = list()
+    j = 0
+    for i in range(len(l1)):
+            j = i + k
+            sub_list = l1[i:j]
+            print(sub_list)
+            if len(sub_list) < k:
+                break
+            max_num = max(sub_list)
+            out_list.append(max_num)
+    return out_list
+ 
+ 
+if __name__ == '__main__':
+    l1 = [2, 5, 7, 8, 3, 2, 9, 1]
+    k = 5
+    out_list = get_required_list(l1, k)
+    print(out_list)
+
+"""
+existing_dict = {'C': 10, 'A': [8, 5, 7], 'B': (4, 9)}
+ 
+write in a class ,
+ 
+user passed : input(8, 10)
+ 
+a = 8
+b = 10
+ 
+if 8 is  part of the key then dont add it else add it
+ 
+ 
+output = {'C': "10,8", 'A': [8, 5, 7, 10], 'B': (4, 9, 8, 10)}
+"""
+ 
+class AppendUserInput(object):
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+    def append_input(self):
+        d1 = {'C': '10', 'A': [8, 5, 7], 'B': (4, 9)}
+        for key, value in d1.items():
+            if isinstance(value, str):
+                if not value.find(str(self.a)) >= 0:
+                    d1[key] = d1[key] + ',' + str(self.a)
+                if not value.find(str(self.b)) >= 0:
+                    print(value.find(str(self.b)))
+                    d1[key] = d1[key] + ',' + str(self.b)
+            elif isinstance(value, list):
+                if self.a not in value:
+                    d1[key].append(self.a)
+                if self.b not in value:
+                    d1[key].append(self.b)
+            elif isinstance(value, tuple):
+                out = list(d1[key])
+                if self.a not in value:
+                    out.append(self.a)
+                    d1[key] = tuple(out)
+                if self.b not in value:
+                    out.append(self.b)
+                    d1[key] = tuple(out)
+        return d1
+ 
+if __name__ == '__main__':
+    obj1 = AppendUserInput(8, 10)
+    out_dict = obj1.append_input()
+    print('Output dict is : {}'.format(out_dict))
+
+"""
+{
+  "data": [
+    {
+      "id": "1",
+      "attributes": {
+        "name": "Product A",
+        "price": 100,
+        "category": "Electronics"
+      }
+    },
+    {
+      "id": "2",
+      "attributes": {
+        "name": "Product B",
+        "price": 200,
+        "category": "Furniture"
+      }
+    },
+    {
+      "id": "3",
+      "attributes": {
+        "name": "Product C",
+        "price": 150,
+        "category": "Electronics"
+      }
+    }
+  ]
+}
+ 
+# output :
+ 
+{
+  "Electronics": 250,
+  "Furniture": 200
+}
+ 
+"""
+ 
+input_json = """{
+  "data": [
+    {
+      "id": "1",
+      "attributes": {
+        "name": "Product A",
+        "price": 100,
+        "category": "Electronics"
+      }
+    },
+    {
+      "id": "2",
+      "attributes": {
+        "name": "Product B",
+        "price": 200,
+        "category": "Furniture"
+      }
+    },
+    {
+      "id": "3",
+      "attributes": {
+        "name": "Product C",
+        "price": 150,
+        "category": "Electronics"
+      }
+    }
+  ]
+}
+"""
+ 
+import json
+ 
+def get_data_from_json(input_json):
+    data = json.loads(input_json)
+    json_data = data['data']
+    output_dict = dict()
+    for item in json_data:
+        item_category = item['attributes']['category']
+        item_price = item['attributes']['price']
+        if item_category in output_dict.keys():
+            output_dict[item_category] += item_price
+        else:
+            output_dict[item_category] = item_price
+    return output_dict
+if __name__ == '__main__':
+    output_dict = get_data_from_json(input_json)
+    print(output_dict)
+
+"""
+existing_dict = {'C': 10, 'A': [8, 5, 7], 'B': (4, 9)}
+ 
+write in a class ,
+ 
+user passed : input(8, 10)
+ 
+a = 8
+b = 10
+ 
+if 8 is  part of the key then dont add it else add it
+ 
+ 
+output = {'C': "10,8", 'A': [8, 5, 7, 10], 'B': (4, 9, 8, 10)}
+"""
+ 
+class AppendUserInput(object):
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+    def append_input(self):
+        d1 = {'C': '10', 'A': [8, 5, 7], 'B': (4, 9)}
+        for key, value in d1.items():
+            if isinstance(value, str):
+                if not value.find(str(self.a)) >= 0:
+                    d1[key] = d1[key] + ',' + str(self.a)
+                if not value.find(str(self.b)) >= 0:
+                    print(value.find(str(self.b)))
+                    d1[key] = d1[key] + ',' + str(self.b)
+            elif isinstance(value, list):
+                if self.a not in value:
+                    d1[key].append(self.a)
+                if self.b not in value:
+                    d1[key].append(self.b)
+            elif isinstance(value, tuple):
+                out = list(d1[key])
+                if self.a not in value:
+                    out.append(self.a)
+                    d1[key] = tuple(out)
+                if self.b not in value:
+                    out.append(self.b)
+                    d1[key] = tuple(out)
+        return d1
+ 
+if __name__ == '__main__':
+    obj1 = AppendUserInput(8, 10)
+    out_dict = obj1.append_input()
+    print('Output dict is : {}'.format(out_dict))
+
+# SURYNAHS GIVEN PROBLEM :
+
+li = [1,2,34,-12,-100,-1234]max = li[0]for i in range(len(li)-1):    for j in range(i+1,len(li)):        if li[i]*li[j]>max:            max = li[i]*li[j]print(max)
+
+
+## FLATTEN LIST :
+
+li = [1,2,[3,4],[5,6,7],9,10]
+out = []
+def flatten(li):
+    i = 0
+    while i < len(li):
+        if type(li[i]) == list:
+            flatten(li[i])
+            i+=1
+        else:
+            out.append(li[i])
+            i+=1
+    return out
+
+print(flatten(li))
+
+
+
+if __name__ == '__main__':
+    l1 = [2, 5, 7, 8, 3, 2, 9, 1]
+    k = 5
+    out_list = get_required_list(l1, k)
+    print(out_list)
+
+if __name__ == '__main__':
+    obj1 = AppendUserInput(8, 10)
+    out_dict = obj1.append_input()
+    print('Output dict is : {}'.format(out_dict))
+
