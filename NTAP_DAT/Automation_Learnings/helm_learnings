@@ -1,0 +1,496 @@
+Helm is widely known as "the package manager for Kubernetes". Although it presents itself like this, its scope goes way beyond that of a simple package manager.
+Helm is an open-source project which was originally created by DeisLabs and donated to CNCF, which now maintains it. The original goal of Helm was to provide users with a better way to manage all the Kubernetes YAML files we create on Kubernetes projects
+The path Helm took to solve this issue was to create Helm Charts. Each chart is a bundle with one or more Kubernetes manifests – a chart can have child charts and dependent charts as well.
+This means that Helm installs the whole dependency tree of a project if you run the install command for the top-level chart. You just a single command to install your entire application, instead of listing the files to install via kubectl.
+
+Charts allow you to version your manifest files too, just like we do with Node.js or any other package. This lets you install specific chart versions, which means keeping specific configurations for your infrastructure in the form of code.
+
+Helm also keeps a release history of all deployed charts, so you can go back to a previous release if something went wrong.
+
+  How to Create a Helm Chart
+*************************************
+
+It's pretty easy to create a chart in Helm. First, you need to have Helm installed. Then, just type in helm create <chart name> and it will create a directory filled with files and other directories. Those files are required for Helm to create a chart.
+
+Let's take a closer look at what this file tree looks like and what the files are within it:
+
+chart.yaml: This is where you'll put the information related to your chart. That includes the chart version, name, and description so you can find it if you publish it on an open repository. Also in this file you'll be able to set external dependencies using the dependencies key.
+values.yaml: Like we saw before, this is the file that contains defaults for variables.
+templates (dir): This is the place where you'll put all your manifest files. Everything in here will be passed on and created in Kubernetes.
+charts: If your chart depends on another chart you own, or if you don't want to rely on Helm's default library (the default registry where Helm pull charts from), you can bring this same structure inside this directory. Chart dependencies are installed from the bottom to the top, which means if chart A depends on chart B, and B depends on C, the installation order will be C ->B →A.
+
+
+Introduction to Helm : (Introduced first time in 2015) :
+
+Helm helps you manage k8s applications with helm charts which help you to define, install and upgrade even the most complex Kubernetes applications.
+Helm is the k8s equivalent of yum or apt.
+The main building block of helm based deployments are helm charts. These charts describe a configurable set of dynamically generated k8s resources.
+The chart can either be stored locally or fetched from remote chart repository.
+
+
+How to install Helm :
+**************************
+Helm now has an installer script that will automatically grab the latest version of Helm and install it locally. You can fetch that script, and then execute it locally
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+ 
+root@cvs-k8s-jaynath-01:~# ./get_helm.sh
+Helm v3.11.2 is available. Changing from version v3.10.3.
+Downloading https://get.helm.sh/helm-v3.11.2-linux-amd64.tar.gz
+Verifying checksum... Done.
+Preparing to install helm into /usr/local/bin
+helm installed into /usr/local/bin/helm
+ 
+root@cvs-k8s-jaynath-01:~# helm version
+version.BuildInfo{Version:"v3.11.2", GitCommi
+
+Why to use Helm :
+
+Writing and maintaining kubernetes YAML manifest for all the required kubernetes objects can be a time consuming and tedious task.
+Helm simplifies the process and create a single package that can be advertised to your cluster
+Helm k8s automatically maintains a database of all versions of your releases. So whenever something goes wrong during deployments, you can rollback to it's previous version.  
+  
+Some Keywords to understand Helm :
+
+Chart : A chart is a helm package. It contains all of the resource definitions necessary to run an application, tool or service inside of k8s cluster.
+
+Or Helm charts are simply K8s YAML manifests combined into a single package that can be advertised to your K8s cluster.
+
+ Release : A release is an instance of a chart running in a k8s cluster. One chart can be installed many times into the same cluster and each time it is installed a new release is created.
+
+Consider a MYSQL chart, if you can install that chart twice , each one will have it's own release, which will be in turn have it's own release name. Helm keeps track of all chart execution (Install/Upgrade/Rollback)
+
+Repository : Location where packaged chart can be stored and shared.  
+
+
+Helm Commands :
+
+*************************
+
+=> Helm repo command : Interact with charts repository, Helm3 no longer ships with a default chart repository.
+
+→ helm repo list : list down all chart repositories present on your k8s cluster
+
+
+root@cvs-k8s-jaynath-01:~# helm repo list
+NAME            URL
+stable          https://charts.helm.sh/stable
+testing         https://helmcharts.qstack.com/testing
+timescale       https://charts.timescale.com/
+
+→ helm repo add <Name> <URL> : add a chart repository locally on your k8s cluster (for example :  helm repo add stable  https://charts.helm.sh/stable)
+root@cvs-k8s-jaynath-01:~# helm repo add stable  https://charts.helm.sh/stable
+"stable\u00a0" has been added to your repositories
+root@cvs-k8s-jaynath-01:~# helm repo add testing https://helmcharts.qstack.com/testing/
+"testing" has been added to your repositories
+root@cvs-k8s-jaynath-01:~# helm repo add timescaledb 'https://charts.timescale.com/'
+"timescaledb" has been added to your repositories
+root@cvs-k8s-jaynath-01:~# helm repo ls
+NAME            URL
+stable          https://charts.helm.sh/stable
+testing         https://helmcharts.qstack.com/testing/
+timescaledb     https://charts.timescale.com/
+
+helm repo remove <Repository Name> : remove one or more chart repositories (for example : helm repo remove stable)
+
+root@cvs-k8s-jaynath-01:~# helm repo remove stable
+"stable" has been removed from your repositories
+root@cvs-k8s-jaynath-01:~# helm repo remove testing
+"testing" has been removed from your repositories
+root@cvs-k8s-jaynath-01:~# helm repo remove timescale
+"timescale" has been removed from your repositories
+
+→ helm search : for finding charts from your local helm repository present on your k8s cluster : (for example : helm search repo <chart name>) => It will pull all charts from all repositories which are available related to your chart name.
+
+=> If you want to display all charts that are present into your repository, then use this command : # helm search repo   or if you want to search specific chart then : helm search repo <chart_name>
+
+=> To list down all versions of all charts in your repo, use this command : # helm search repo -l
+
+helm search repo -l [your_search_string]
+
+root@cvs-k8s-jaynath-01:~# helm search repo rabbitmq
+NAME                                    CHART VERSION   APP VERSION     DESCRIPTION
+stable /prometheus-rabbitmq-exporter    0.5.6           v0.29.0         DEPRECATED Rabbitmq metrics exporter for promet...
+stable /rabbitmq                        6.18.2          3.8.2           DEPRECATED Open source message broker software ...
+stable /rabbitmq-ha                     1.47.1          3.8.7           DEPRECATED - Highly available RabbitMQ cluster,...
+testing/rabbitmq                        v1.2.48         3.9.8           Open source message broker software that implem...
+root@cvs-k8s-jaynath-01:~# helm search repo timescaledb
+NAME                                    CHART VERSION   APP VERSION     DESCRIPTION
+testing/nfsaas-timescaledb              1.0.2           1               This chart deploys a TimescaleDB cluster based ...
+timescaledb/timescaledb-multinode       0.8.0                           TimescaleDB Multinode Deployment.
+timescaledb/timescaledb-single          0.33.1                          TimescaleDB HA Deployment.
+timescaledb/avalanche                   0.8.1                           A Helm chart run avalanche for benchmarking Pro...
+timescaledb/parca-agent                 0.1.1           v0.10.0-rc.1    Parca Agent deployment.
+timescaledb/parca-server                0.1.0           v0.14.0         Parca Server deployment.
+timescaledb/promscale                   15.0.0          0.17.0          Promscale Connector deployment
+timescaledb/tobs                        20.8.0                          A Helm chart for tobs, The Observability Stack ...
+root@cvs-k8s-jaynath-01:~#
+
+
+→ helm show : Displays all information about a chart (for ex : helm show <values/chart/readme/all/> <ChartName>)
+
+
+# helm show all testing/nfsaas-timescaledb
+# root@cvs-k8s-jaynath-01:~# helm show chart testing/nfsaas-timescaledb
+apiVersion: v1
+appVersion: "1"
+dependencies:
+- name: postgresql
+  repository: https://kubernetes-charts.storage.googleapis.com
+  version: 3.11.0
+description: This chart deploys a TimescaleDB cluster based on the stable PostgreSQL
+  Helm chart.
+keywords:
+- postgresql
+- postgres
+- database
+- sql
+name: nfsaas-timescaledb
+version: 1.0.2
+ 
+ 
+root@cvs-k8s-jaynath-01:~# helm show values testing/nfsaas-timescaledb
+postgresql:
+  image:
+    registry: registry.qstack.com
+    repository: qstack/timescaledb
+    tag: 1.2.2-pg11-bitnami
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - registry.qstack.com
+
+
+ helm repo update : update information of available charts locally from chart repositories
+
+
+Helm Available Commands:
+   
+  completion  generate autocompletion scripts for the specified shell
+  create      create a new chart with the given name
+  dependency  manage a chart's dependencies
+  env         helm client environment information
+  get         download extended information of a named release
+  help        Help about any command
+  history     fetch release history
+  install     install a chart
+  lint        examine a chart for possible issues
+  list        list releases
+  package     package a chart directory into a chart archive
+  plugin      install, list, or uninstall Helm plugins
+  pull        download a chart from a repository and (optionally) unpack it in local directory
+  push        push a chart to remote
+  registry    login to or logout from a registry
+  repo        add, list, remove, update, and index chart repositories
+  rollback    roll back a release to a previous revision
+  search      search for a keyword in charts
+  show        show information of a chart
+  status      display the status of the named release
+  template    locally render templates
+  test        run tests for a release
+  uninstall   uninstall a release
+  upgrade     upgrade a release
+  verify      verify that a chart at the given path has been signed and is valid
+  version     print the client version information
+
+
+→ helm install : Install a package : for example : # helm install <release_name> <chart_name>
+
+    # helm install mychart stable/tomcat --wait --timeout 10s 
+
+→ helm create : create a new chart with given name
+
+   # helm create helloworld
+
+→ helm list or helm list  -A  : To see all deployed helm charts
+
+
+
+# helm list
+NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# helm ls -A
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                        APP VERSION
+rabbitmq        rabbitmq        1               2023-04-03 06:50:47.331761961 +0000 UTC deployed        rabbitmq-v1.2.48             3.9.8
+timescaledb     sde             1               2023-03-24 06:56:50.4635563 +0000 UTC   deployed        timescaledb-single-0.7.1
+  
+# To delete deployed helm charts use below commands
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# helm delete rabbitmq -n rabbitmq
+release "rabbitmq" uninstalled
+root@cvs-k8s-jaynath-01:~/jay_helm# helm delete timescaledb -n sde
+release "timescaledb" uninstalled
+
+When you create helm chart, then few things get by default created like Chart.yaml, charts directory, templates directory, values.yaml
+
+# helm create helloworld  or you can give any name instead of helloworld , like jaynath-testing or any other name
+=> By default helm create command deploy ngnix deployment
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# tree helloworld/
+helloworld/
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+
+Steps to install chart name and install it :
+------------------------------------------------
+Step 1: Create chart using helm create command
+# helm create <jaynath-testing>      (Here jaynath-testing is the name of the chart)
+ 
+Step 2: Install chart using helm install command.
+# helm install jaynath-deployment jaynath-testing/ -n jaynath
+ 
+Step 3: Check the chart deployment status
+# helm ls -n <namespace>
+ 
+Step 4: Get all k8s resources created for your chart deployment in that particular namespace
+# kubectl get all -n jaynath
+ 
+Step 5: You will see that all charts are created
+-----------------------------------------------------------------------------------------------------
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# helm create jaynath-testing
+Creating jaynath-testing
+root@cvs-k8s-jaynath-01:~/jay_helm# ls
+jaynath-testing
+root@cvs-k8s-jaynath-01:~/jay_helm# tree jaynath-testing/
+jaynath-testing/
+├── charts
+├── Chart.yaml
+├── templates
+│   ├── deployment.yaml
+│   ├── _helpers.tpl
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── NOTES.txt
+│   ├── serviceaccount.yaml
+│   ├── service.yaml
+│   └── tests
+│       └── test-connection.yaml
+└── values.yaml
+ 
+3 directories, 10 files
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# helm install jaynath-deployment jaynath-testing/ -n jaynath
+NAME: jaynath-deployment
+LAST DEPLOYED: Sat Apr  8 17:11:47 2023
+NAMESPACE: jaynath
+STATUS: deployed
+REVISION: 1
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# helm ls -n jaynath
+NAME                    NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                        APP VERSION
+jaynath-deployment      jaynath         1               2023-04-08 17:11:47.584313541 +0000 UTC deployed        jaynath-testing-0.1.0        1.16.0
+ 
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# kubectl get pods -n jaynath
+NAME                                                 READY   STATUS    RESTARTS   AGE
+jaynath-deployment-jaynath-testing-754cffd5c-dnvdn   1/1     Running   0          25s
+root@cvs-k8s-jaynath-01:~/jay_helm# kubectl get all -n jaynath
+NAME                                                     READY   STATUS    RESTARTS   AGE
+pod/jaynath-deployment-jaynath-testing-754cffd5c-dnvdn   1/1     Running   0          38s
+ 
+NAME                                         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+service/jaynath-deployment-jaynath-testing   ClusterIP   10.100.72.82   <none>        80/TCP    38s
+ 
+NAME                                                 READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/jaynath-deployment-jaynath-testing   1/1     1            1           38s
+ 
+NAME                                                           DESIRED   CURRENT   READY   AGE
+replicaset.apps/jaynath-deployment-jaynath-testing-754cffd5c   1         1         1       38s
+ 
+=> Now you will see that service is created with ClusterIp with Port 80, try to access nginx using curl command.
+ 
+root@cvs-k8s-jaynath-01:~/jay_helm# curl http://10.100.72.82:80
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+ 
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+ 
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+
+Install tomcat chart :
+
+Step 1 # First Add bitnami helm chart repository for installing tomcat
+ 
+   -> helm repo add bitnami https://charts.bitnami.com/bitnami
+ 
+Step 2 # Install tomcat chart using helm from bitnami repository
+-> helm install my-release bitnami/tomcat
+ 
+ 
+ 
+root@cvs-k8s-jaynath-01:~#  helm repo add bitnami https://charts.bitnami.com/bitnami
+"bitnami" has been added to your repositories
+root@cvs-k8s-jaynath-01:~# helm repo ls
+NAME            URL
+stable          https://charts.helm.sh/stable
+testing         https://helmcharts.qstack.com/testing/
+timescaledb     https://charts.timescale.com/
+bitnami         https://charts.bitnami.com/bitnami
+root@cvs-k8s-jaynath-01:~# helm install my-release bitnami/tomcat
+NAME: my-release
+LAST DEPLOYED: Sun Apr  9 15:09:38 2023
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+CHART NAME: tomcat
+CHART VERSION: 10.6.2
+APP VERSION: 10.1.7
+ 
+** Please be patient while the chart is being deployed **
+ 
+1. Get the Tomcat URL by running:
+ 
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace default -w my-release-tomcat'
+ 
+  export SERVICE_IP=$(kubectl get svc --namespace default my-release-tomcat --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+  echo "Tomcat URL:            http://$SERVICE_IP/"
+  echo "Tomcat Management URL: http://$SERVICE_IP/manager"
+ 
+2. Login with the following credentials
+ 
+  echo Username: user
+  echo Password: $(kubectl get secret --namespace default my-release-tomcat -o jsonpath="{.data.tomcat-password}" | base64 -d)
+ 
+See the helm deployment :
+ 
+root@cvs-k8s-jaynath-01:~# helm ls -A
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+my-release      default         1               2023-04-09 15:09:38.155065151 +0000 UTC deployed        tomcat-10.6.2   10.1.7
+ 
+root@cvs-k8s-jaynath-01:~# kubectl get all
+NAME                                     READY   STATUS    RESTARTS   AGE
+pod/my-release-tomcat-58ddddcfb6-nmdc7   1/1     Running   0          2m36s
+pod/volume-test                          1/1     Running   1          26d
+ 
+NAME                        TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes          ClusterIP      10.96.0.1        <none>        443/TCP        86d
+service/my-release-tomcat   LoadBalancer   10.107.193.187   <pending>     80:31504/TCP   2m36s
+ 
+NAME                                READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/my-release-tomcat   1/1     1            1           2m36s
+ 
+NAME                                           DESIRED   CURRENT   READY   AGE
+replicaset.apps/my-release-tomcat-58ddddcfb6   1         1         1       2m36s
+ 
+ 
+# helm show values bitnami/tomcat
+ 
+Using above command you can see the values.yaml file and you can override those values when upgradig or installing using helm commnad : --set <param>=<value>
+ 
+Helm upgrade command :
+ 
+# helm upgrade my-release bitnami/tomcat --set replicaCount=5
+ 
+root@cvs-k8s-jaynath-01:~# kubectl get all
+NAME                                     READY   STATUS    RESTARTS   AGE
+pod/my-release-tomcat-58ddddcfb6-5gqrn   1/1     Running   0          2m6s
+pod/my-release-tomcat-58ddddcfb6-84hwf   1/1     Running   0          2m6s
+pod/my-release-tomcat-58ddddcfb6-hfqps   1/1     Running   0          2m6s
+pod/my-release-tomcat-58ddddcfb6-nmdc7   1/1     Running   0          9m38s
+pod/my-release-tomcat-58ddddcfb6-rl24v   1/1     Running   0          2m6s
+pod/volume-test                          1/1     Running   1          26d
+ 
+NAME                        TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/kubernetes          ClusterIP      10.96.0.1        <none>        443/TCP        86d
+service/my-release-tomcat   LoadBalancer   10.107.193.187   <pending>     80:31504/TCP   9m38s
+ 
+NAME                                READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/my-release-tomcat   5/5     5            5           9m38s
+ 
+NAME                                           DESIRED   CURRENT   READY   AGE
+replicaset.apps/my-release-tomcat-58ddddcfb6   5         5         5       9m38s
+ 
+ 
+root@cvs-k8s-jaynath-01:~# helm ls -A
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART           APP VERSION
+my-release      default         2               2023-04-09 15:17:09.97500112 +0000 UTC  deployed        tomcat-10.6.2   10.1.7
+ 
+=> If you see the history, there would be 2 revisions now, since you earlier installed and now you upgraded, so you can see 2 revision below
+root@cvs-k8s-jaynath-01:~# helm history my-release
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+1               Sun Apr  9 15:09:38 2023        superseded      tomcat-10.6.2   10.1.7          Install complete
+2               Sun Apr  9 15:17:09 2023        deployed        tomcat-10.6.2   10.1.7          Upgrade complete
+
+
+How to Rollback to previous revision of helm deployment :
+=> Now how to rollback to previous release
+First: List revision numbers by running : helm history <RELEASE_NAME>
+Second: Roll back to the version you want using helm rollback <RELEASE> [REVISION]
+
+root@cvs-k8s-jaynath-01:~# helm history my-release
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+1               Sun Apr  9 15:09:38 2023        superseded      tomcat-10.6.2   10.1.7          Install complete
+2               Sun Apr  9 15:17:09 2023        superseded      tomcat-10.6.2   10.1.7          Upgrade complete
+3               Sun Apr  9 15:20:26 2023        deployed        tomcat-10.6.2   10.1.7          Upgrade complete
+
+Rollback to previous release now :
+
+root@cvs-k8s-jaynath-01:~# helm rollback my-release 1
+Rollback was a success! Happy Helming!
+
+=> As now you can see only one pod running of tomcat after switching back to previous release
+root@cvs-k8s-jaynath-01:~# kubectl get pods
+NAME                                 READY   STATUS    RESTARTS   AGE
+my-release-tomcat-58ddddcfb6-nmdc7   1/1     Running   0          15m
+
+
+Helm Commands : There are two ways to pass configuration data during install.
+--set : specify overrides on the command line
+--values : specify a yaml file with overrides
+
+For example : helm install mychart stable/tomcat -set serviceType=NodePort
+# helm install testchart stable/jenkins --set master.serviceType=NodePort
+
+helm get => Information about from a named release
+helm get <all/manifest/values>  => helm get all mychart
+
+
+
+
+Helm Commands :
+
+-> helm pull : Download a chart from repository
+-> helm pull <chartname> : Download the tar
+-> helm pull --untar <chartname> : Download and untar
+
+Install from a full URL : helm install <mychart> <url>
+
+
+
+
