@@ -1,0 +1,26 @@
+import jwt
+import json
+import time
+import argparse
+from jwt.contrib.algorithms.pycrypto import RSAAlgorithm
+
+parser = argparse.ArgumentParser()
+parser.add_argument("sa_key_json_file_path", type=str,
+                    help="Provide customer project service account key json file path")
+args = parser.parse_args()
+
+
+
+def generate_jwt_token():
+    iat = round(time.time())
+    exp = iat + 3600
+    with open(args.sa_key_json_file_path,'r') as f:
+        data = f.read()
+    json_data = json.loads(data)
+    client_email = json_data["client_email"]
+    payload = {'iss': client_email,'sub': client_email, 'aud': 'https://dev-cloudvolumesgcp-api.netapp.com','iat': iat, 'exp': exp}
+    additional_headers = {'kid': json_data["private_key_id"]}
+    signed_jwt = jwt.encode(payload, json_data["private_key"], headers=additional_headers, algorithm='RS256')
+    return signed_jwt.decode('ascii')
+
+print (generate_jwt_token())
