@@ -215,3 +215,401 @@ No resources found
 root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get pvc -A
 No resources found in default namespace.
 root@cvs-k8s-jaynath-07:~/k8s_install/kubernetes_install_1_21_14# kubectl get sc -A    (A- for all namespaces)
+
+
+
+
+
+***********************************************************************************************************************************************
+
+Steps 2 : Next step is to install helm3 and setting up persistent volume creation (for this you need to setup storage class)
+
+How to install helm3, follow below commands and instructions :
+---------------------------------------------------------------
+
+#Get helm3 from this location and downloadit using curlas below command mentioned :
+
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+
+# above command will download helm3 executable file from that url and save it as output in get_helm.sh
+# after that change executable permission of get_helm3.sh file as 777
+# chmod 700 get_helm.sh	
+# Execute that get_helm.sh file to install helm3 as (./get_helm.sh)	
+# sudo ./get_helm.sh
+
+
+# check helm version after installing helm :
+
+# helm version
+version.BuildInfo{Version:"v3.10.3", GitCommit:"835b7334cfe2e5e27870ab3ed4135f136eecc704", GitTreeState:"clean", GoVersion:"go1.18.9"}
+
+root@cvs-k8s-jaynath-07:~/k8s_install# helm ls
+NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
+root@cvs-k8s-jaynath-07:~/k8s_install# helm repo ls
+Error: no repositories to show
+
+
+# Setup/Init helm, Add stable and testing repo of helm
+
+# helm repo add stable https://charts.helm.sh/stable
+# helm repo add testing https://helmcharts.qstack.com/testing
+# helm repo update
+
+# helm ls   (list helm repos/deployments)
+
+# helm version  (list the version of helm installed)
+
+# list allhelm repository added locally 
+
+root@cvs-k8s-jaynath-07:~/k8s_install# helm repo ls
+NAME    URL
+stable  https://charts.helm.sh/stable
+testing https://helmcharts.qstack.com/testing
+
+root@cvs-k8s-jaynath-07:~/k8s_install# helm ls
+NAME    NAMESPACE       REVISION        UPDATED STATUS  CHART   APP VERSION
+
+# initially there won't be any helm deployment , so it is showing as empty.
+
+
+
+# Now setup persistent volumes, you need to create storage class where you can create PV and PVC whill will be allocated to containers for volume read/write of data. Before deployment of any pod using helm install/upgrade command, this step is mandatory otherwise containers within pod won't be in started state. they will go in pending state because volume would be in pending state
+*************************************************************************************************************************
+
+Initially by default there won't be any storage class, or pv or pvc existing in your cluster. You need to configure it manually. As you can see below , there is no sc, pv or pc initially.
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get sc
+No resources found
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pv
+No resources found
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+No resources found in default namespace.
+
+# Now let's create storage class using following steps, remember storage class is a global entity/objects in k8s, though you can create multiple storage class in k8s cluster, but in pv/pvc yaml file it need to be mntioned from which storage class it should create pv and pvc, so it will pickup from there, if it is not metnioned then it will pickup from default 
+storage class.
+When we create storage class we specify which storage class should be considered as default one
+---------------------------------------------------------------------------------------------------------------------
+Steps 1 : For creating storage class, you need to define  local-path-provisioner storage configuration.
+	# Create default storage class on master node of k8s cluster
+		# git clone https://github.com/rancher/local-path-provisioner.git		(you can clone this in any directory)
+		
+		
+if you downloaded this above files from git, then go and check in local-path-provisioner/deploy/local-path-storage.yaml,
+search for section (kind: StorageClass) as you can see below, we need to add annotations under metadata section, just below name section as you can see below :
+
+# Add this line after name section of kind: StorageClass
+
+annotations:
+        storageclass.kubernetes.io/is-default-class: "true"
+
+# After modifying , section would look like this as below :
+
+# vim ./local-path-provisioner/deploy/local-path-storage.yaml
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-path
+  annotations:
+        storageclass.kubernetes.io/is-default-class: "true"
+provisioner: rancher.io/local-path
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+
+# after above changes, it would become default storage class
+
+# Then apply that local-path-storage configuration using below command :
+		# kubectl apply -f local-path-provisioner/deploy/local-path-storage.yaml
+
+
+Output of above command : after executing above command, it will create local-path-storage namespace automatically
+***************************
+root@cvs-k8s-jaynath-01:~# kubectl apply -f local-path-provisioner/deploy/local-path-storage.yaml
+namespace/local-path-storage created
+serviceaccount/local-path-provisioner-service-account created
+clusterrole.rbac.authorization.k8s.io/local-path-provisioner-role unchanged
+clusterrolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind unchanged
+deployment.apps/local-path-provisioner created
+storageclass.storage.k8s.io/local-path unchanged
+configmap/local-path-config created
+
+
+# Before applying that local-path-storage.yml file, namespace and all pods would be something like this :
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get ns
+NAME              STATUS   AGE
+default           Active   47h
+kube-flannel      Active   47h
+kube-node-lease   Active   47h
+kube-public       Active   47h
+kube-system       Active   47h
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -A
+NAMESPACE      NAME                                         READY   STATUS    RESTARTS   AGE
+kube-flannel   kube-flannel-ds-57xvm                        1/1     Running   0          47h
+kube-flannel   kube-flannel-ds-kpz47                        1/1     Running   0          46h
+kube-flannel   kube-flannel-ds-rwx9z                        1/1     Running   0          46h
+kube-flannel   kube-flannel-ds-sx5bs                        1/1     Running   0          46h
+kube-flannel   kube-flannel-ds-tv4c9                        1/1     Running   0          46h
+kube-system    coredns-558bd4d5db-ljgms                     1/1     Running   0          47h
+kube-system    coredns-558bd4d5db-tfn6s                     1/1     Running   0          47h
+kube-system    etcd-cvs-k8s-jaynath-07                      1/1     Running   0          47h
+kube-system    kube-apiserver-cvs-k8s-jaynath-07            1/1     Running   0          47h
+kube-system    kube-controller-manager-cvs-k8s-jaynath-07   1/1     Running   20         47h
+kube-system    kube-proxy-48v74                             1/1     Running   0          46h
+kube-system    kube-proxy-hv62t                             1/1     Running   0          46h
+kube-system    kube-proxy-lztxm                             1/1     Running   0          47h
+kube-system    kube-proxy-mgmhj                             1/1     Running   0          46h
+kube-system    kube-proxy-x9g8q                             1/1     Running   0          46h
+kube-system    kube-scheduler-cvs-k8s-jaynath-07            1/1     Running   19         47h
+kube-system    weave-net-2pbhd                              2/2     Running   1          46h
+kube-system    weave-net-d7lcb                              2/2     Running   2          46h
+kube-system    weave-net-f2mhc                              2/2     Running   1          46h
+kube-system    weave-net-fw698                              2/2     Running   1          46h
+kube-system    weave-net-zvvgq                              2/2     Running   1          46h
+
+# After applying local-path-storage.yml file, namespace local-path-storage, deployment.apps/local-path-provisioner, storageclass.storage.k8s.io/local-path , and configmap/local-path-config will be created.
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl apply -f local-path-provisioner/deploy/local-path-storage.yaml
+namespace/local-path-storage created
+serviceaccount/local-path-provisioner-service-account created
+clusterrole.rbac.authorization.k8s.io/local-path-provisioner-role created
+clusterrolebinding.rbac.authorization.k8s.io/local-path-provisioner-bind created
+deployment.apps/local-path-provisioner created
+storageclass.storage.k8s.io/local-path created
+configmap/local-path-config created
+
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get ns
+NAME                 STATUS   AGE
+default              Active   47h
+kube-flannel         Active   47h
+kube-node-lease      Active   47h
+kube-public          Active   47h
+kube-system          Active   47h
+local-path-storage   Active   2m21s
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -A
+NAMESPACE            NAME                                         READY   STATUS    RESTARTS   AGE
+kube-flannel         kube-flannel-ds-57xvm                        1/1     Running   0          47h
+kube-flannel         kube-flannel-ds-kpz47                        1/1     Running   0          46h
+kube-flannel         kube-flannel-ds-rwx9z                        1/1     Running   0          46h
+kube-flannel         kube-flannel-ds-sx5bs                        1/1     Running   0          46h
+kube-flannel         kube-flannel-ds-tv4c9                        1/1     Running   0          46h
+kube-system          coredns-558bd4d5db-ljgms                     1/1     Running   0          47h
+kube-system          coredns-558bd4d5db-tfn6s                     1/1     Running   0          47h
+kube-system          etcd-cvs-k8s-jaynath-07                      1/1     Running   0          47h
+kube-system          kube-apiserver-cvs-k8s-jaynath-07            1/1     Running   0          47h
+kube-system          kube-controller-manager-cvs-k8s-jaynath-07   1/1     Running   20         47h
+kube-system          kube-proxy-48v74                             1/1     Running   0          46h
+kube-system          kube-proxy-hv62t                             1/1     Running   0          46h
+kube-system          kube-proxy-lztxm                             1/1     Running   0          47h
+kube-system          kube-proxy-mgmhj                             1/1     Running   0          46h
+kube-system          kube-proxy-x9g8q                             1/1     Running   0          46h
+kube-system          kube-scheduler-cvs-k8s-jaynath-07            1/1     Running   19         47h
+kube-system          weave-net-2pbhd                              2/2     Running   1          46h
+kube-system          weave-net-d7lcb                              2/2     Running   2          46h
+kube-system          weave-net-f2mhc                              2/2     Running   1          46h
+kube-system          weave-net-fw698                              2/2     Running   1          46h
+kube-system          weave-net-zvvgq                              2/2     Running   1          46h
+local-path-storage   local-path-provisioner-849cb58dff-88sfs      1/1     Running   0         
+
+
+# after applying that configuration, in local-path-storage namespace, local-path-provisioner-xxxx pod would be created as you can see below :
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -n local-path-storage
+
+NAME                                      READY   STATUS    RESTARTS   AGE
+local-path-provisioner-849cb58dff-88sfs   1/1     Running   0          4m2s
+
+
+# Now you can see storage class created , and this is default one
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get sc
+NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+local-path (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  4m53s
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pv
+No resources found
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+No resources found in default namespace.
+
+At this point there won't be any pv or pvc, only storage class would be created, 
+
+Important : test creation of PV and PVC to ensure things are working before going for sde installation:
+----------------------------------------
+=> But if you want to test whether you are able to create pv or pvc in that storage class you can check using below commands, this is just for tetsing purpose, in real time by default pv and pvc would be created when containers would run
+
+
+# kubectl apply -f local-path-provisioner/examples/pvc/pvc.yaml
+
+# vim local-path-provisioner/examples/pvc/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-path-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 128Mi
+
+As you can see above in yml, volumes of size 128 mb would be created and attached to pods/containers later in next step
+
+Create PVC first :
+
+# kubectl apply -f local-path-provisioner/examples/pvc/pvc.yaml
+
+persistentvolumeclaim/local-path-pvc created
+
+# Create a volume-test pod to check, pod is creating pvc internally
+
+# kubectl apply -f local-path-provisioner/examples/pod/pod.yaml  
+
+pod/volume-test created		(default name space)
+
+# we are just created a pod with name volume-test in default namespace, just to check if pvc is getting attached to that pods or not which we have defined above.
+
+# vim local-path-provisioner/examples/pod/pod.yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: volume-test			# this is name of pod volume-test
+spec:
+  containers:
+  - name: volume-test
+    image: nginx:stable-alpine
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+    - name: volv
+      mountPath: /data
+    ports:
+    - containerPort: 80
+  volumes:
+  - name: volv
+    persistentVolumeClaim:
+      claimName: local-path-pvc		# This is the name of pvc local-path-pvc which created earlier and attaching to pod
+	  
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+NAME             STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+local-path-pvc   Pending                                      local-path     31s
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+NAME             STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+local-path-pvc   Pending                                      local-path     35s
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl describe pvc local-path-pvc
+Name:          local-path-pvc
+Namespace:     default
+StorageClass:  local-path
+Status:        Pending
+Volume:
+Labels:        <none>
+Annotations:   volume.beta.kubernetes.io/storage-provisioner: rancher.io/local-path
+               volume.kubernetes.io/selected-node: cvs-k8s-jaynath-10
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:
+Access Modes:
+VolumeMode:    Filesystem
+Used By:       volume-test
+Events:
+  Type    Reason                Age                From                                                                                                Message
+  ----    ------                ----               ----                                                                                                -------
+  Normal  WaitForPodScheduled   45s                persistentvolume-controller                                                                         waiting for pod volume-test to be scheduled
+  Normal  Provisioning          45s                rancher.io/local-path_local-path-provisioner-849cb58dff-88sfs_a5b075a1-3c0b-4622-ada8-363cda573d3e  External provisioner is provisioning volume for claim "default/local-path-pvc"
+  Normal  ExternalProvisioning  14s (x4 over 45s)  persistentvolume-controller                                                                         waiting for a volume to be created, either by external provisioner "rancher.io/local-path" or manually created by system administrator
+
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods -n local-path-storage
+NAME                                                         READY   STATUS         RESTARTS   AGE
+helper-pod-create-pvc-912d9bf6-7e09-44a3-b0b4-03fdd6b1171e   0/1     ErrImagePull   0          68s
+local-path-provisioner-849cb58dff-88sfs                      1/1     Running        0          25m
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl describe pod helper-pod-create-pvc-912d9bf6-7e09-44a3-b0b4-03fdd6b1171e -n local-path-storage
+
+ Type     Reason          Age                From     Message
+  ----     ------          ----               ----     -------
+  Normal   SandboxChanged  87s                kubelet  Pod sandbox changed, it will be killed and re-created.
+  Normal   Pulling         39s (x3 over 88s)  kubelet  Pulling image "busybox"
+  Warning  Failed          39s (x3 over 88s)  kubelet  Failed to pull image "busybox": rpc error: code = Unknown desc = Error response from daemon: toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
+  Warning  Failed          39s (x3 over 88s)  kubelet  Error: ErrImagePull
+  Normal   BackOff         14s (x6 over 84s)  kubelet  Back-off pulling image "busybox"
+  Warning  Failed          14s (x6 over 84s)  kubelet  Error: ImagePullBackOff
+  
+  
+  
+ # For fixing above issue, pull busybox image on all nodes of cluster
+	# docker login -u jaynath120
+	# docker pull busybox
+
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods
+NAME          READY   STATUS             RESTARTS   AGE
+volume-test   0/1     ImagePullBackOff   0          11m
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl describe pod volume-test
+
+ Type     Reason            Age                    From               Message
+  ----     ------            ----                   ----               -------
+  Warning  FailedScheduling  11m                    default-scheduler  0/5 nodes are available: 5 persistentvolumeclaim "local-path-pvc" not found.
+  Warning  FailedScheduling  11m                    default-scheduler  0/5 nodes are available: 5 persistentvolumeclaim "local-path-pvc" not found.
+  Normal   Scheduled         4m13s                  default-scheduler  Successfully assigned default/volume-test to cvs-k8s-jaynath-10
+  Warning  Failed            2m55s (x6 over 4m12s)  kubelet            Error: ImagePullBackOff
+  Normal   Pulling           2m41s (x4 over 4m13s)  kubelet            Pulling image "nginx:stable-alpine"
+  Warning  Failed            2m41s (x4 over 4m12s)  kubelet            Failed to pull image "nginx:stable-alpine": rpc error: code = Unknown desc = Error response from daemon: toomanyrequests: You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limit
+  Warning  Failed            2m41s (x4 over 4m12s)  kubelet            Error: ErrImagePull
+  Normal   BackOff           2m30s (x7 over 4m12s)  kubelet            Back-off pulling image "nginx:stable-alpine"
+
+
+# for fixing above issue pull docker image on all nodes
+	# docker pull nginx:stable-alpine
+	
+	
+After pulling images automatically pod will come up as you can see below :
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pvc
+NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+local-path-pvc   Bound    pvc-912d9bf6-7e09-44a3-b0b4-03fdd6b1171e   128Mi      RWO            local-path     9m36s
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl get pods
+NAME          READY   STATUS    RESTARTS   AGE
+volume-test   1/1     Running   0          14m
+
+
+Note : All persistent volumes state should be in bound state, if it goes into any other state like pending, then please fix it before going further.
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install# kubectl describe pvc local-path-pvc
+Name:          local-path-pvc
+Namespace:     default
+StorageClass:  local-path
+Status:        Bound
+Volume:        pvc-912d9bf6-7e09-44a3-b0b4-03fdd6b1171e
+Labels:        <none>
+Annotations:   pv.kubernetes.io/bind-completed: yes
+               pv.kubernetes.io/bound-by-controller: yes
+               volume.beta.kubernetes.io/storage-provisioner: rancher.io/local-path
+               volume.kubernetes.io/selected-node: cvs-k8s-jaynath-10
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:      128Mi
+Access Modes:  RWO
+VolumeMode:    Filesystem
+Used By:       volume-test
+Events:
+
+
+
+# the above steps creating local-path-pvc and volume-test pod is just for testing purpoise, mandatoruly not required to be performed , if you want you can skip this as well.but better create pvc and pod for tetsing purpose to ensure things are working correctlty before proceeding further.
+
+
+
+The above steps like installing helm and creating pvc and pod, instea of doing manually using abobe steps, you can also do by running sh file # ./master1.sh file  (/root/k8s_install/sde_install/master1.sh)
+***********************************************************************************************************************
+
+
