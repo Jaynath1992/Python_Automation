@@ -1,0 +1,133 @@
+
+Make sure on your VM, you are logged in to your gcloud using sso user,
+
+# gcloud auth login --no-launch-browser
+
+1. => Autopush 1 Testing env, us-east4 region, ssh command below :
+----------------------------------------------------------------------
+sde_project : netapp-us-e4-autopush-sde-tst
+jump_host: cv-ap-tst-us-east4-k8s-lmgmt-a 
+psql_host: 192.168.XXX.XXX
+zone: us-east4-a
+region: us-east4
+
+
+=> gcloud compute ssh "cv-ap-tst-us-east4-k8s-lmgmt-a" --zone "us-east4-a"   --project "netapp-us-e4-autopush-sde-tst"  --tunnel-through-iap
+
+
+# Then execute and check =>  gcloud auth login => command to see if sso user is set as gcloud auth login
+# then use below command to generate kubeconfig file for your k8s cluster(cv-ap-tst-us-east4-sde)
+
+=> gcloud container clusters get-credentials cv-ap-tst-us-east4-sde --region us-east4
+
+
+=> To connect to postgres, execute below command :
+---------------------------------------------------
+# psql -h 192.168.XXX.XXX -U postgres
+
+password : XXXXXXXXX
+
+To Check ONTAP version: login to cvs database, and fire command : select * from host;
+
+ONTAP Access : have ontap access in us-east4 tst region
+***************-----------------------------------------
+ONTAP IP : 192.XXX.XXX.XX   # To login to ONTAP : ssh -i jaynath jaynath@192.168.208.20
+
+# ssh -i jaynath jaynath@192.168.XXX.XX
+
+
+=> Queries to get k8s cluster info from jumphost
+**************************************
+gcloud compute ssh --zone "us-central1-a" "k8s-host" --project "netapp-us-c1-autopush-sde-tst" --command "sudo kubectl get pods -n sde"
+
+Queries to get psql output from jumphost directly with command :
+*********************************************************************
+
+gcloud compute ssh --zone "us-central1-a" "k8s-host" --project "netapp-us-c1-autopush-sde-tst" --command "export PGPASSWORD='XXXXX'; psql -h 192.168.XXX.XXX -U postgres cvs -c 'select count(*) from host'"
+
+
+# Get record from pool table in cvs database
+
+gcloud compute ssh --zone us-central1-a "k8s-host-1" --project netapp-us-c1-autopush-sde-tst --tunnel-through-iap --verbosity=none --command="psql postgres://postgres:secretpassword@192.168.XXX.XXX:5432/cvs --expanded -c 'select * from pool where id=9315;'"
+
+# Get record from volume table in cvs database
+
+gcloud compute ssh --zone us-central1-a "k8s-host-1" --project netapp-us-c1-autopush-sde-tst --tunnel-through-iap --verbosity=none --command="psql postgres://postgres:secret****@192.168.XXX.XXX:5432/cvs --expanded -c 'select * from volume where id=9315;'"
+
+OR use below commmand to connect using postgres connection string	:
+****************************************************************************
+
+gcloud compute ssh --zone "us-central1-a" "k8s-host" --project "netapp-us-c1-autopush-sde-tst" --command "psql postgres://postgres:secretpassword@192.168.XXX.XXX:5432/cvs -c 'select count(*) from host;'"
+
+ 
+
+
+PSQL query to connect to posgtres from jumphost :
+*******************************************************
+
+connection_string :
+----------------------
+psql postgresql://[user[:password]@][host][:port][,...][/dbname][?param1=value1&...]
+
+=> psql postgres://postgres:secretpassword@192.168.XXX.XXX/cvs --expanded -c "select count(*) from host"
+
+where 
+	postgres - username
+	secretpassword	- password
+	192.168.XXX.XXX - psql host
+		/cvs - database
+
+Alternatively you can also connect to postgres and execute command using below command :
+*******************************************************************************************
+
+export PGPASSWORD='secret******'; psql -h 192.168.XXX.XXX -U postgres cvs -c "select count(*) from host"
+
+
+Basic Postgres command to show/display db, tables :
+********************************************************
+
+=> Command to list all databases  : \l
+=> command to connect to databases : \c cvs;
+=> to see all tables : \dt;
+
+=> To display details in pretty format 
+
+cvs=# \x on
+
+
+Helm upgrade command :
+*****************************
+
+sudo helm upgrade cvs-sde testing/nfsaas-deployment --set cloud-volumes-network.sqlServerType=postgres 
+--set cloud-volumes-network.postgres.hostname="10.193.238.211"  --set volume-placement.enabled=true 
+--set cloud-volumes-network.logLevel="5" --set cloud-volumes-network.logSQL="true" 
+--set cloud-volumes-network.enableDbMigration=false --set cloud-volumes-proxy.enableDbMigration=false 
+--set cloud-volumes-proxy.enabled=true,global.hyperscaler="gcp" --set cloud-volumes-telemetry.flyway.enabled=false 
+--set cloud-volumes-telemetry.collector.enabled=false   --set "nfsaas-mysql.persistence.ssdClassEnabled=false" 
+--set nfsaas-mysql.enabled=false  --set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.gcpPartnerService='dev-cloudvolumesgcp-api.netapp.com' 
+--set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.gcp1pAuthServiceAccount='710524723845-compute@developer.gserviceaccount.com' 
+--set cloud-volumes-proxy.gcpRegion1p='us-east4' --set cloud-volumes-proxy.gcpAuthServiceAccount='710524723845-compute@developer.gserviceaccount.com'
+--set cloud-volumes-proxy.gcpServiceUrl='https://dev-cloudvolumesgcp-api.netapp.com' --set global.imageRegistry="ghcr.io"
+--set global.imageRegistryPath=greenqloud --set global.imageRegistryPasswordAuth=true  --set imagepull.username=jaynathkumar 
+--set imagepull.password="ghp_*****************" --set global.postgresPassword="tea**" 
+--set global.postgresHost="10.193.XXX.XXX" --set global.postgresCVSAdminUsername=cvs_admin 
+--set global.postgresCVSAdminPassword='*****'  --set global.postgresGSAdminUsername=gs_admin 
+--set global.postgresGSAdminPassword='******' --set global.postgresHeimdallAdminUsername=heimdall_admin 
+--set global.postgresHeimdallAdminPassword='*******' --set global.postgresCBSAdminUsername=cbs_admin 
+--set global.postgresCBSAdminPassword='*******' --set global.postgresCVIUsername=svc_cvi 
+--set global.postgresCVIPassword='********' --set global.postgresCVSUsername=svc_cvs 
+--set global.postgresCVSPassword='*************' --set global.postgresGSUsername=svc_gs 
+--set global.postgresGSPassword='**********' --set global.postgresHeimdallUsername=svc_heimdall 
+--set global.postgresHeimdallPassword='************' --set global.postgresCBSUsername=svc_cbs 
+--set global.postgresCBSPassword='******' --set global.hyperscaler="gcp" 
+--set global-scheduler.enabled=true,global.hyperscaler="gcp" --set cloud-volumes-proxy.enabled=true,global.hyperscaler="gcp" 
+--set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.gsEnabled="1" --set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.vpsEnabled="1"   
+--set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.quotaEnforcement="1" --set heimdall.config.dbType="postgresql" 
+--set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.sqlServerType="postgres" --set cloud-volumes-service.cloud-volumes-infrastructure.storageConfigmap.sqlServerType="postgres" 
+--set global-scheduler.db.sqlServerType="postgres" --set cloud-volumes-sds.sqlServerType="postgres"  --set global.managedPostgresHost="10.193.XXX.XXX" 
+--set heimdall.config.dbType="postgresql" --set cloud-volumes-service.cloud-volumes-service.nfsaasConfigmap.sqlServerType="postgres" 
+--set cloud-volumes-service.cloud-volumes-infrastructure.storageConfigmap.sqlServerType="postgres" --set cloud-volumes-service.cloud-volumes-infrastructure.postgres.hostname="10.193.XXX.XXX" 
+--set "cloud-volumes-service.cloud-volumes-service.gcpServiceAccountControlKey=***************" --set reuseValues=true,nfsaas-rabbitmq.rabbitmq-migrator.enabled=true,rabbitmq.host=rabbitmq,rabbitmq.namespace=rabbitmq,rabbitmq.embedded=false --debug=True  
+--version=2023.9.0-RC37 --debug --timeout=3600s 
+
+
