@@ -1,0 +1,285 @@
+Hi Team,
+
+Let’s start on the migration to dynamic agents, I have created an image with required software tools.
+We can go-through it and try a pipeline on a Pod based on it.
+
+Also request for a “team level namespace” on our internal docker repository which will be used to store the dynamic agent images. Details in the below confluence page:
+https://confluence.ngage.netapp.com/display/NGAGE/Repository+Services
+
+
+
+Kubernetes Plugin jenkins : https://plugins.jenkins.io/kubernetes/
+
+
+
+
+Pod template :
+
+podTemplate(yaml: '''
+    apiVersion: v1
+    kind: Pod
+    spec:
+      containers:
+      - name: maven
+        image: maven:3.8.1-jdk-8
+        command:
+        - sleep
+        args:
+        - 99d
+      - name: golang
+        image: golang:1.16.5
+        command:
+        - sleep
+        args:
+        - 99d
+''')
+
+  node(POD_LABEL) {
+    stage('Get a Maven project') {
+      git 'https://github.com/jenkinsci/kubernetes-plugin.git'
+      container('maven') {
+        stage('Build a Maven project') {
+          sh 'mvn -B -ntp clean install'
+        }
+      }
+    }
+
+
+    stage('Get a Golang project') {
+      git url: 'https://github.com/hashicorp/terraform-provider-google.git', branch: 'main'
+      container('golang') {
+        stage('Build a Go project') {
+          sh '''
+            mkdir -p /go/src/github.com/hashicorp
+            ln -s `pwd` /go/src/github.com/hashicorp/terraform
+            cd /go/src/github.com/hashicorp/terraform && make
+          '''
+        }
+      }
+    }
+
+  }
+}
+
+Jenkins job for pushing images : https://cvscit-team-jenkins.daas.netapp.com/job/daas-test/
+
+
+daas-test jenkins file :
+
+// Uses Declarative syntax to run commands inside a container.
+pipeline {
+    agent {
+        kubernetes {
+            // Rather than inline YAML, in a multibranch Pipeline you could use: yamlFile 'jenkins-pod.yaml'
+            // Or, to avoid YAML:
+            // containerTemplate {
+            //     name 'shell'
+            //     image 'ubuntu'
+            //     command 'sleep'
+            //     args 'infinity'
+            // }
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: python3
+    image: docker.repo.eng.netapp.com/global/devts-daas/cvscit-team-agent:v1
+    command:
+    - sleep
+    args:
+    - infinity
+'''
+            // Can also wrap individual steps:
+            // container('shell') {
+            //     sh 'hostname'
+            // }
+            defaultContainer 'python3'
+        }
+    }
+    stages {
+        stage('Main') {
+            steps {
+                sh 'hostname'
+                sh 'python3 -V'
+            }
+        }
+    }
+}
+
+
+=> we need to create our own namespace on k8s cluster where jenkins server is running, something like cvs-cit or other name
+=> Netapp repo url : docker.repo.eng.netapp.com/global/devts-daas/cvscit-team-agent:v1
+=> another container that will get automatically created, jenkins/inbound-agent:3107.v6650000b_51902_4, this helps use to connect dynamic agent to master
+=> we dont need to add it if we are in openlab
+
+=> For repository access - So you just need to create a ticket with Ng, and any any team member who is part of that ng, will only have the rights to push to that team namespace.
+
+Quetions to ask :
+
+1. Need access to k8scluster where jenkins server is running
+2. once sample jenkinsfile with pod template defined where we can our test.
+3. 
+
+
+=> we will use kubernetes plugin in jenkins, this plugin helps us to create dynamic agent on k8s cluster where jenkins server is hosted.
+=> SO in jenkinfile we need to have manifest file that will define our pod
+=> 
+
+
+
+
+
+This is basic and simple pipeline for one of the suites run :
+
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: docker.repo.eng.netapp.com/global/devts-daas/cvscit-team-agent:v1
+    command:
+    - sleep
+    args:
+    - infinity
+    volumeMounts:
+    - mountPath: /x/eng/cvs_qa/hosts/
+      name: cvs-qa-host
+  volumes:
+  - name: cvs-qa-host
+    hostPath:
+      path: /x/eng/cvs_qa/hosts/
+'''
+    defaultContainer 'shell'
+        }
+    }
+    environment {
+        LOGDIR = "${WORKSPACE}/build_log_${BUILD_NUMBER}"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                sh 'hostname'
+                checkout scmGit(branches: [[name: '*/master']], extensions: [cloneOption(depth: 1, noTags: false, reference: '', shallow: true)], userRemoteConfigs: [[credentialsId: 'TmpGitHubRead', url: 'https://github.com/greenqloud/cvs-qa.git']])
+            }
+        }
+        stage('Buils'){
+            steps{
+                sh '''
+                BUILD_ID=allow_to_run_as_daemon
+                #export LOGDIR=$WORKSPACE/build_log_${BUILD_NUMBER}
+
+                export HOSTDIR=/x/eng/cvs_qa/hosts/
+
+                export TESTDIR=/x/eng/cvs_qa/hosts/cbsqa/testbed/cvp/ap1_cit01_east4_ldap_attribute_change.hst
+
+                whoami
+                
+                cat /x/eng/cvs_qa/hosts/cbsqa/testbed/cvp/ap1_cit01_east4_ldap_attribute_change.hst
+                touch ${WORKSPACE}/env.properties
+
+                rm -rf $WORKSPACE/build_log/
+                mkdir -p $WORKSPACE/build_log/
+
+
+
+                # Get the env details like SDE build version and API Version
+                mkdir -p $LOGDIR
+                touch  ${LOGDIR}/env_details.txt
+
+                SDE_VERSION=`curl --location 'https://cloudvolumesgcp-api-autopush-tst.gcp.netapp.com/v2/projects/37212674861/locations/us-east4/version' | jq -r '.sdeVersion'`
+                echo "SDE_VERSION=$SDE_VERSION" >> ${LOGDIR}/env_details.txt
+                export SDE_VERSION=$SDE_VERSION
+
+                API_VERSION=`curl --location 'https://cloudvolumesgcp-api-autopush-tst.gcp.netapp.com/v2/projects/37212674861/locations/us-east4/version' | jq -r '.apiVersion'`
+
+                echo "API_VERSION=$API_VERSION" >> ${LOGDIR}/env_details.txt
+                
+                export API_VERSION=$API_VERSION
+                '''
+                withCredentials([usernamePassword(credentialsId: 'linux_nfs_client', passwordVariable: 'linux_pass', usernameVariable: 'linux_user'), usernamePassword(credentialsId: 'windows_ad_client', passwordVariable: 'windows_ad_pass', usernameVariable: 'windows_ad_user'), file(credentialsId: 'AutoPush1_TST_Env', variable: 'ap1_tst_cit01_json'), file(credentialsId: 'g1p-functional-ap-tst-cit-02', variable: 'ap1_tst_cit02_json'), usernamePassword(credentialsId: 'jaynath_controller_vm', passwordVariable: 'jaynath_controller_pass', usernameVariable: 'jaynath_controller_user')]) {
+                    sh '''
+                    #python3 -m robot -T --loglevel TRACE --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b debug_jobID_logs_${BUILD_NUMBER}.out -d ${LOGDIR} -v LIB:${WORKSPACE}/cbsqa/lib/ -v TESTBED:${TESTDIR} --listener ${WORKSPACE}/cbsqa/lib/cbs_listener.py \
+#--suite ldap_attribute_change_suite.TCASE-29908  ${WORKSPACE}/cbsqa/gnftestsuite/
+                    python3 -m robot -T --loglevel TRACE --nostatusrc -x ${LOGDIR}/xunit/xunit.xml -b ${LOGDIR}/debug_jobID_logs.out -d ${LOGDIR}  -v LIB:./cbsqa/lib/ -v TESTBED:/x/eng/cvs_qa/hosts/cbsqa/testbed/cvp/ap1_cit01_east4_ldap_attribute_change.hst --listener ./cbsqa/lib/cbs_listener.py --suite ldap_attribute_change_suite.TCASE-29911  ./cbsqa/gnftestsuite/
+                    '''
+                 }
+            }
+        }
+        // stage('Generate Html Report') {
+        //   steps {
+        //     echo 'Generating Robot Reports...'
+        //     robot archiveDirName: 'robot-plugin', logFileName: 'log*.html', otherFiles: 'debug*.out', outputFileName: 'output*.xml', outputPath: '${LOGDIR}', overwriteXAxisLabel: '', reportFileName: 'report*.html'
+        //     //  script {
+        //     //   step(
+        //     //   [
+        //     //      $class                    : 'RobotPlugin',
+        //     //      outputPath                : '${LOGDIR}',
+        //     //      outputFileName            : "*output*.xml",
+        //     //      reportFileName            : "*report*.html",
+        //     //      logFileName               : "*log*.html",
+        //     //      disableArchiveOutput      : false,
+        //     //      passThreshold             : 0,
+        //     //      unstableThreshold         : 0,
+        //     //      otherFiles                : "*debug*.out"
+        //     //     ]
+        //     //   )
+        //     // }  
+        //   }
+        // }
+    }
+    post { 
+        always { 
+            robot archiveDirName: 'robot-plugin', outputPath: '${LOGDIR}', outputFileName: '*.xml', reportFileName: 'report*.html', logFileName: 'log*.html', passThreshold: 0.0, unstableThreshold: 0.0, overwriteXAxisLabel: ''
+        }
+    }
+}
+
+
+**********************************************************************************************************************************************************
+
+Kubernetes plugin for Jenkins :
+**********************************
+
+=> Jenkins plugin to run dynamic agents in a Kubernetes cluster.
+=> The plugin creates a Kubernetes Pod for each agent started, and stops it after each build.
+
+Agents are launched as inbound agents, so it is expected that the container connects automatically to the Jenkins controller. For that some environment variables are automatically injected:
+
+JENKINS_URL : Jenkins web interface url
+JENKINS_SECRET : the secret key for authentication
+JENKINS_AGENT_NAME : the name of the Jenkins agent
+JENKINS_NAME : the name of the Jenkins agent (Deprecated. Only here for backwards compatibility)
+
+It is not required to run the Jenkins controller inside Kubernetes.
+
+jnlp is used by kubernetes plugin to launch dynamic pods on k8s cluster.
+
+jnlp container is ceated to connect to k8s jenkins server
+
+
+
+
+
+stage('Copy Cost File To Jenkins'){
+        withCredentials([sshUserPrivateKey(credentialsId: "462e5c76-fae2-4d66-a72b-15ddba9dc785", keyFileVariable: 'my_private_key_file')]) {
+            sh "scp -i ${my_private_key_file} -v myuser@mycompany.com:/some_path/SSC*.CP037 host-dirs/cost-files"
+        }
+    }
+
+
+resources:
+      limits:
+        cpu: 300m
+        memory: 200Mi
+      requests:
+        cpu: 200m
+        memory: 100Mi
+
+
+
