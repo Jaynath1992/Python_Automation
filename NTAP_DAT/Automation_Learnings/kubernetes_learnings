@@ -612,4 +612,100 @@ Events:
 The above steps like installing helm and creating pvc and pod, instea of doing manually using abobe steps, you can also do by running sh file # ./master1.sh file  (/root/k8s_install/sde_install/master1.sh)
 ***********************************************************************************************************************
 
+***Important : Now next step is to install timescale db setup:
+
+# apt list postgresql postgresql-*		
+# sudo apt-get --purge remove postgresql postgresql-* -y
+
+
+# Timescale db installation steps from:  https://confluence.ngage.netapp.com/pages/viewpage.action?pageId=300303655
+*********************************************************************************************************************
+
+
+
+Timescale version supported: only till 0.7.1
+
+Delete older if needed:
+----------------------------
+
+                # helm delete timescaledb
+
+                # kubectl delete secret timescaledb-certificate timescaledb-credentials timescaledb-pgbackrest
+
+                # kubectl delete pvc storage-volume-timescaledb-0 storage-volume-timescaledb-1    storage-volume-timescaledb-2 wal-volume-timescaledb-0 wal-volume-timescaledb-1 wal-volume-timescaledb-2
+
+                # kubectl delete svc timescaledb-config
+				
+Install timescale:
+---------------------
+
+Before installing timescaledb, make sure to install it in sde namespace, so create a namespace sde
+# kubectl create ns sde   or you can also install timescaledb in default namespace
+					
+					# helm repo add timescaledb 'https://charts.timescale.com/'
+					
+                    # helm fetch timescaledb/timescaledb-single --version=0.7.1    (timescaledb-single-0.7.1.tgz)
+					# tar -xvzf timescaledb-single-0.7.1.tgz		(extract that tar file timescaledb-single-0.7.1.tgz)
+
+## helm fetch command willonly download that chart to your local machine from helm repository in cureent directory
+
+
+                    # cd timescaledb-single
+
+                    # chmod 0777 generate_kustomization.sh
+					
+                    # ./generate_kustomization.sh timescaledb    
+					
+# (It will install and generate secrets for timescaledb by default in default namespace )
+
+if you want to install timescaledb in sde namespace then secrets also needs to be generated in same sde namespace, so to generate secrets in sde namespace, you need to make changes in generate_kustomization.sh file.
+# search in this file for "kubectl apply" and append -n sde to that line where kubectl apply is found, generally 2 lines would be there which you need to replace with -n sde
+
+
+
+                    # cd ..
+
+                    # helm install timescaledb-single --name-template=timescaledb -n sde      (add -n sde , if namespace)
+
+#If you want to install  timescaledb in sde namespace, use this command : 
+# helm fetch timescaledb/timescaledb-single --version=0.7.1 -n sde
+#helm repo remove timescale
+"timescale" has been removed from your repositories
+
+
+root@cvs-k8s-jaynath-07:~/k8s_install/timescaledb-single# ./generate_kustomization.sh timescaledb
+Can't load /root/.rnd into RNG
+139731731427776:error:2406F079:random number generator:RAND_load_file:Cannot open file:../crypto/rand/randfile.c:88:Filename=/root/.rnd
+Generating a RSA private key
+.............................++++
+.....................++++
+writing new private key to './kustomize/timescaledb/tls.key'
+-----
+Do you want to configure the backup of your database to S3 (compatible) storage? (y/n)
+n
+
+Generated a kustomization named timescaledb in directory ./kustomize/timescaledb.
+
+
+WARNING: The generated certificate in this directory is self-signed and is only
+         fit for development and demonstration purposes.
+         The certificate should be replaced by a signed certificate, signed by
+         a Certificate Authority (CA) that you trust.
+
+
+You may now wish to (p)review the files that have been created and further edit
+them before deployment.
+
+
+To preview the deployment of the secrets:
+
+    kubectl kustomize "./kustomize/timescaledb"
+
+Or you may want to install the secrets directly? (y/n)
+y
+Installing secrets...
+secret/timescaledb-certificate created
+secret/timescaledb-credentials created
+secret/timescaledb-pgbackrest created
+
 
