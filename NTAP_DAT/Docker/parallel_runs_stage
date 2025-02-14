@@ -1,0 +1,48 @@
+
+pipeline {
+    agent none
+    
+options {
+    timestamps ()
+    buildDiscarder(
+        logRotator(
+            numToKeepStr:'20', daysToKeepStr: '180', artifactDaysToKeepStr: '180', artifactNumToKeepStr: '20'
+        )
+    )
+    
+    
+}
+    
+
+stages {
+
+    stage ('Trigger Builds In Parallel') {
+        steps {
+
+            parallel (
+                ABE_Suite: {
+                    build job: 'ABE_Suite_Dynamic_Pipeline'
+                },
+                LDAP_Attribute_Change_Suite: {
+                    build job: 'LDAP_Attribute_US_East4_Dynamic_Pipeline'
+                },
+                Unix_Permission_Suite: {
+                    
+                    build job: 'Unix_Permission'
+                },
+                Dual_Protocol_Suite: {
+                    
+                    build job: 'Dual_Protocol_US_East4_Dynamic_Pipeline'
+                },
+                Storage_Pool_Suite: {
+                    
+                    build job: 'Storage_Pool_US_East4_Dynamic_Pipeline_Job'
+                },
+                
+                failFast: false)
+        }
+    }
+     
+    }
+
+}
