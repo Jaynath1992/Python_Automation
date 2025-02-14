@@ -1,0 +1,115 @@
+def timestamp_format
+def docker_image_tag
+
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: docker:25.0.5
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi
+    command:
+    - sleep
+    args:
+    - infinity
+    volumeMounts:
+    - mountPath: /x/eng/cvs_qa/hosts/
+      name: cvs-qa-host
+    - mountPath: /var/run/docker.sock
+      name: sock
+  volumes:
+  - name: cvs-qa-host
+    hostPath:
+      path: /x/eng/cvs_qa/hosts/
+  - name: sock
+    hostPath:
+      path: /var/run/docker.sock
+
+  
+'''
+    defaultContainer 'shell'
+        }
+    }
+    
+     environment {
+        registryName = 'docker.repo.eng.netapp.com'
+     }
+     
+    parameters {
+            string defaultValue: 'gcp_container_script_changes', description: 'Provide your branch name', name: 'Git_Branch', trim: true
+            string description: 'Provide your docker image tag name', name: 'Docker_Image_Tag', trim: true
+            
+    }
+
+
+options {
+    timestamps ()
+    buildDiscarder(
+        logRotator(
+            numToKeepStr:'20', daysToKeepStr: '180', artifactDaysToKeepStr: '180', artifactNumToKeepStr: '20'
+        )
+    )
+}
+    
+    stages {
+        
+        stage('Checkout') {
+            steps {
+                sh 'hostname'
+                checkout scmGit(branches: [[name: '*/${Git_Branch}']], extensions: [cloneOption(depth: 1, noTags: false, reference: '', shallow: true)], userRemoteConfigs: [[credentialsId: 'TmpGitHubRead', url: 'https://github.com/greenqloud/cvs-qa.git']])
+            }
+        }
+        stage('Main') {
+            steps {
+                sh 'hostname'
+            }
+        }
+        stage('Build docker image And push to NetApp docker repo'){
+        //   when { 
+        //       anyOf {
+        //             changeset "**/requirements.txt"
+        //             changeset "**/Dockerfile"
+        //       }
+               
+        //   } 
+              steps {
+                  //sh 'echo Dockerfile or requirements.txt file got changed'
+                 script {
+                  def now = new Date()
+                  timestamp_format = now.format("yyyyMMddHHmmss", TimeZone.getTimeZone('UTC'))
+                  echo  "current formatted timestamp is : ${timestamp_format} "
+                  if (params.Docker_Image_Tag){
+                      echo("Docker Image tag is : params.Docker_Image_Tag")
+                      docker_image_tag=Docker_Image_Tag
+                  }
+                  else {
+                      docker_image_tag=timestamp_format
+                      
+                  }
+                  
+                 }
+                  //withCredentials([usernamePassword(credentialsId: 'cituser_account_id', passwordVariable: 'cituser_pass', usernameVariable: 'cituser_name')]) {
+                  withCredentials([usernamePassword(credentialsId: 'jaynath_controller_vm_creds', passwordVariable: 'jaynath_controller_pass', usernameVariable: 'jaynath_controller_user')]) {
+                  sh """
+                    cd ./cbsqa/containerized_infra/gcp
+                    
+                    docker login -u ${jaynath_controller_user} -p ${jaynath_controller_pass} ${registryName}
+                    docker build -t docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:${docker_image_tag} .
+                    docker push docker.repo.eng.netapp.com/team/cit-team/cvscit-team-agent:${docker_image_tag}
+
+                  """
+                  }
+            }
+        }
+    }
+}
