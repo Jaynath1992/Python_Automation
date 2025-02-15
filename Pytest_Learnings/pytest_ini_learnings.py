@@ -28,3 +28,7 @@ filterwarnings =
     ignore::DeprecationWarning
     ignore:.*Unknown option directConnection.*:UserWarning
     ignore:.*TripleDES has been moved to.*
+
+markers =
+    cvs: mark a test as a cvs.
+    cvs_pool: mark a test as a cvs_pool.
