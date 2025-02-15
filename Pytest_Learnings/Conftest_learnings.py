@@ -240,8 +240,259 @@ def pytest_configure(config):
         ('create_negative', 'Negative create Tests')]
     volume_markers = [
         ('volume', 'Volume Tests')]
-   
     markers = [*create_markers, *volume_markers]
 
     register_pytest_markers(config, custom_markers=markers)
 
+"""Common conftest.py PyTest hooks."""
+from typing import List
+
+import datetime
+import functools
+import os
+import pathlib
+import sys
+import traceback
+
+import pytest
+from py.xml import html  # pylint: disable=E0401, E0611
+
+from cbsqa.lib import (
+    keeper,
+    logger,
+    report as report_lib
+)
+from cbsqa.lib.k8smanage import k8s
+
+# Collected Environment Variables
+# HOST_FILE and LOG_DIR should be the default, but also allowing for HST_FILE and ART_DIR for Moonstone.
+LOG_DIR = os.environ.get('ART_DIR') or os.environ.get('LOG_DIR') or '/tmp/pytest/'
+HOST_FILE = os.environ.get('HST_FILE') or os.environ.get('HOST_FILE')
+LOG_FILE = os.environ.get('LOG_FILE') or 'test.log'
+
+# Critical Error Handling Variables
+_SKIP_TESTS_ON_CRIT_ERROR = False
+_CRITICAL_ERROR_TB = None
+
+# Check to see if running in Moonstone
+IN_MOONSTONE = k8s.k8s.executing_in_moonstone()
+if IN_MOONSTONE:
+    # This indicates that this test is being ran in Moonstone, so generate a test log file since the
+    # Moonstone service doesn't currently use the --log-file option.
+    # NOTE: The file must be named "tests_gw0.log" for Moonstone to correctly link the file.
+    LOG_FILE = 'tests_gw0.log'
+
+_LOG_PATH = f'{LOG_DIR}/{LOG_FILE}'
+_REPORT_HTML_PATH = f'{LOG_DIR}/report.html'
+_REPORT_JUNIT_PATH = f'{LOG_DIR}/junit.xml'
+_CRITICAL_ERROR_PATH = f'{LOG_DIR}/critical_failure.txt'
+
+_log = logger.get_log(__name__)
+_keeper = keeper.get_keeper()
+
+
+_REQUIRED_ENV_VARS = ['HOST_FILE', 'LOG_DIR', 'LOG_FILE']
+"""Using environment variables since they are a bit easier to work with from a Jenkins perspective
+
+HOST_FILE: Path to the host YAML file containing resource details. For Moonstone, HST_FILE is also
+    accepted.
+LOG_DIR: Path to the directory where the logs are to be store. If it doesn't exist, it will be created.
+    For Moonstone, ART_DIR is also accepted. Will default to /tmp/pytest/.
+LOG_FILE: Name of the log file to store in the LOG_DIR. Will default to test.log unless in Moonstone,
+    which will default to test_gw0.log.
+"""
+
+LOG_PODS = ['cloud-volumes-service', 'cloud-volumes-infrastructure', 'anf-rp']
+"""Pods to log on test failure."""
+
+LOG_POD_SINCE = datetime.timedelta(minutes=10)
+"""Pod logs to store since the the last 10 minutes."""
+
+DEFAULT_TB_STYLE = 'short'
+"""Default traceback style for PyTest if not specified as --tb in command."""
+
+DEFAULT_SHOW_CAPTURE = 'no'
+"""Default showcapture for PyTest if not specified as --show-capture in command."""
+
+
+# NOTE: This decorator is defined here and not in _decorators.py to prevent circular imports.
+def ignore_exceptions(condition: bool = None):
+    """Decorator to ignore exceptions raised in the decorated method.
+
+    This is particularly helpful when preventing PyTest INTERNALERROR from being raised.
+
+    :param condition: If specified, the exceptions will only be ignored if the condition is True.
+    """
+    def decorator(func):
+        if condition is not None and not condition:
+            return func
+
+        @functools.wraps(func)
+        def ignore_exc_wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                _log.exception(f'Exception occurred in {func.__name__}: {e}')
+        return ignore_exc_wrapper
+    return decorator
+
+
+def pytest_configure(config):
+    """Set the default PyTest configurations if not already set."""
+    if config.getoption('tbstyle') == 'auto':
+        config.option.tbstyle = DEFAULT_TB_STYLE
+    if not config.getoption('log_file'):
+        config.option.log_file = _LOG_PATH
+    if not config.getoption('htmlpath'):
+        config.option.htmlpath = _REPORT_HTML_PATH
+        config.option.self_contained_html = True
+    if not config.getoption('xmlpath'):
+        config.option.xmlpath = _REPORT_JUNIT_PATH
+    if config.getoption('showcapture') == 'all':
+        config.option.showcapture = DEFAULT_SHOW_CAPTURE
+
+
+@ignore_exceptions(condition=IN_MOONSTONE)
+@pytest.hookimpl(tryfirst=True)
+def pytest_sessionstart(session) -> None:  # pylint: disable=unused-argument
+    """Ensure the host file and log directory exists, storing the values in the Keeper.
+
+    Note: this is the earliest PyTest hook that allows for logging.
+    """
+    msg = [f'Execution Command: {" ".join(sys.argv)}',
+           f'HOST_FILE={HOST_FILE}, LOG_DIR={LOG_DIR}, LOG_FILE={LOG_FILE}']
+    _log.suite('\n'.join(msg))
+
+    msg = (f'One or more of the following required environment variables have not been '
+           f'defined: {_REQUIRED_ENV_VARS}')
+    if not all([HOST_FILE, LOG_DIR, LOG_FILE]):
+        _log.error(msg)
+        raise ValueError(msg)
+
+    host_file = pathlib.Path(HOST_FILE)
+    log_dir = pathlib.Path(LOG_DIR)
+    log_file = pathlib.Path(LOG_FILE)
+
+    msg = (f'The HOST_FILE environment variable must be populated with a filepath of a host file that '
+           f'exists: {host_file}')
+    assert host_file.exists(), msg
+
+    if not log_dir.exists():
+        log_dir.mkdir(mode=0o777, parents=True)
+
+    _keeper.host_file = host_file
+    _keeper.log_dir = log_dir
+    _keeper.log_file = log_file
+
+
+@ignore_exceptions(condition=IN_MOONSTONE)
+@pytest.hookimpl(trylast=True)
+def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
+    """Generate the test summary.txt and build_version.txt if executed locally."""
+
+    # Generate build version report if executed locally.
+    k8s_fms = _keeper.k8s_fms or []
+    if not k8s_fms:
+        k8s_fms = [k8s_fm] if (k8s_fm := _keeper.k8s_fm) else []
+
+    for i, k8s_fm in enumerate(k8s_fms):
+        filepath = f'{LOG_DIR}/build_version.txt' if i == 0 else f'{LOG_DIR}/build_version_{i}.txt'
+        report_lib.generate_build_report(
+            k8s_fm=k8s_fm,
+            filepath=filepath,
+            log_output=True,
+            raise_on_error=False)
+
+    # Generate test summary if jUnit XML file is present.
+    xmlpath = session.config.option.xmlpath
+    if xmlpath:
+        filepath = f'{LOG_DIR}/summary.txt'
+        report_lib.generate_test_summary(
+            xml_file=xmlpath,
+            crit_fail_path=_CRITICAL_ERROR_PATH,
+            filepath=filepath,
+            log_output=True,
+            raise_on_error=False)
+    else:
+        _log.warning('No jUnit XML file found, unable to generate summary.')
+
+
+def pytest_runtest_call(item):
+    """Skip remaining tests if a critical failure occurs in setup or teardown."""
+    if _SKIP_TESTS_ON_CRIT_ERROR and _CRITICAL_ERROR_TB:
+        pytest.skip(f"Skipping {item.name} execution due to critical failure.")
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_exception_interact(node, call, report):  # pylint: disable=unused-argument
+    """Store pod logs on test failure and determine critical error."""
+    yield
+
+    k8s_fms: List[k8s.k8s]
+
+    # Store pod logs on test failure.
+    if report.failed:
+        k8s_fms = _keeper.k8s_fms or []
+        if not k8s_fms:
+            k8s_fms = [k8s_fm] if (k8s_fm := _keeper.k8s_fm) else []
+
+        _log.info(f'Storing the logs for the following pods due to failure in test {node.name}')
+        duration = int(max(LOG_POD_SINCE.total_seconds(), call.duration))
+        for i, k8s_fm in enumerate(k8s_fms):
+            k8s_fm.store_pod_logs(
+                pods=LOG_PODS,
+                artifact_dir=_keeper.log_dir,
+                since_seconds=duration,
+                suffix=f'{node.name}-{i}',
+                ignore_errors=True)
+
+    # Determine if a critical error occurred, write to a file and skip remaining tests.
+    global _CRITICAL_ERROR_TB  # pylint: disable=global-statement
+    if report.failed and _SKIP_TESTS_ON_CRIT_ERROR:
+
+        if (setup_report := getattr(node, 'report_setup', None)) and setup_report.failed:
+            _CRITICAL_ERROR_TB = setup_report.longreprtext
+        if (teardown_report := getattr(node, 'report_teardown', None)) and teardown_report.failed:
+            _CRITICAL_ERROR_TB = teardown_report.longreprtext
+
+        if _CRITICAL_ERROR_TB:
+            _log.error('Skipping remaining tests due to critical failure in setup or teardown.')
+            with open(_CRITICAL_ERROR_PATH, 'w', encoding='utf-8') as f:
+                f.write(_CRITICAL_ERROR_TB)
+            node.config.option.exitfirst = True
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):  # pylint: disable=unused-argument
+    """Append log filepath to HTML report"""
+    pytest_html = item.config.pluginmanager.getplugin("html")
+    outcome = yield
+
+    report = outcome.get_result()
+    setattr(item, f'report_{report.when}', report)
+
+    extra = getattr(report, "extra", [])
+    if report.when == "call":
+
+        # always add url to report
+        extra.append(pytest_html.extras.url(LOG_FILE, name="Log File"))
+        report.extra = extra
+
+
+def pytest_html_results_summary(prefix, summary, postfix):  # pylint: disable=unused-argument
+    """Update the HTML summary."""
+    prefix.extend([html.a("Show Debug Logs", href=LOG_FILE)])
+
+
+def skip_tests_on_critical_error(skip: bool):
+    """If True, when a critcal error is hit, any remaining test cases will be skipped."""
+    global _SKIP_TESTS_ON_CRIT_ERROR  # pylint: disable=global-statement
+    _SKIP_TESTS_ON_CRIT_ERROR = skip
+
+
+def _hit_critical_error():
+    """Call to indicate a critical error occurred."""
+    global _CRITICAL_ERROR_TB  # pylint: disable=global-statement
+
+    _CRITICAL_ERROR_TB = traceback.format_exc()
+    _log.error('!!! CRITICAL ERROR !!!')
