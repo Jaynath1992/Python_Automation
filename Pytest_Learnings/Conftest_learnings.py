@@ -30,6 +30,41 @@ def pytest_addoption(parser):
                      dest='token',
                      help='Project id specific token')
 
+    parser.addoption("--testbed-3p", action="store", help="option to get 3p test bed")
+    parser.addoption("--testbed-1p", action="store", help="option to get 1p test bed")
+    parser.addoption("--testbed-1p-so", action="store", help="option to get 1p test bed so")
+    parser.addoption("--gcloud-account", action="store", help="Option to provide gcloud account")
+    parser.addoption("--another-vpc", action="store", help="Option to provide another vpc network")
+    parser.addoption("--remote-region", action="store", help="Option to provide remote region for crr")
+    parser.addoption("--multiple_vpc", nargs='+', help="this will used in scale testing. to pass multiple vpcs")
+    parser.addoption("--test-steps", action="store", help="this is used to specify test steps")
+    parser.addoption("--replications-count", action="store", help="this is used to control the number of "
+                                                                  " replications in crr scale test")
+    parser.addoption("--skip-resource-create-host", default=False, action="store_true",
+                     help="This is to skip volume creation in host project")
+    parser.addoption("--skip-resource-create-svc01", default=False, action="store_true",
+                     help="This is to skip volume creation in svc01 project")
+    parser.addoption("--skip-resource-create-svc02", default=False, action="store_true",
+                     help="This is to skip volume creation in svc02 project")
+    parser.addoption("--skip_tags", action='store', help="skip tags")
+
+
+
+
+@pytest.fixture(scope='session')
+def custom_logger(request):
+    _logger = logging.getLogger('pytest')
+    log_level = request.config.getoption("--log-level") or os.getenv('LOG_LEVEL', 'DEBUG')
+    _logger.setLevel(log_level)
+    if not _logger.handlers:
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(filename)s %(funcName)s %(message)s')
+        file_name = 'output-{}.log'.format(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+        log_file = request.config.getoption("--log-file") or os.path.join(os.getenv('LOG_DIR', os.curdir), file_name)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        _logger.addHandler(file_handler)
+        _logger.propagate = True
+    return _logger
 
 
 
