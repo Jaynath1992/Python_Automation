@@ -1,4 +1,13 @@
 [pytest]
+# Use @pytest.mark.timeout(timeout_in_seconds) decorator if individual unit tests need more time.
+timeout = 3
+timeout_func_only = True
+addopts = --cov=.
+        ;   --cov-fail-under=100
+          --no-cov-on-fail
+          --ignore=suites/
+
+norecursedirs = *.egg .* build CVS dist node_modules venv {arch}
 log_cli = true
 log_cli_level = 22
 log_format = %(asctime)s.%(msecs)03d [%(levelname)s] [%(filename)s:%(funcName)s:%(lineno)d] %(message)s
