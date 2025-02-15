@@ -1,0 +1,16 @@
+{
+    "code_style_exclusions": [
+        "../setup.py"
+    ],
+    "docstring_config_file": ".docstringrc",
+    "coveragerc_file": ".coveragerc",
+    "pylintrc_file": "pylintrc",
+    "pytestini_file": "pytest.ini",
+    "pydocstyle_file": ".pydocstyle",
+    "scribe_dirs": [],
+    "max_line_length": 105,
+    "commit_msg_summary_max_length": 80,
+    "commit_msg_body_max_length": 105,
+    "commit_msg_jira_required": true,
+    "commit_msg_api_change_required": false
+}
