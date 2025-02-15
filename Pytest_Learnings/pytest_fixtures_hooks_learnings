@@ -1,0 +1,162 @@
+"""
+
+=> Pytest is a testing framework for Python that makes it easy to write simple and scalable test cases. 
+It offers features like fixtures, parameterized tests, and detailed error reporting. With Pytest, you can efficiently test 
+your code and ensure its reliability.
+=> Pytest helps you write and manage tests for your Python code more effectively. 
+
+Pytest features :
+******************************
+1. Fixtures : Provides a powerful fixture mechanism to set up and tear down resources needed for tests, promoting code reuse and reducing duplication.
+2. Parameterizr tests/fixtures : Supports parameterized tests, allowing you to run the same test with different inputs efficiently.
+3. Automatic Test disovery - Automatic test discovery mechansim allows tests to be discovered automatically named with the test_ prefix without extra setup.
+    =>  Pytest finds and runs tests without explicit configuration, just by following naming conventions like test_*.py
+4. Assertions - Provides assertion statement to validate the expected and actual result of tests/steps
+5. pytest configuration file (pytest.ini) - pytest supports configuration to be defined separately in pytest.ini file
+    => or similar pytest supported configuration files (pytest.ini, pyproject.toml, tox.ini, setup.config)
+5. Detailed Reporting - Provides reporting features through pytest0html plugins and also support third party reporting pluins like Allure, reportportal
+6. Extensive plugins support - It has wide range of pytest related plugins support availabe for different purposes
+
+"""
+
+Pytest fixtures :
+*****************************
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pytest.ini file : Generally we place pytest.ini file at the root of the repo here.
+*************************
+-> Config files help you define how you want each program or unit test to behave on execution.
+
+=> So how do you specify config in Pytest?
+=> pytest.ini is a configuration file in pytest, usin this ini file we can set up console logs format, timeout, 
+environment variables, test paths, custom markers, minimum versions and others.
+
+Logging :
+--------------
+[pytest]  
+log_cli=true  
+log_level=DEBUG  
+log_format = %(asctime)s %(levelname)s %(message)s  
+log_date_format = %Y-%m-%d %H:%M:%S
+
+Output Console Logs To Log File :
+***************************************
+[pytest]  
+log_file = logs/pytest-logs.txt
+
+Specify Timeouts :
+**************************
+[pytest]  
+timeout=5
+
+Define Environment Variables
+**********************************
+[pytest]  
+env =  
+    ENVIRONMENT=dev  
+    ACCOUNT=12345
+
+Specify minimum version for pytest : (You can specify that we need pytest==7.2 and actually installed pytest==7.1.3)
+************************************************************************************************************************8
+[pytest]  
+minversion = 7.2
+
+Set Required Plugins :
+*************************
+[pytest]  
+required_plugins = pytest-xdist>=3.2.0 pytest-env<=0.8.0
+
+Use Custom Markers :
+**************************
+[pytest]  
+addopts = --strict-markers  
+markers =  
+    core: marks tests as core (deselect with '-m "not core"')  
+    serial
+
+Setting prefix for python class, modules, functions for test discovery :
+*******************************************************************************
+[pytest]
+python_files = test_*.py
+python_classes = Test
+python_functions = test_*
+norecursedirs = _build __pycache__
+addopts = -ra -v
+
+Sample configuration pytest.ini file :
+**********************************************
+
+[pytest]
+minversion = 7.2
+python_files = test_*.py
+python_classes = Test
+python_functions = test_*
+log_file = logs/pytest-logs.txt
+norecursedirs = _build __pycache__
+addopts = -ra -v
+required_plugins = pytest-xdist>=3.2.0 pytest-env<=0.8.0
+timeout = 5
+env =  
+    ENVIRONMENT=dev  
+    ACCOUNT=12345             
+log_cli = True
+log_cli_level = INFO
+log_cli_format = %(asctime)s %(levelname)s %(message)s
+log_cli_date_format = %Y-%m-%d %H:%M:%S
+log_format = %(asctime)s %(levelname)s %(message)s
+log_date_format = %Y-%m-%d %H:%M:%S
+markers =
+    smoke: require to be run for smoke test
+    small: tests last less than 1 minute
+    medium: tests last 1-3 minutes
+    large: tests last more than 3 minutes
+filterwarnings =
+    ignore:.*Call to deprecated function .*(fields|_options|_valid_input_keys|validator_functions).*:DeprecationWarning
+    ignore:^Could not append AuthInteractivePassword, not allowed auth type keyboard-interactive$
+    ignore:.*imp:DeprecationWarning
+    ignore:.*(notifyAll|setDaemon):DeprecationWarning
+    ignore:.*coroutine:RuntimeWarning
+    ignore::pytest.PytestCacheWarning
+    ignore:.*invalid escape sequence.*:DeprecationWarning
+    ignore:.*is deprecated and slated for removal.*:DeprecationWarning
+    ignore:.*"is" with a literal.*:SyntaxWarning
+    ignore::DeprecationWarning
+    ignore:.*Unknown option directConnection.*:UserWarning
+    ignore:.*TripleDES has been moved to.*
+
+
+    
+
