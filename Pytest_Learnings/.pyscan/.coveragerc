@@ -1,0 +1,21 @@
+[run]
+omit = */docs/*
+       */cases/*
+       */profiles/*
+       */suites/*
+
+[report]
+show_missing = True
+omit =  */__init__.py
+        */tests/*
+        */yaml/*
+        */setup.py
+        */unittest/*
+
+       */cases/*
+       */profiles/*
+       */suites/*
+
+exclude_lines =
+    if __name__ == .__main__.:
+	pragma: no cover
