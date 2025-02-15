@@ -1,0 +1,3 @@
+[docstring_checker]
+# ignore everything since the docstring checker isn't used due to google docstrings being used
+ignore_dirs = **, .
