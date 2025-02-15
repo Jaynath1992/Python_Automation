@@ -226,3 +226,22 @@ def pre_test(request):
         log.info('Executing Post test')
 
     request.addfinalizer(post_test)
+
+def pytest_html_report_title(report):
+    """Update the HTML report title."""
+    report.title = "Atom Backup Restore Suite"
+
+
+def pytest_configure(config):
+    """Add custom markers to the pytest configuration."""
+    create_markers = [
+        ('create', 'All Create Tests'),
+        ('create_delete', 'Create/Delete Tests'),
+        ('create_negative', 'Negative create Tests')]
+    volume_markers = [
+        ('volume', 'Volume Tests')]
+   
+    markers = [*create_markers, *volume_markers]
+
+    register_pytest_markers(config, custom_markers=markers)
+
