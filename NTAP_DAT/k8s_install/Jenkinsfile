@@ -1,0 +1,112 @@
+pipeline {
+    parameters {
+        string(name: 'AGENT_LABEL', defaultValue: 'qai', description: 'Agent Node Executor Filter')
+        string(name: 'SDK_VERSION', defaultValue: '2024-01-01', description: 
+            'Version of swagger.json to generate the SDK from. (e.g. 2024-01-01, 2023-11-01-preview) Valid versions can be found here:\n\
+             https://github.com/greenqloud/anf-resource-provider/tree/master/dotnet/azure-bridge.anf-swagger/anf-swagger/resource-manager/Microsoft.NetApp')
+        booleanParam(name: 'OVERWRITE', defaultValue: false, description: 'If true, the existing generated SDK will be overwritten.')
+        string(name: 'SDK_BRANCH', defaultValue: 'master', description: 'Branch of the SDK repo to use.')
+    }
+    agent {
+        label "${AGENT_LABEL}"
+    }
+    environment {
+        SWAGGER_REPO = "https://github.com/greenqloud/anf-resource-provider.git"
+        SWAGGER_DIR = "${WORKSPACE}/anf-resource-provider/dotnet/azure-bridge.anf-swagger/"
+        SDK_DIR = "${WORKSPACE}/anf-sdk/"
+        SDK_TYPE = "${SDK_VERSION.contains('preview') ? 'preview' : 'stable'}" 
+        TARGET_DIR = "/x/eng/cvs_qa/sdk/anf/${SDK_TYPE}/${SDK_VERSION}"
+    }
+    stages{
+        stage('Check to see if SDK has already been generated') {
+            steps {
+                script {
+                    currentBuild.displayName = "#${BUILD_NUMBER}: ${SDK_VERSION}"
+                    if (fileExists("${TARGET_DIR}") && !params.OVERWRITE) {
+                        error("The generated SDK already exists: ${TARGET_DIR}")
+                    }
+                }
+            }
+        }
+        stage('Git Clone Swagger Repo') {
+            steps{
+                withCredentials([gitUsernamePassword(credentialsId: 'TmpGitHubRead', gitToolName: 'git-tool')]) {
+                    sh "git clone --branch ${SDK_BRANCH} --depth 1 ${SWAGGER_REPO}"
+                }
+            }
+        }
+        stage('Build Autorest Container') {
+            steps{
+                dir("${WORKSPACE}/qai/cicd/autorest/") {
+                    sh '''
+                    docker build \
+                        --network host \
+                        --add-host deb.debian.org:146.75.42.132 \
+                        -t sdk_generator \
+                        -f sdk.Dockerfile .
+                    '''
+                }
+            }
+        }
+        stage('Generate SDK using Autorest') {
+            steps{
+                sh '''
+                docker run --rm \
+                    -v ${SWAGGER_DIR}:/swagger \
+                    -v ${SDK_DIR}:/sdk \
+                    -e SDK_VERSION=${SDK_VERSION} \
+                    sdk_generator
+                '''
+            }
+        }
+        stage('Update SDK version of generated SDK') {
+            // Since the package version defaults to 1.0.0, it needs to be updated
+            steps{
+                sh '''
+                docker run --rm \
+                    -v ${SWAGGER_DIR}:/swagger \
+                    -v ${SDK_DIR}:/sdk \
+                    -e SDK_VERSION=${SDK_VERSION} \
+                    sdk_generator \
+                    /bin/update_version.sh
+                '''
+            }
+        }
+        stage('Generate Python wheel from generated SDK') {
+            steps{
+                sh '''
+                docker run --rm \
+                    -v ${SWAGGER_DIR}:/swagger \
+                    -v ${SDK_DIR}:/sdk \
+                    -e SDK_VERSION=${SDK_VERSION} \
+                    sdk_generator \
+                    /bin/make_wheel.sh
+                '''
+            }
+        }
+        stage('Copy generated SDK to shared location') {
+            steps{
+                echo "Copying generated SDK to ${TARGET_DIR}"
+                sh "rm -rf ${TARGET_DIR}"
+                sh "mkdir -p ${TARGET_DIR}"
+                sh "cp -fR ${SDK_DIR}/netapp/* ${TARGET_DIR}"
+            }
+        }
+    }
+    post {
+        always {
+            //clean workspace
+            cleanWs()
+            //@tmp, @script and @script@tmp are leftovers that cleanWs won't remove as they may be needed for replays. We aren't interested in replay for this, so we can manually remove them.
+            dir("${env.WORKSPACE}@tmp") {
+              deleteDir()
+            }
+            dir("${env.WORKSPACE}@script") {
+              deleteDir()
+            }
+            dir("${env.WORKSPACE}@script@tmp") {
+              deleteDir()
+            }
+        }
+    }
+}
