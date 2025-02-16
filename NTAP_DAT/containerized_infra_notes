@@ -1,0 +1,29 @@
+Why do we need containerized infra ?
+Current Approach (Test Controller Setup) :
+Requires a CAG lab VM, treated as test controller machine, where all configuration and setup are done
+All python/robot packages/plugins/tools to be installed before CIT execution
+Test controller vm needs to be configured as static agent in jenkins
+Concerns : 
+Every time test controller to be configured for CIT execution when there is a new requirements such as OS upgrade
+Dependency packages/Plugins should also be reinstalled on new VM.
+Human error happens during setup readiness such as misplacing to configure some parameters, unsupported packages/version usage etc.
+For the new engineer,  a tedious circumstance to bring up in the infrastructure to kick off the execution and time-consuming process
+Containerized Approach :
+VM can be migrated as container which will be running inside k8s pod in DAAS environment
+We will have docker image built with all the necessary packages/plugins/software/tools installed on this
+Container will get spin off from docker image with all hardware (os, memory, storage) & software requirements
+All the logs and html reports from container would be fetched and it would be available in Jenkins
+Container and pods will get deleted at the end once test suite execution finishes
+
+
+
+
+
+
+
+
+
+
+
+
+
