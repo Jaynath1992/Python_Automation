@@ -18,36 +18,62 @@ Pytest features :
 6. Extensive plugins support - It has wide range of pytest related plugins support availabe for different purposes
 
 """
+=> conftest file => Present in root directory of automation folder structure, or also it may reside in tests directory
+=> Conftest (confifuration test file) - is a special file in pyest, which allows user to write pytest fxitures, hooks and make call
+to plugins inside this. anything written inside this file would be automatically available to test modules without injecting this conftest 
+file in test modules. we don't need to import fixtures in conftest file into test modules explicitly as they would be auto available
+in the test modules, this is called as dependecny injection.
+
 
 Pytest fixtures :
 *****************************
 
+Pytest fixtures are a powerful feature that allows you to set up and tear down resources needed for your tests. 
+They help in creating reusable and maintainable test code by providing a way to define and manage the setup and teardown logic. 
+A Fixture is a piece of code that runs and returns output before the execution of each test.
 
 
-  
+@pytest.fixture(scope='session/function/class/module', autouse='True', params=['ie', 'chrome', 'firefox'])
+def my_setup_teardown_fixture(request):
+    browser = request.param
+    # write setup code
+    # setup code block
+    ###teardown code call below, we can make call using yield or by using request.addfinalizer function
+    yield None  
+    request.addfinalizer(finalizer_function)
+
+
+=> We can make call to teardown code in fixture in 2 ways, one way is using yield statement which is genrator concept, which 
+pauses the execution at yield statement point and transfer the control to calling function which is testcase, and once testcase
+execution is completed then it will again make call to teardown code below yield statement.
+
+=> another way of calling finalizer function is by passing request object to fixture function and then using request.addfinalizer function
+pass the finalizer function object inside request.addfinalizer(fin)
+
+=> Difference between making teardown code call using yeild and addfinalizer function :
+In case of yield statement, when there is a failure or exception in the setup part of code in fixture, then teardown code won't be called.
+but in case of addfinalizer function, even if setup code raises failure or exception, tearown code would be called. This would be
+beneficial in certain cases where we want to do forcefully resource cleanup or release resources acqyuired by setup code.
 
 
 
+## pytest hooks : Learn more about hooks from this page : https://pytest-with-eric.com/hooks/pytest-hooks/
 
+=> Pytest Hooks are gateway points, allowing you to inject logic at specific stages of the test execution process to modify or extend the behaviour of tests based on test events.
 
+Pytest offers a variety of hooks, each designed for different purposes and stages of the test cycle. 
 
+=> Some well defined hooks in pyest conftest file
 
+def pytest_addoption(parser)
 
+def pytest_runtest_makereport()
 
+def pytest_sessionstart()
 
+def pytest_sessionfinish()
 
-
-
-
-
-
-
-
-
-
-
-
-
+def pytest_configure()
 
 
 
