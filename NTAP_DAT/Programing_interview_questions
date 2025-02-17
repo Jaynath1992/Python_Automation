@@ -912,3 +912,56 @@ if __name__ == '__main__':
     print(out)
 
 
+####>> How do you write a Python program to check if a given string is a sizeof pangram (contains all letters of the alphabet)?
+
+def check_string_pangram(input_str):
+    """Check string pangaram"""
+
+    letters = set()
+    for char in input_str:
+        if char.isalpha:
+            letters.add(char.lower())
+    if len(letters) == 26:
+        print('Given string : {} contains all alpha characters'.format(input_str))
+    else:
+        print('Given string : {} does not contain all alpha characters'.format(input_str))
+
+import re
+
+def check_string_pangram_with_regex(input_str):
+    """check string pangram wihtout loop"""
+    pattern = '[a-z A-Z]{26}'
+    match = re.search(pattern, input_str)
+    if match:
+        print('Given String : {} contains all alpha characters'.format(input_str))
+    else:
+        print('Given String : {} does not contain all alpha characters'.format(input_str))
+
+
+def check_string_pangram_without_for_loop(input_str):
+    """Check string pangram wihtout for loop"""
+    # input_str.isalpha()
+    # input_str.isalnum()
+    # input_str.isdigit()
+    is_pangram = False
+    if input_str.isalpha():
+        if len(set(input_str)) == 26:
+            is_pangram = True
+            print('Given string : {} contains all 26 alphabets'.format(input_str))
+    if is_pangram is False:
+        print('Given string : {} does not contains all 26 alphabets'.format(input_str))
+
+
+if __name__ == '__main__':
+    #input_str = 'abcdefghijklmnopqrstuvwxyz'
+    input_str1 = 'abcdefghijklmnopqrstuvwxzxc'
+
+    #out = check_string_pangram(input_str)
+    #print(out)
+
+    #out = check_string_pangram_with_regex(input_str1)
+
+    out = check_string_pangram_without_for_loop(input_str1)
+
+
+
