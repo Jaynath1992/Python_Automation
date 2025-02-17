@@ -1,0 +1,80 @@
+{
+  "python.pythonPath": "C:/Python39/python.exe",
+  // "python.languageServer": "Jedi",
+  // "python.jediEnabled": true,
+  "python.autoComplete.extraPaths": [
+      "C:/cvs-qa/cvs-qa/cbsqa/lib",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/nvc_wrapper.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/atom_wrapper.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/../gnftestsuite/3P_ported",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers/utils.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers/",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/logger.py",
+      "./lib/cvpmanage",
+      "./lib/cvp_wrapper.py"
+       
+      //"C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/ccfe_wrapper.py"
+
+
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/atom_wrapper.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/nvc_wrapper.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/fabric_ssh_operations.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/linux.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/computer.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/client.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/cvp_wrapper.py",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/lib/cvpmanage",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/testbed",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/cvptestsuite",
+  //   "C:/NetApp_Automation/cbs-qa/cbsqa/cvptestsuite/cvp_testsuite"
+  ],
+
+  "robot.pythonpath": [
+      // "${workspaceFolder}/lib/",
+      // "${workspaceFolder}/lib/cvp_wrapper.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/nvc_wrapper.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/atom_wrapper.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/logger.py",
+      "./lib/gnf/",
+      "./lib/cvpmanage",
+      "./lib/cvp_wrapper.py",
+      "./lib/gnf/ccfe",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/../gnftestsuite/3P_ported",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers/",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers/utils.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/logger.py",
+      "C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/helpers/utils.py"
+      //"C:/cvs-qa/cvs-qa/cbsqa/lib/gnf/ccfe/ccfe_wrapper.py"
+  
+        
+    ],
+    "robot.python.executable": "",
+    "robot.lint.enabled": true,
+    "robot.editor.4spacesTab": true,
+    "robot.lint.keywordCallArguments": true,
+  //   "robot.libraries.libdoc.needsArgs": [
+  //     "cvp_wrapper",
+  //     "common_lib"
+  //   ],
+    "robot.variables": {
+        "LIB": "C:/cvs-qa/cvs-qa/cbsqa/lib",
+        //"TESTBED": "C:/service_account_json/jaynath_kumar_hst.hst",
+        //"TESTBED": "C:/service_account_json/GCP_1P/hst/ap1_cit01_east4_sanity.hst",
+        "TESTBED": "C:/service_account_json/GCP_1P/hst/ap2_sqa_cit01_australlia_southeast1_sanity.hst"
+        //"TESTBED": "C:/service_account_json/jaynath_hst/kishore_sanity_east4.hst"
+        //"TESTBED": "C:/service_account_json/jaynath_hst/jaynath_hst.hst"
+        //"TESTBED": "C:/service_account_json/jaynath_hst/gcp_hw_poc.hst"
+        //"TESTBED": "C:/service_account_json/GCP_Atom_Setup/sqa_env_setup/atom_zonal_cit_hst.hst",    # sqa env setup hst
+        //"TESTBED": "C:/service_account_json/GCP_Atom_Setup/jaynath_setup_2/atom_regional_hst.hst"         
+
+      }
+
+}
