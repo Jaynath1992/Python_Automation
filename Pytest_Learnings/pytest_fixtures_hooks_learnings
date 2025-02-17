@@ -1,4 +1,5 @@
 """
+Pytest learnings Doc : https://docs.pytest.org/en/stable/how-to/fixtures.html
 
 => Pytest is a testing framework for Python that makes it easy to write simple and scalable test cases. 
 It offers features like fixtures, parameterized tests, and detailed error reporting. With Pytest, you can efficiently test 
@@ -16,7 +17,7 @@ Pytest features :
     => or similar pytest supported configuration files (pytest.ini, pyproject.toml, tox.ini, setup.config)
 5. Detailed Reporting - Provides reporting features through pytest0html plugins and also support third party reporting pluins like Allure, reportportal
 6. Extensive plugins support - It has wide range of pytest related plugins support availabe for different purposes
-
+7. Assertion exception : you can raise exception when pytest assertion fails 
 """
 => conftest file => Present in root directory of automation folder structure, or also it may reside in tests directory
 => Conftest (confifuration test file) - is a special file in pyest, which allows user to write pytest fxitures, hooks and make call
@@ -33,7 +34,7 @@ They help in creating reusable and maintainable test code by providing a way to 
 A Fixture is a piece of code that runs and returns output before the execution of each test.
 
 
-@pytest.fixture(scope='session/function/class/module', autouse='True', params=['ie', 'chrome', 'firefox'])
+@pytest.fixture(scope='session/function/class/module/package', autouse='True', params=['ie', 'chrome', 'firefox'])
 def my_setup_teardown_fixture(request):
     browser = request.param
     # write setup code
@@ -55,7 +56,199 @@ In case of yield statement, when there is a failure or exception in the setup pa
 but in case of addfinalizer function, even if setup code raises failure or exception, tearown code would be called. This would be
 beneficial in certain cases where we want to do forcefully resource cleanup or release resources acqyuired by setup code.
 
+=> Notes : If multiple fixtures are called inside test function, then setup code of fixtures would be called in sequential order
+but teardown code would be called in the last in first out order.
 
+=> Fixtures can request other fixtures :
+One of pytest’s greatest strengths is its extremely flexible fixture system. 
+It allows us to boil down complex requirements for tests into more simple and organized functions, where we only need to have each one describe the things they are dependent on. 
+That means in case of multiple fixtures call inside testcases, teadown would be called from right to left fixtures, but setup would be
+called from lef to right fixtures.
+
+##=> Parameterizing fixtures :
+
+@pytest.fixture(scope="module", params=["smtp.gmail.com", "mail.python.org"])
+def smtp_connection(request):
+    smtp_connection = smtplib.SMTP(request.param, 587, timeout=5)
+    yield smtp_connection
+    print(f"finalizing {smtp_connection}")
+    smtp_connection.close()
+
+## Override a fixture with direct test parametrization
+
+tests/
+    conftest.py
+        # content of tests/conftest.py
+        import pytest
+
+        @pytest.fixture
+        def username():
+            return 'username'
+
+        @pytest.fixture
+        def other_username(username):
+            return 'other-' + username
+
+    test_something.py
+        # content of tests/test_something.py
+        import pytest
+
+        @pytest.mark.parametrize('username', ['directly-overridden-username'])
+        def test_username(username):
+            assert username == 'directly-overridden-username'
+
+        @pytest.mark.parametrize('username', ['directly-overridden-username-other'])
+        def test_username_other(other_username):
+            assert other_username == 'other-directly-overridden-username-other'
+
+###How to mark test functions with attributes :
+
+By using the pytest.mark helper you can easily set metadata on your test functions.
+
+usefixtures - use fixtures on a test function or class
+
+filterwarnings - filter certain warnings of a test function
+
+skip - always skip a test function
+
+skipif - skip a test function if a certain condition is met
+
+xfail - produce an “expected failure” outcome if a certain condition is met
+
+parametrize - perform multiple calls to the same test function.
+
+Registering marks
+You can register custom marks in your pytest.ini file like this:
+
+[pytest]
+markers =
+    slow: marks tests as slow (deselect with '-m "not slow"')
+    serial
+
+=> Alternatively, you can register new markers programmatically in a pytest_configure hook:
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "env(name): mark test to run only on named environment"
+    )
+=> Raising errors on unknown marks :
+When the --strict-markers command-line flag is passed, any unknown marks applied with the @pytest.mark.name_of_the_mark decorator will trigger an error. 
+You can enforce this validation in your project by adding --strict-markers to addopts:
+[pytest]
+addopts = --strict-markers
+markers =
+    slow: marks tests as slow (deselect with '-m "not slow"')
+    serial
+
+
+Basic examples fixtures :
+from uuid import uuid4
+from urllib.parse import urljoin
+
+from selenium.webdriver import Chrome
+import pytest
+
+from src.utils.pages import LoginPage, LandingPage
+from src.utils import AdminApiClient
+from src.utils.data_types import User
+
+
+@pytest.fixture
+def admin_client(base_url, admin_credentials):
+    return AdminApiClient(base_url, **admin_credentials)
+
+
+@pytest.fixture
+def user(admin_client):
+    _user = User(name="Susan", username=f"testuser-{uuid4()}", password="P4$$word")
+    admin_client.create_user(_user)
+    yield _user
+    admin_client.delete_user(_user)
+
+
+@pytest.fixture
+def driver():
+    _driver = Chrome()
+    yield _driver
+    _driver.quit()
+
+
+@pytest.fixture
+def login(driver, base_url, user):
+    driver.get(urljoin(base_url, "/login"))
+    page = LoginPage(driver)
+    page.login(user)
+
+
+@pytest.fixture
+def landing_page(driver, login):
+    return LandingPage(driver)
+
+
+def test_name_on_landing_page_after_login(landing_page, user):
+    assert landing_page.header == f"Welcome, {user.name}!"
+
+import pytest
+
+
+# Arrange
+@pytest.fixture
+def first_entry():
+    return "a"
+
+
+# Arrange
+@pytest.fixture
+def order(first_entry):
+    return [first_entry]
+
+
+def test_string(order):
+    # Act
+    order.append("b")
+
+    # Assert
+    assert order == ["a", "b"]
+
+A test/fixture can request more than one fixture at a time
+
+
+PyTest Assertions and Exceptions:
+****************************************
+=>******* Assertions about expected exceptions :
+
+def test_zero_division():
+    with pytest.raises(ZeroDivisionError):
+        1 / 0
+
+def test_recursion_depth():
+    with pytest.raises(RuntimeError) as excinfo:
+
+        def f():
+            f()
+
+        f()
+    assert "maximum recursion" in str(excinfo.value)
+excinfo is an ExceptionInfo instance, which is a wrapper around the actual exception raised. The main attributes of interest are .type, .value and .traceback.
+
+## Matching exception messages :
+def test_match():
+    with pytest.raises(ValueError, match=r".* 123 .*"):
+        myfunc()
+
+## 
+def test_exception_in_group():
+    with pytest.raises(ExceptionGroup) as excinfo:
+        raise ExceptionGroup(
+            "Group message",
+            [
+                RuntimeError("Exception 123 raised"),
+            ],
+        )
+    assert excinfo.group_contains(RuntimeError, match=r".* 123 .*")
+    assert not excinfo.group_contains(TypeError)
+
+PyTest Hooks :
+******************
 
 ## pytest hooks : Learn more about hooks from this page : https://pytest-with-eric.com/hooks/pytest-hooks/
 
@@ -65,7 +258,19 @@ Pytest offers a variety of hooks, each designed for different purposes and stage
 
 => Some well defined hooks in pyest conftest file
 
-def pytest_addoption(parser)
+1. def pytest_addoption(parser)
+
+=> Occasionally, it is necessary to change the way in which command line options are defined by one plugin based on hooks in another plugin.
+
+
+def pytest_addoption(parser, pluginmanager):
+    default_value = pluginmanager.hook.pytest_config_file_default_value()
+    parser.addoption(
+        "--config-file",
+        help="Config file to use, defaults to %(default)s",
+        default=default_value,
+    )
+
 
 def pytest_runtest_makereport()
 
@@ -76,6 +281,33 @@ def pytest_sessionfinish()
 def pytest_configure()
 
 
+
+
+
+##> How to run pytest testcases :
+******************************************
+-> Pytest supports several ways to run and select tests from the command-line or from a file :
+1. Run tests in a module :                      pytest test_mod.py
+2. Run tests in a directory :                   pytest testing/
+3. Run tests by keyword expressions :           pytest -k 'My Class and Not method'
+4. To run a specific test within a module:      pytest tests/test_mod.py::test_func
+5. To run all tests in a class:                 pytest tests/test_mod.py::TestClass
+6. To run a specific test case within class     pytest tests/test_mod.py::TestClass::test_method
+7. Specifying a specific parametrization of a test:  pytest tests/test_mod.py::test_func[x1,y2]
+8. To run tests by marker : 
+To run all tests which are decorated with the annotated @pytest.mark.slow(phase=1) decorator, with the phase keyword argument set to 1 :
+=> pytest -m "slow(phase=1)"
+
+=> Read argument from a file and then run : pytest @tests_to_run.txt
+=> 
+##### ******* How to re-run failed tests and maintain state between test runs :
+
+--lf, --last-failed - to only re-run the failures.
+--ff, --failed-first - to run the failures first and then the rest of the tests.
+
+How to handle test failures :
+pytest -x           # stop after first failure
+pytest --maxfail=2  # stop after two failures
 
 
 
