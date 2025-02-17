@@ -1,0 +1,53 @@
+definitions:
+    - client1: &client_1
+        type : client
+        os : linux
+        device : client
+        ip : 10.193.XXX.XXX
+        user : jaynath_controller_user
+        password : jaynath_controller_pass
+
+    - client2: &client_2
+        type : client
+        os : linux
+        device : gcp_nfs_client
+        ip : 35.199.XXX.XXX
+        user : linux_user
+        password : linux_pass
+
+
+project: atom
+cluster_sde:
+    type: kube
+    pgsql: True
+    device: sde_cluster
+    k8s_version: 1.21.14
+    ip: 10.193.XXX.XXX
+    user: jaynath_controller_user
+    password: jaynath_controller_pass
+    number_of_user_accounts: 1
+    client:
+        - *client_1
+	- *client_2
+
+    users:
+     -  type: atom
+        pgsql: True
+        pipeline: cvs
+        nvc_cluster: us-east4-725117389761
+        projectno: 725117389761
+        project: r82c62c25bfb3c741-tp
+        region: us-east4
+        zone: us-east4-a
+        secondaryZone: us-east4-b
+        namespace: atom-quark
+        regionalHA: True
+        pool_enabled: True
+        group: quark.netapp.io
+        cus_version: v1alpha1
+        projectvpc: jaynath-atom-vpc-2
+        auth_login_nvc_filepath: json3
+        auth_login_cp_filepath: json1
+        client:
+            -  *client_2
+
