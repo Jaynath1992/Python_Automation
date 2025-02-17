@@ -1,0 +1,149 @@
+definitions:
+    - client1: &client_1
+        type : client
+        os : linux
+        device : linux-vm
+        ip : 35.188.XXX.XXX
+        user : NFS_CLIENT_USER
+        password : NFS_CLIENT_PASSWORD
+        internal_ip : 10.30.0.8
+    - client2: &client_2
+        type : client
+        os : linux
+        device : linux-vm-dst
+        ip : 34.45.XXX.XXX
+        user : NFS_CLIENT_USER1
+        password : NFS_CLIENT_PASSWORD1
+        internal_ip : 10.40.0.47
+ 
+
+    - ad_1: &ad_1
+        dns : 10.30.0.7
+        username : SMB_CLIENT_USER
+        password : SMB_CLIENT_PASSWORD
+        domain : "CRR.COM"
+        netBIOS : "CRR"
+        organizationalUnit: CN=Computers
+        encryptDCConnections: false
+        region : "us-east4"
+        ip : 34.86.XXX.XXX
+    - ad_2: &ad_2
+        dns : 10.40.0.46
+        username : SMB_CLIENT_USER
+        password : SMB_CLIENT_PASSWORD
+        domain : "CRRC1.COM"
+        netBIOS : "CRRC1"
+        organizationalUnit: CN=Computers
+        encryptDCConnections: false
+        region : "us-central1"
+        ip : 34.170.XXX.XXX
+
+    - smb_client1: &smb_client1
+        type : client
+        os : windows
+        device : windows-vm1
+        ip :   34.86.XXX.XXX
+        netBIOS : "CRR"
+        user : SMB_CLIENT_USER
+        password : SMB_CLIENT_PASSWORD
+        domain : "CRR.COM"
+    - smb_client2: &smb_client2
+        type : client
+        os : windows
+        device : windows-vm1-remote
+        ip :   34.170.XXX.XXX
+        netBIOS : "CRRC1"
+        user : SMB_CLIENT_USER
+        password : SMB_CLIENT_PASSWORD
+        domain : "CRRC1.COM"
+
+project: gnf
+ad_details:
+    dns : 10.30.0.7
+    username : SMB_CLIENT_USER
+    password : SMB_CLIENT_PASSWORD
+    domain : "CRR.COM"
+    netBIOS : "CRR"
+    organizationalUnit: CN=Computers
+    encryptDCConnections: false
+    region : "us-east4"
+    ip : 34.86.XXX.XXX
+
+project: gnf
+ad_details:
+    dns : 10.40.0.46
+    username : SMB_CLIENT_USER
+    password : SMB_CLIENT_PASSWORD
+    domain : "CRRC1.COM"
+    netBIOS : "CRRC1"
+    organizationalUnit: CN=Computers
+    encryptDCConnections: false
+    region : "us-central1"
+cluster_sde:
+    type: stage
+    gnf_api: ccfe
+    stage_url: "https://autopush-netapp.sandbox.googleapis.com"
+    number_of_user_accounts: 1
+    # Project1:
+    #    1. It should be service project for SharedVPC tests
+    # Project2:
+    #    1. It should be host project for SharedVPC tests
+    users:
+     # User 1: Project 1 & Source region
+     -  type: ccfe
+        platform: so
+        zone: us-east4-a
+        secondary_zone: us-east4-b
+        regional_ha: true
+        region: us-east4
+        stage_url: "https://autopush-netapp.sandbox.googleapis.com"
+        projectno: 506604544XXX
+        projectvpc: cit-1p-hw-vpc
+        use_legacy_mapping: False
+        use_default_ad: True
+        ad_details:
+            ad:
+            -  *ad_1
+        auth_login_cp_filepath: ap1_tst_cit02_json
+        client:
+            -  *client_1
+            -  *smb_client1
+        extra_args:
+          service_level: FLEX
+     # User 2: Project 1 & Remote region
+     -  type: ccfe
+        platform: so
+        zone: us-central1-a
+        secondary_zone: us-central1-b
+        regional_ha: true
+        region: us-central1
+        stage_url: "https://autopush-netapp.sandbox.googleapis.com"
+        projectno: 506604544198
+        projectvpc: cit-1p-hw-vpc
+        use_legacy_mapping: False
+        use_default_ad: True
+        extra_args:
+          service_level: FLEX        
+
+        invalid_vpcs:
+         # dummy VPC which does not exists
+         -    dummy-vpc
+         # VPC which is not peered to 1P service. You can use 3P only peered VPC
+         -    vpc1
+         #Below 2 VPCs will be used for SO tests
+         # VPC which is different from the VPC which is used for SOURCE volume
+         -    so-1p-crr-vpc
+         # VPC which is different from the VPC which is used for SOURCE volume but shared VPC
+         -    projects/937483642155/global/networks/qa-1p-so-01-shared-vpc
+        valid_vpcs:
+         # Different VPC network for PO and same VPC as source for SO
+         -    cit-1p-hw-vpc-1
+         -    cit-1p-hw-vpc-1
+        ad_details:
+            ad:
+            -  *ad_2
+        auth_login_cp_filepath: ap1_tst_cit02_json
+        client:
+            -  *client_2
+            -  *smb_client2
+  
