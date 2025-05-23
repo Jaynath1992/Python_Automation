@@ -122,6 +122,262 @@ Components of Worker node  :
 -> Responsible for pulling images, starting/stopping containers, and managing storage and networking.
 
 
+Kubernetes Pod:
+**********************
+-> smallest unit of deployment in K8S cluster
+-> Contains one or more running container
+-> Each pod gets its own IP address (internal)
+-> New IP address on pod re-creation
+
+=> So in short, a pod does not have stable IP address, its ip address changes frequently on pod deletion/re-creation or restarts, It is not possible to access the application using POD IP everytime, thats where we need kubernetes services. so we need stable IP address to communicate with pods and other resources within cluster, this is where we need kubernets services which provides you a stable endpoint (ClusterIP, DNS name) to access these pods.
+
+Why do we need Kubernetes Services ?
+****************************************
+
+1. Pods are empheral 
+    -> Pods can be created and destroyed frequently
+    -> Each pod gets a new IP address when rec-created
+    -> Services provide a stable endpoint (ClusterIP, DNS name) to access these pods
+
+2. Load balancing 
+    -> Services distribute traffic across multiple pods(or replica)
+    -> Ensures high availability and better resource utilization
+
+3. Service discovery 
+    -> Kubernetes assigns a DNS name to each service
+    -> Other pods can discover and connect to the service using this name
+
+Types of Kubernetes Services :
+*************************************
+
+1. ClusterIP
+2. NodePort
+3. LoadBalancer
+4. Ingress
+
+
+1. ClusterIP Service - 
+    -> It is default service in k8s which is used to internally expose the resources within cluster. It exposes the service on an internal IP in the cluster
+    -> This IP is not accessible from outside the cluster.
+    -> It allows Pods to communicate with each other using a consistent endpoint, even if the underlying Pods change.
+
+Sample YAML definition file for nginx service at ClusterIP:
+--------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+Samnple NGINX Deployment YAML :
+---------------------------------
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+
+
+2. NodePort Service :
+------------------------
+-> Expose resources externally (it has a range 30000-32767)
+-> NodePort exposes the service on each Node’s IP at a static port (the NodePort)
+-> You can contact the NodePort service from outside the cluster, by requesting <Node IP>:<Node Port>
+
+-> It allows users to access a service from outside the cluster using the node’s IP address and the assigned port.
+-> Kubernetes allocates a port from a predefined range (default: 30000–32767).
+-> This port is open on every node in the cluster.
+-> Traffic sent to this port on any node is forwarded to the corresponding service and then to the appropriate Pod.
+
+Sample YAML definition for NOdePort service :
+---------------------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nodeport-service
+spec:
+  selector:
+    app: nginx
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+
+When to Use NodePort:
+-----------------------------
+-> For development or testing environments.
+-> When you don’t have a cloud load balancer.
+-> When you want direct access to services from outside the cluster.
+
+3. Load Balancer Service : A LoadBalancer service in Kubernetes is a type of service that exposes your application to the internet by provisioning an external load balancer 
+-----------------------------
+(typically provided by a cloud provider like AWS, Azure, or GCP).
+
+-> Expose resources externally
+-> This service will use or dynamically create an external load balancer like a cloud load balancer when running in the cloud. This load balancer gets a public IP address.
+-> It forwards external traffic to the Kubernetes service, which then routes it to the appropriate Pods.
+-> Cloud provider will provide a mechanism for routing the traffic to the services
+-> we can create network load balancer in cloud . cost will be there.
+
+Sample YAML definition file for nginx load balancer:
+----------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-loadbalancer-service
+spec:
+  selector:
+    app: nginx
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+External Name Service:
+------------------------
+An ExternalName service in Kubernetes is a special type of service that maps a service name to an external DNS name. It doesn’t create a traditional service proxy or load balancer—instead, it acts like a DNS alias within the cluster.
+
+Sample YAML definition file for external Name 
+---------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-db
+spec:
+  type: ExternalName
+  externalName: db.example.com
+
+
+Ingress : is a service which supports path based routing 
+**********
+
+Ingress in Kubernetes is an API object that manages external access to services within a cluster, typically over HTTP and HTTPS. It acts as a smart router that controls how requests from outside the cluster are routed to internal services based on rules like hostnames and URL paths.
+
+=> Why Do We Need Ingress?
+*********************************
+By default, Kubernetes services are only accessible:
+
+    -> Internally via ClusterIP
+    -> Externally via NodePort or LoadBalancer, which are limited and not flexible
+
+Ingress solves this by:
+
+    -> Consolidating access under a single IP or domain
+    -> Allowing path-based or host-based routing
+    -> Supporting TLS termination (HTTPS)
+    -> Enabling custom routing rules and authentication
+
+How path based routing works ?
+*************************************
+1. Ingress Controller 
+    -> Listens for incoming HTTP/HTTPS traffic from outside the cluster
+    -> responsible for routing external HTTP(S) traffic to the appropriate services inside the Kubernetes cluster.
+
+Popular Ingress Controllers :
+********************************
+NGINX - Most widely used, flexible and well-documented.
+Traefik - Dynamic configuration, good for microservices.
+HAProxy - High-performance, enterprise-grade.
+Istio Gateway - Part of the Istio service mesh.
+AWS ALB Ingress - Integrates with AWS Application Load Balancer.
+
+2. Ingress resource 
+    -> Define routing rules based on URL paths (e.g. /api/, /web, /admin)
+
+3. Path rules
+    -> Requests to /api are routed to Backend Service A.
+    -> Requests to /web go to Backend Service B.
+    -> Requests to /admin are sent to Backend Service C.
+
+4. Backend Services
+    -> Each service forwards traffic to its associated Pods (e.g., Pod A1, Pod A2).
+
+Benefits of path based routing:
+*************************************
+-> Efficiently route different parts of an application (e.g. frontend, backend, admin) through a single domain
+-> Simplifies traffic management and scaling.
+-> Enables microservices architecture with clean separation.
+
+Here's a sample Ingress YAML configuration for path-based routing in Kubernetes:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: myapp.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service-a
+            port:
+              number: 80
+      - path: /web
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service-b
+            port:
+              number: 80
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service-c
+            port:
+              number: 80
+
+Explanation :
+*****************
+host: The domain name (e.g., myapp.example.com) that routes traffic through this Ingress.
+paths: Each path (like /api, /web, /admin) is routed to a different backend service.
+rewrite-target: Ensures the path is rewritten correctly when passed to the backend (optional, depends on your use case and ingress controller).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
