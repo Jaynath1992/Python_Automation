@@ -367,10 +367,307 @@ rewrite-target: Ensures the path is rewritten correctly when passed to the backe
 
 
 
+Kubernetes Deployment :
+******************************
+-> A deployment is an object in Kubernetes that lets you manage a set of identical pods
+-> Ensure that a certain no. of replicas of pods are always running
+-> Easily autoscale your applications using a Kubernetes deployment  (kubectl scale deployment <deployment-name> --replicas=<number-of-replicas> -n <ns>)
+-> Rolling update & Roll back we can do in case of Deployment
+-> Stateless applications are deployed using Deployment in K8S
+
+-> Creates and manages pods automatically
+-> Scale the number of replicas up or down
+-> does rolling update and rollback
+
+How it works ?
+-------------------
+1. You define a Deployment in a YAML file (or via kubectl).
+2. Kubernetes creates a ReplicaSet based on the Deployment spec.
+3. The ReplicaSet ensures the desired number of Pods are running.
+4. If you update the Deployment(rolling update) (e.g., change the image), then Kubernetes:
+    -> Creates a new ReplicaSet.
+    -> Gradually shifts traffic from the old Pods to the new ones (rolling update).
+    -> Deletes the old Pods once the new ones are ready.
+
+Deployment Rolling update and Rollback commands :
+*********************************************************
+-> A rolling update allows you to update the Deployment (e.g., change the container image) without downtime.
+
+# kubectl set image deployment/nginx-deployment nginx=nginx:1.21.0   (nginx image version is udpated to nginx:1.21.0)
+
+-> This updates the container image in the Deployment to nginx:1.21.0.
+-> Kubernetes will gradually replace old Pods with new ones.
+
+Rollback to Previous Version :
+------------------------------------
+
+# kubectl rollout undo deployment/nginx-deployment
+
+=> This reverts the Deployment to the last known good configuration.
+
+Check rollout status :
+--------------------------
+# kubectl rollout status deployment/nginx-deployment
+
+View Revision History :
+------------------------------
+# kubectl rollout history deployment/nginx-deployment
 
 
 
+Sample deployment manifest yaml file :
+-------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
 
+
+StatefulSet :
+---------------
+A StatefulSet is a Kubernetes workload API object used to manage stateful applications
+Unlike Deployments, which are designed for stateless applications, StatefulSets are used when each Pod needs a unique identity, stable storage, and ordered deployment or scaling.
+
+Key Features of StatefulSet:
+--------------------------------
+1. Stable Network Identity
+
+    -> Each Pod gets a unique, stable DNS name (e.g., pod-0, pod-1, etc.).
+    -> Useful for applications like databases that require fixed hostnames.
+
+2. Stable Persistent Storage
+
+    -> Each Pod can be associated with a PersistentVolumeClaim (PVC) that is not deleted when the Pod is rescheduled.
+    -> Ensures data is preserved across restarts.
+
+3. Ordered Deployment and Scaling
+
+    -> Pods are created, updated, and deleted in order (e.g., pod-0 before pod-1).
+    -> Ensures predictable behavior for clustered applications.
+
+4. Graceful Rolling Updates
+    -> Updates are done one Pod at a time, maintaining order and stability.
+
+How It Works? :
+----------------
+When you create a StatefulSet with 3 replicas:
+    -> Kubernetes creates Pods named myapp-0, myapp-1, and myapp-2.
+    -> Each Pod gets its own PVC (e.g., myapp-pvc-0, myapp-pvc-1, etc.).
+    -> If a Pod is deleted, it is recreated with the same name and volume.
+
+Deployment and Statefulset difference :
+*********************************************
+
+1. Pod identity : in case of deployment pod identity is anonymous(random string at the end of each pod name), but in case of statefulset, pod identity would be unique or stable like(pod-0, pod-1, pod-2)
+
+2. Storage : in case of deployment storage(pvc) is shared or ephemeral, but in case of statefulset storage(pvc) is dedicated for each pod (persistent per pod)
+
+3. Use case - stateless application((e.g., web servers, rest api, microservices)) are deployed using deployment and statefulset applications(e.g., databases(mongodb, timescaledb, mysql), Kafka, rabbitmq) are deployed using statefulset
+
+4. Pod management - in case of deployment it is parallel but in case of statefulset it is ordered (sequential)
+
+5. DNS - shared service name in case of deployment but in case of statefulset it is Unique DNS per Pod.
+
+Sample manifest yaml file for TimescaleDB statefulset :
+---------------------------------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: timescaledb-headless
+  labels:
+    app: timescaledb
+spec:
+  ports:
+    - port: 5432
+  clusterIP: None
+  selector:
+    app: timescaledb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: timescaledb
+spec:
+  selector:
+    matchLabels:
+      app: timescaledb
+  serviceName: "timescaledb-headless"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: timescaledb
+    spec:
+      containers:
+      - name: timescaledb
+        image: timescale/timescaledb:latest-pg12
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "yourpassword"
+        volumeMounts:
+        - name: timescale-storage
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: timescale-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+
+
+
+ConfigMap in k8s :
+---------------------
+-> In Kubernetes (K8s), a ConfigMap is an API object used to store non-confidential configuration data in key-value pairs.
+
+Why Use ConfigMaps?
+-----------------------
+-> To externalize configuration from your application code.
+-> To reuse the same container image in different environments (e.g., dev, staging, prod) with different configurations.
+-> To update configuration without rebuilding your container image.
+
+-> Environment Variables: ConfigMap values are injected into the container as environment variables.
+-> Volume Mount: ConfigMap values are mounted as files inside the container (e.g., /etc/config).
+
+Key Features
+------------------
+-> Stores data as key-value pairs.
+-> Can be consumed by Pods as:
+-> Environment variables
+-> Command-line arguments
+-> Configuration files in a volume
+
+Sample YAMl file for configmap
+-----------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-config
+data:
+  APP_MODE: "production"
+  LOG_LEVEL: "info"
+
+
+Using ConfigMap in a Pod
+-------------------------------
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+spec:
+  containers:
+  - name: app-container
+    image: my-app-image
+    env:
+    - name: APP_MODE
+      valueFrom:
+        configMapKeyRef:
+          name: my-config
+          key: APP_MODE
+
+
+Secrets :
+************
+
+In Kubernetes, a Secret is an object used to store sensitive data, such as passwords, OAuth tokens, SSH keys, or TLS certificates. Unlike ConfigMaps, Secrets are base64-encoded and can be configured to be more securely handled by the system.
+
+Why Use Secrets?
+-------------------
+-> To protect sensitive information from being exposed in plain text.
+-> To separate sensitive data from application code and configuration.
+-> To control access to sensitive data using Kubernetes RBAC.
+
+Sample YAMl file for secrets :
+----------------------------------
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-secret
+type: Opaque
+data:
+  username: YWRtaW4=        # base64 for "admin"
+  password: c2VjcmV0MTIz    # base64 for "secret123"
+
+
+###########
+
+You can encode values using:
+# echo -n 'admin' | base64
+
+Using Secrets in a Pod:
+-----------------------------
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-env-pod
+spec:
+  containers:
+  - name: my-container
+    image: my-app-image
+    env:
+    - name: USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: my-secret
+          key: username
+    - name: PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: my-secret
+          key: password
+
+As Mounted Files:
+**********************
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-volume-pod
+spec:
+  containers:
+  - name: my-container
+    image: my-app-image
+    volumeMounts:
+    - name: secret-volume
+      mountPath: "/etc/secret-data"
+      readOnly: true
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: my-secret
+
+This will mount the secret keys as files under /etc/secret-data/username and /etc/secret-data/password.
+
+How it works ?
+--------------------
+-> Secret: Stores sensitive data like username and password.
+-> Pod: The application container that consumes the secret.
+-> Environment Variable: The secret is injected into the container as environment variables.
+-> Volume Mount: The secret is mounted as files inside the container (e.g., /etc/secret-data/username).
 
 
 
