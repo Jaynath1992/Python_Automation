@@ -536,6 +536,37 @@ spec:
           storage: 1Gi
 
 
+What is a DaemonSet?
+***************************
+-> A DaemonSet ensures that a copy of a Pod runs on all (or some) nodes in the cluster. It’s typically used for background system-level tasks.
+
+Common Use Cases:
+---------------------
+-> Log collection agents (e.g., Fluentd, Logstash)
+-> Monitoring agents (e.g., Prometheus Node Exporter)
+-> Network plugins (e.g., Calico, Cilium)
+-> Storage daemons (e.g., GlusterFS, Ceph)
+
+Sample YAML definition file for Daemonset:
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: log-agent
+spec:
+  selector:
+    matchLabels:
+      name: log-agent
+  template:
+    metadata:
+      labels:
+        name: log-agent
+    spec:
+      containers:
+      - name: log-agent
+        image: fluentd
+
+
 
 ConfigMap in k8s :
 ---------------------
