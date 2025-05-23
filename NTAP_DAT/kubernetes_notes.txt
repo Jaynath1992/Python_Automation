@@ -80,6 +80,46 @@ The kube-controller manager runs multiple controller in a single process, here a
   -> If the actual state differs (e.g., only 2 pods running), the controller takes action (e.g., creates a new pod).
   -> It keeps looping to maintain the desired state.
 
+4. Scheduler : The Kubernetes Scheduler is a core component of the control plane responsible for assigning newly created Pods to Nodes in the cluster. It ensures that workloads are placed on the most suitable nodes based on resource availability, constraints, and policies.
+
+ Key Responsibilities of the Scheduler
+********************************************
+1. Pod Placement
+-> When a new Pod is created (but not yet assigned to a Node), the Scheduler Watches for unassigned Pods via the API Server.
+-> Selects an appropriate Node for each Pod.
+-> Updates the Pod’s specification with the chosen Node.
+
+2. Filtering Nodes
+-> The Scheduler first filters out Nodes that cannot run the Pod due to:
+-> Insufficient CPU, memory, or other resources.
+-> Node taints and tolerations.
+-> Node selectors or affinity rules.
+-> Volume or port conflicts.
+
+3. Scoring Nodes
+-> Among the remaining Nodes, it scores them based on:
+-> Resource availability (e.g., least loaded).
+-> Pod affinity/anti-affinity.
+-> Data locality (e.g., for storage).
+-> Custom scheduling policies.
+
+
+Components of Worker node  :
+****************************
+
+1. Kubelet : 
+-> an agent which runs on each worker nodes in k8s cluster
+-> Helps in the creation of pods and ensures the container containers are running inside pod
+
+2. Kube-proxy 
+-> Handles all network traffic in k8s cluster
+-> routes connection to specific/correct pod and also perform load balancing across pods
+-> Kube-Proxy enables Pods to communicate with Services using a stable virtual IP (ClusterIP).
+
+3. Container runtime 
+-> The software responsible for running containers (e.g., Docker, containerd, CRI-O).
+-> Kubelet uses it to start, stop, and manage containers inside Pods.
+-> Responsible for pulling images, starting/stopping containers, and managing storage and networking.
 
 
 
