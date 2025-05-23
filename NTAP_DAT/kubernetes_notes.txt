@@ -1,1 +1,101 @@
 ### Kubernetes learning notes
+***************************************
+
+* What is kubernetes ?
+=> kubernetes is a open source container orchestration tool designed to automate the deployment, scaling, and management of containerized applications in different deployment environments(physical/virtual/cloud/hybrid).
+
+Containers -> containers are lightweight, portable unit that package an application and its dependencies together into a single unit.
+
+Orchestration -> when you have many containers running across multiple machines, you need a way to manage them - starting, stopping, scaling, updating, and ensuring they stay healthy.
+
+Key features of kubernetes:
+********************************
+1. Automated deployment and scaling : Automatically deploy and scale/descale application based on demand. Scaling can be done horizontally(increasing no. of nodes/pods/container) or vertically(increasing cpu/ memory)
+2. Load balancing (network) : Distributes traffic across pods/containers to ensure reliability and performance.
+3. Rolling Updates & Rollbacks :  update application without any downtime and can rollback if something goes wrong
+4. Service discovery : Automatically assigns ip addresses and a single DNS name for a set of containers
+5. Secret and configuration management : Manages sensitive information like passwords and configuration settings securely.
+
+
+Basic Components of kubernetes :
+************************************
+1. Pod - Smallest unit of deployment, in which one or more containers keeps running.
+2. Node : A machine(physical/virtual) that runs pods
+3. Cluster: A set of nodes manages by k8s
+4. Master(Control Plane): manages the cluster and makes global decisions(like scheduling)
+5. Worker nodes : nodes which form k8s cluster where pod/container runs
+6. kubelet : an agent that runs on each node which helps in the creation of the pod.
+
+Kubernetes Architecture :
+****************************
+
+Kubernetes cluster consists of control plane( that we say as master node) and nodes (worker machines)
+
+Control plane(Top layer): 
+*****************************
+-> Manages the overall cluster and makes global decisions
+
+There are 4 components which runs on kubernetes master node :
+
+1. API Server : It is heart of k8s cluster, all components(controllers, schedulers) interact with the cluster through the API server.It receives RESTful API calls and processes them and then stores the data in the etcd database(in key value pair format). 
+    -> As a end user we interact with api server component of k8s master node, whatever kubectl command we fire, command is sent as REST API request to the k8s API server.
+    -> Validation of command/manifest file
+    -> Authentication and Authorization 
+      * Verify the identity of users (authentication)
+      * Checks if they have permission to perform the requested action (authorization)
+
+2. etcd  :  is a database (nosql format) that holds all cluster data in key-value pair format. etcd is a distributed, consistent, and highly available key-value store.
+   
+      -> etcd is a highly available and consistent key-value store that helps in Kubernetes backing store for all the cluster data
+      -> Stores all configuration data (Configmaps(non-sensitive data), secrets(encrypted sensitive data)), user info(user roles(rbac), user permissions), node info(node status,             node metrics, node labels, taints and conditions), pod info(pod status, pod metrics, pod lables, spec (configuration like containers, volumes and restart policies)),       
+         Replicasets, Deployment, Daemonsets , app versions, no. of replicas, connectivity etc.
+  
+just adding below lines about etcd for understanding purpose :
+
+    -> Distributes means : Runs across multiple nodes for fault tolerance and high availability.
+    -> Strong Consistency - Guarantees that reads always return the most recent write.
+    -> High Availability - Can tolerate node failures using leader election and quorum-based writes.
+
+3. Controller manager : is a key component of the control plane that runs controller processes - background loops that monitor the cluster state and make changes to move the current state toward the desired state
+
+-> A controller is a control loop, that watches the state of your cluster through API server and makes changes to ensure actual state matches the desired state.
+
+-> Process that run controller to handle cluster background task
+-> It is a daemon(server) that runs in a continuous loop and responsible for gathering information and sending it to API server
+-> Responsible for changing the current state of cluster to its desired state
+
+Key function of controller manager : 
+
+The kube-controller manager runs multiple controller in a single process, here are the main ones
+1. Node controller - monitors the health of the nodes and manages node lifecycle, mark node as NotReady if node become unresponsive. Evicts pods from failed nodes.
+2. Replication controller - ensure the specifies number of pods replicas are always running. Creates or deletes pods as needed
+3. Deployment controller - manages rolling updates and rollback for deployments, ensure the desired version of an app is running
+4. Endpoint Controller: Manages endpoints for services.
+5. Service Account Controller: Manages service accounts. Creates default service accounts for new namespaces. Manages API access tokens for service accounts.
+6. Job & CronJob Controllers : Manages one-time and scheduled jobs.Ensures jobs complete successfully or are retried if they fail.
+
+=> How It Works (Simplified Flow):
+  -> You define a desired state (e.g., 3 replicas of a pod).
+  -> The controller watches the current state via the API server.
+  -> If the actual state differs (e.g., only 2 pods running), the controller takes action (e.g., creates a new pod).
+  -> It keeps looping to maintain the desired state.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
