@@ -1,1 +1,62 @@
 # Helm notes
+
+What is Helm ?
+------------------
+-> Helm is a package manager for kubernetes, think of it like apt for ubuntu or yum for centos
+-> It helps you define, install, and manage Kubernetes applications using Helm charts, which are reusable, versioned packages of pre-configured Kubernetes resources.
+
+Why Do We Need Helm?
+---------------------
+Managing Kubernetes applications manually using YAML files can be:
+-> Repetitive
+-> Error-prone
+-> Hard to maintain across environments (dev, staging, prod)
+
+Helm solves these problems by offering:
+-----------------------------------------
+Key Benefits :
+
+1. Templating : Write reusable YAML templates with variables.
+2. Versioning : Helm charts are versioned, making rollbacks easy.
+3. Dependency Management	: Charts can depend on other charts (e.g., a web app that needs a database).
+4. Release Management : Helm tracks releases, so you can upgrade, rollback, or uninstall cleanly.
+5. Environment Customization : Use values files to customize deployments for dev, staging, or prod.
+
+Examples :
+
+Instead of writing multiple YAML files for a PostgreSQL deployment, you can run:
+
+# helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm install my-postgres bitnami/postgresql
+
+
+Helm Basics Commands :
+----------------------------
+1. helm version : Purpose: Check the installed Helm version.
+2. helm repo add bitnami https://charts.bitnami.com/bitnami
+3. helm repo update
+4. helm search repo nginx
+5. helm install my-nginx bitnami/nginx
+6. helm list
+7. helm upgrade my-nginx bitnami/nginx --set service.type=LoadBalancer
+8. helm uninstall my-nginx
+9. helm show values bitnami/nginx  (Show default values for a chart.)
+10. helm get values my-nginx (Get the values used in a release.)
+11. helm create my-chart
+12. helm package ./my-chart  (Package a chart directory into a .tgz file.)
+13. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
