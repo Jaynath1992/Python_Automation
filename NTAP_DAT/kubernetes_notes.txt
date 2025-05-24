@@ -567,6 +567,71 @@ spec:
         image: fluentd
 
 
+Node/Pod affinity and anti-affinity :
+************************************
+In Kubernetes, affinity and anti-affinity rules help control where pods are scheduled in the cluster based on node or pod characteristics. These rules are useful for improving performance, availability, and fault tolerance.
+
+Node Affinity : Node affinity is like a filter that tells Kubernetes which nodes a pod can be scheduled on, based on node labels.
+
+Example Use Cases:
+--------------------
+-> Schedule pods only on nodes with SSDs.
+-> Avoid nodes in a specific zone.
+
+Types:
+-> requiredDuringSchedulingIgnoredDuringExecution: Hard rule — pod won’t be scheduled unless the rule is met.
+-> preferredDuringSchedulingIgnoredDuringExecution: Soft rule — scheduler tries to meet it but can ignore if needed.
+
+Example of nodeAffinity (Schedule pods only on nodes with SSDs.):
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: disktype
+              operator: In
+              values:
+                - ssd
+
+2. Pod Affinity :
+-> Pod affinity tells Kubernetes to schedule a pod near other pods (on the same node or in the same topology domain like zone or region).
+
+Example Use Cases:
+---------------------
+-> Co-locate microservices that communicate frequently.
+-> Improve performance by reducing latency.
+
+ Example:
+---------------
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app: frontend
+        topologyKey: "kubernetes.io/hostname"
+
+
+ 3. Pod Anti-Affinity :
+---------------------------
+-> Pod anti-affinity tells Kubernetes to avoid placing a pod near certain other pods.
+
+Example Use Cases:
+-----------------------
+-> Spread replicas of the same app across nodes for high availability.
+-> Avoid resource contention.
+
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app: my-app
+        topologyKey: "kubernetes.io/hostname"
+
+
 
 ConfigMap in k8s :
 ---------------------
