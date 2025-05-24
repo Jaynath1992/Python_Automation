@@ -928,27 +928,239 @@ spec:
       claimName: my-pvc
 
 
+Dynamic Provisioning :
+---------------------------
+=> With dynamic provisioning, Kubernetes uses a StorageClass to automatically provision a volume when a PVC is created.
+
+Storage Class :
+------------------
+-> Provisioner : determines the volume plug-in used by the storageClass (e.g., AWS EBS, GCE PD, CSI drivers).
+-> Several plug-ins such as AWS EBS and GCE PD are available for different storage providers.
+-> Parameters : contain available configurations accepted by the provisioner.
+-> ReclaimPolicy : retain or delete
+-> volumeBindingMode : Immediate/ WaitForFIrstConsumer
+-> In PVC you have to mention that storage class name like (storageClassName: <name>)
 
 
+Example Storage Class :
+----------------------------
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-storage
+provisioner: kubernetes.io/aws-ebs
+parameters:
+  type: gp2
+
+Example: PVC Using StorageClass
+---------------------------------------
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-dynamic-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-storage
+
+When this PVC is created, Kubernetes:
+----------------------------------------
+-> Looks at the storageClassName.
+-> Uses the provisioner defined in the StorageClass.
+-> Dynamically creates a Persistent Volume.
+-> Binds the new PV to the PVC.
+
+Benefits of Dynamic Provisioning :
+------------------------------------
+-> No manual PV management.
+-> Faster and more scalable.
+-> Cloud-native: Works well with cloud providers and CSI drivers.
 
 
+There are different types of storage class available for dynamic volume provisioning for on-premise k8s cluster as well as cloud deployed k8s cluster like(AKS, EKS, GKE)
+
+In Kubernetes, StorageClasses define how dynamic volume provisioning should occur. The actual types of StorageClasses available depend on the cloud provider, CSI drivers, or on-premise storage solutions you're using.
+
+Here are some of the most common on-premises dynamic volume provisioning options for Kubernetes:
+---------------------------------------------------------------------------------------------------------
+1. Rancher Local Path Provisioner
+-> Provisioner: rancher.io/local-path
+-> Use Case: Lightweight, simple dynamic provisioning using local disk paths
+-> Best For: Development, testing, small-scale clusters.
+-> Website: GitHub - rancher/local-path-provisioner
+
+2. Longhorn
+-> Provisioner: driver.longhorn.io
+-> Use Case: Distributed block storage with replication, snapshots, and backups.
+-> Best For: Production-grade on-prem clusters.
+-> Integrated with Rancher.
+
+3. NFS (via NFS-Client Provisioner)
+-> Provisioner: nfs-client
+-> Use Case: Dynamic provisioning using an existing NFS server.
+-> Best For: Shared file storage across pods.
+
+4. OpenEBS
+-> Provisioners:
+    -> openebs.io/local (Local PVs)
+    -> openebs.io/jiva (Replicated block storage)
+    -> cstor.csi.openebs.io (CStor engine)
+-> Use Case: Container-attached storage with multiple engines.
+-> Best For: Stateful workloads on bare metal.
+
+5. NetApp Trident
+-> Provisioner: Supports NetApp ONTAP (cloud or on-prem)
+-> Use Case: Enterprise storage integration with Kubernetes.
+-> Best For: Organizations using NetApp storage systems 1.
 
 
+How to setup using Rancher Local Path Provisioner :
+---------------------------------------------------------
+
+Here’s a step-by-step guide to set up and use the Rancher Local Path Provisioner for dynamic volume provisioning in your on-prem Kubernetes cluster:
+
+Step 1: Install Local Path Provisioner
+# kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml
+
+This will:
+
+-> Deploy the provisioner as a pod.
+-> Create a StorageClass named local-path.
+
+Step 2: Verify the StorageClass
+-----------------------------------
+# kubectl get storageclass
+
+Step 3: Create a PVC Using Local Path
+------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+
+Apply it :
+--------------
+# kubectl apply -f pvc.yaml
+
+Step 4: Use the PVC in a Pod
+--------------------------------
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+spec:
+  containers:
+    - name: test-container
+      image: busybox
+      command: [ "sleep", "3600" ]
+      volumeMounts:
+        - mountPath: "/data"
+          name: local-storage
+  volumes:
+    - name: local-storage
+      persistentVolumeClaim:
+        claimName: local-pvc
+
+Step 5: Check Where Data Is Stored :
+----------------------------------------
+By default, data is stored under /opt/local-path-provisioner on the node. You can customize this path in the provisioner’s config if needed.
 
 
+What storage class is used for GKE cluster in production?
+---------------------------------------------------------------
+For production workloads on GKE (Google Kubernetes Engine), the recommended StorageClasses for dynamic volume provisioning depend on your performance and availability needs. Here's a breakdown of the most commonly used options.
 
+1. standard (Balanced Persistent Disk)
+-> Provisioner: pd.csi.storage.gke.io
+-> Disk Type: Balanced Persistent Disk (SSD-backed)
+-> Use Case: General-purpose workloads, web apps, databases.
+-> Default: Often the default StorageClass in GKE clusters.
 
+Here’s a sample PersistentVolumeClaim (PVC) YAML that uses the GKE CSI driver provisioner: pd.csi.storage.gke.io. This is the recommended provisioner for Google Persistent Disks in GKE.
 
+ pvc-gke-csi.yaml
+-----------------------
 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gke-csi-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
 
+Note : The standard StorageClass in GKE uses the pd.csi.storage.gke.io provisioner by default.
 
+# kubectl get storageclass standard -o yaml
 
+Look for this line in the output: provisioner: pd.csi.storage.gke.io
 
+Here’s a complete example of a Kubernetes Deployment that uses a PersistentVolumeClaim (PVC) backed by the GKE CSI provisioner (pd.csi.storage.gke.io) via the standard StorageClass.
 
+nginx-deployment-with-pvc.yaml
+-----------------------------------
 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gke-csi-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-storage
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: nginx-storage
+          persistentVolumeClaim:
+            claimName: gke-csi-pvc
 
-
-
+What This Does:
+------------------
+-> Creates a PVC named gke-csi-pvc using the standard StorageClass.
+-> Deploys an NGINX pod that mounts the PVC at /usr/share/nginx/html.
+-> Any data written to that path will persist even if the pod is deleted or restarted.
 
 
 
