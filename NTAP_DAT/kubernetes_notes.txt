@@ -701,6 +701,256 @@ How it works ?
 -> Volume Mount: The secret is mounted as files inside the container (e.g., /etc/secret-data/username).
 
 
+Kubernetest Service Account :
+***********************************
+
+=> A ServiceAccount in kubernetes is an identity for processes running in pods. It allows those processes to authenticate to the kubernetes API server and perform actions based on their assigned permissions.
+
+=> Think of it as a "user account" for your application inside the cluster.
+
+Default Behavior :
+--------------------
+-> Every namespace has a default service account
+-> If you don't specify one, k8s automatically assigns the default ServiceAccount to your pod.
+-> The ServiceAccount token is mounted into the Pod at :
+    /var/run/secrets/kubernetes.io/serviceaccount/token
+
+Creating a Custom ServiceAccount :
+-------------------------------------
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+  namespace: default
+
+Attach roles with RBAC:
+*****************************
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+
+Create RoleBinding :
+---------------------------
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: my-service-account
+  namespace: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+
+ Use ServiceAccount in a Pod :
+*******************************
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  serviceAccountName: my-service-account
+  containers:
+  - name: my-container
+    image: busybox
+    command: ["sleep", "3600"]
+
+
+Use ServiceAcoount in a Deployment :
+****************************************
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      serviceAccountName: my-service-account
+      containers:
+      - name: my-container
+        image: busybox
+        command: ["sh", "-c", "while true; do echo Hello from $(hostname); sleep 10; done"]
+
+
+Persistent Volumes and Persistent Volumes Claim :
+*****************************************************
+
+Why PV & PVCs matter in k8s ?
+-----------------------------------
+=> Kubernetes pods are ephemeral—they can be created and destroyed at any time. If you store data inside a pod, it will be lost when the pod is deleted. To solve this, Kubernetes provides Persistent Volumes (PVs) and Persistent Volume Claims (PVCs).
+
+
+=> In Kubernetes, Persistent Volumes(PV) and Persistent Volumes Claim(PVC) are used to manage persistent storage for pods. They decouple storage provisioning from pod lifecycle allowing data to persist even if pods are deleted or rescheduled
+
+What is Persistent Volume(PV):
+********************************
+-> A persistent volume is a piece of storage in the cluster that has been provisioned by an administrator or dynamically provisioned through storage class. It’s like a physical disk in the cluster.
+-> PersistentVolumes are a cluster-level resource like nodes, which don’t belong to any namespace
+-> It has 3 things, one is Capacity(e.g. 5Gi), 2nd is accessModes(ReadOnlyMany, ReadWriteOnce, ReadWriteMany) and 3rd is Reclaim Policy (Retain, Recycle, Delete)
+
+=> PVC : In Kubernetes (K8s), a Persistent Volume Claim (PVC) is a way for a user or application to request persistent storage from the cluster.
+
+Key Concepts
+----------------
+Persistent Volume (PV): A piece of storage in the cluster, provisioned by an admin or dynamically via a StorageClass.
+Persistent Volume Claim (PVC): A request for storage by a user. It specifies:
+    -> Size (e.g., 10Gi)
+    -> Access mode (e.g., ReadWriteOnce)
+    -> Storage class (optional)
+
+
+Key features :
+-----------------
+-> Cluster-Wide resource
+-> Can be backed by local disk, NFS, cloud-storage(EBS, GCE, Azure-disk) etc
+-> Lifecycle is independent of any individual pod
+-> 3 main Yaml file attributes for PV:
+    1. Capacity :  indicate its storage size in the Capacity attribute (e.g. 5 Gi)
+    2. Access Modes : 
+        -> ReadOnlyMany : multiple pods will use that pvc to read the data
+        -> ReadWriteOnce : one pod will use that storage to read and write data
+        -> ReadWriteMany : multiple pods will use that pvc to read and write data both
+    3. ReclaimPolicy :
+        -> Retain : volume will retain even if pv get deleted
+        -> Recycle : meaning the data can be restored later after getting scrubbed
+        -> Delete : associated storage assets (such as AWS EBS, GCE PD,..) are deleted
+
+Sample Example of Persistent volume  yaml file :
+----------------------------------------------------
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: my-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data
+
+
+** Let’s walk through how to create a PersistentVolume (PV) using cloud storage like AWS EBS or Azure Disk, and how a PersistentVolumeClaim (PVC) can bind to it.
+
+=> There are 2 ways of volume provisioning, one way is using static volume provisioning and other way is using dynamic volume provisioning through storage class.
+
+AWS EBS-backed PersistentVolume : (Pre-requisites : kubernetes cluster running on AWS, EBS volume already created (or use dynamic provisioning))
+
+Static PV Example (AWS EBS):
+---------------------------------
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aws-ebs-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: <your-ebs-volume-id>
+    fsType: ext4
+
+Azure Disk-backed PersistentVolume : (Pre-requisites : Kubernetes cluster running on Azure (AKS), Azure Disk created or use dynamic provisioning)
+--------------------------------------
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: azure-disk-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  azureDisk:
+    diskName: <your-disk-name>
+    diskURI: <your-disk-uri>
+    cachingMode: ReadOnly
+    fsType: ext4
+    kind: Managed
+
+How to create Persistent volume claim from PV:
+--------------------------------------------------
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: aws-ebs-pv  # or azure-disk-pv
+
+Note : The volumeName field binds the PVC to a specific PV.
+
+Use PVC in a Pod :
+---------------------
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-using-pvc
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - mountPath: "/usr/share/nginx/html"
+      name: storage
+  volumes:
+  - name: storage
+    persistentVolumeClaim:
+      claimName: my-pvc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 Kubectl commands :
@@ -799,6 +1049,9 @@ Phases of pod :
 3. Succeeded : Container exited with status 0
 4. Failed : All conatiner exit and at least one exited with non-zero status
 5. Unknown : state of pod can not be determined due to communication issues with its node
+
+
+
 
 
 
