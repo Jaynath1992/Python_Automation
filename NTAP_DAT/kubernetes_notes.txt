@@ -703,6 +703,113 @@ How it works ?
 
 
 
+Kubectl commands :
+---------------------------
+=> Deploying and Accessing an Application :
+
+Let’s launch a simple Nginx web server and access its default web page, Execute below command to pull the Nginx image from Docker Hub and create a deployment called myweb:
+
+# kubectl run --image=nginx:latest myweb  
+
+It packages and deploys the container in a Kubernetes-specific artifact called a Pod. 
+To access the web server running inside the Pod, (here target pod is port of pod)
+
+# kubectl expose pod <pod_name> --type=NodePort --port=<expose_host_port> --target-port=<container_port>
+
+example : # kubectl expose pod myweb-59d7488cb9-jvnwn --port=80 --target-port=80 --type=NodePort
+
+The Pod is now exposed on every Node of the cluster on an arbitrary port.
+
+(For a NodePort service, Kubernetes allocates a port from a configured range (default is 30000-32767), and each node forwards that port, which is the same on each node, to the service. It is possible to define a specific port number, but you should take care to avoid potential port conflicts.)
+
+Note: A Service can map any incoming port to a targetPort. By default and for convenience, the targetPort is set to the same value as the port field.
+
+# kubectl expose deployment <deployment_name> --port=<port> --target-port=<container_port> --type=NodePort
+
+Then you can describe above service and get the NodePort details
+
+# kubectl get svc <pod name/deployment name>
+
+Use Kubectl commands :
+***************************
+1. Login inside pod : # kubectl exec -it <pod_name> -- /bin/bash
+2. Describe Pod : # kubectl describe pod <pod name>
+3. Get deployment/replica sets : # kubectl get deployment   # kubectl get rs
+4. Get pods and show labels attached to those pods  # kubectl get pods --show-labels
+5. Restart deployment : # kubectl rollout restart deploy <deployment name>
+6. Get deployment status : # kubectl roolout status deployment <deployment name>
+
+=> Rollout and rollback related commands for deployment
+
+7. Update deployment image : # kubectl set image deployment/nginx-deployment nginx=nginx:1.21.0   (nginx image version is udpated to nginx:1.21.0)
+8. Edit deployment object : kubectl edit deployment/helloworld-deployment       
+9. Get rollout history : # kubectl rollout history deployment/hellowworld-deployment
+10. Rollback to previous version : # kubectl rollout undo deployment helloworld-deployment
+11. Rollback to specific version : # kubectl rollout undo deployment helloworld-deployment --to-revision=N
+
+
+Cluster Introspection commands :
+***********************************
+1. Get version information : # kubectl version
+2. Get cluster info : # kubectl cluster-info
+3. Get the configuration : # kubectl config view
+4. output information about a node : # kubectl describe node <node name>
+
+Debugging commands:
+*************************
+
+View pod logs :
+-------------------
+1. View pod logs : # kubectl logs <pod-name>
+2. View specific container logs inside pod : # kubectl logs <pod-name> -c <container-name>
+3. Follow logs in realtime : # kubectl logs -f <pod-name>
+4. Logs from last 1 hour : # kubectl logs --since=1h <pod_name> -c <container-name>
+5. Logs since specific time : # kubectl logs --since-time="2025-05-24T14:00:00Z" <pod-name>
+6. Other flags, show last 100 lines of logs
+    # kubectl logs <pod-name> -c <container-name> --tail=100
+    # kubectl logs <pod-name> -c <container-name> --tail=100 -f  (follow logs like tail -f)
+
+How to see deployment logs :
+----------------------------------
+=> In kubernetes, deployment manage pods, but they don't have logs themselves. To view logs for a deployment, you need to access the logs of the pod it manages.
+
+# Get the all pods managed by deployment : # kubectl get pods -l app=<deployment-label>
+Replace in above command <deployment-label> with the label used in your Deployment (e.g., app=my-app)
+
+=> Check logs for all pods in the deployment :
+
+# kubectl get pods -l app=my-app -o name | xargs -I {} kubectl logs {}
+
+
+
+
+Ingress :
+***************
+It exposes services to outside world, it maps your url to the services, you configure access by creating a collection of rules that defines which inbound connection reach to which services.
+
+Ingress is not actually a type of service, instead it sits in front of multiuple services and acts as smart router or entrypoint into your cluster.
+
+
+Lifecycle of Pod :
+*************************
+
+Phases of pod : 
+1. pending : Accepted  by kubernetes but container not yet created
+2. Running : Pod bound to a node, all containers created and at least one container is running/starting/re-starting
+3. Succeeded : Container exited with status 0
+4. Failed : All conatiner exit and at least one exited with non-zero status
+5. Unknown : state of pod can not be determined due to communication issues with its node
+
+
+
+
+
+
+
+
+
+
+
 
 
 
