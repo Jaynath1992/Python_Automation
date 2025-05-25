@@ -1,2 +1,274 @@
 # GCNV learnings txt
 #############################
+
+Google Cloud NetApp Volumes : 
+
+-> is a fully managed, cloud native file storage service that integrates NetApp's enterprise grade storage capabilities with Google Cloud's infrastructure.
+-> It allows organizations to run traditional file-based applications in the cloud without needing to re-architect them.
+-> It is designed to support file bases workload without requiring application re-architecture, making it ideal for enterprise migrating from on-premises environment to cloud.
+-> You can take your existing applications—the ones that rely on file systems like NFS or SMB—and move them to the cloud using GCNV without changing their code or structure.
+
+-> In simple terms, GCNV is like having your enterprise grade file server in the cloud. It is ideal for companies those who want to move their existing application to cloud quickly, maintain performance and ensure data-protection.
+
+-> GCNV lets you move your old apps(residing on on-prem system) to the cloud and keep them working just like before, without needing to rebuild or reprogram them.
+
+-> No, Google Cloud NetApp Volumes (GCNV) does not support block storage. It is specifically designed to provide file storage, not block storage.
+-> File Storage - Data is stored and accessed as files and folders using protocols like NFS and SMB. Ideal for shared file systems.
+-> Block Storage - Data is stored in raw blocks and accessed via a block device (like a virtual hard drive). Used by databases and OS disks.
+
+If You Need Block Storage in Google Cloud:
+----------------------------------------------
+You should consider:
+1. Persistent Disks (Standard or SSD) for Compute Engine VMs
+2. Local SSDs for ultra-low latency
+3. Hyperdisk (next-gen block storage with high performance and flexibility)
+
+
+GCNV is used for :
+********************
+-> Run traditional file-based applications in the cloud (like SAP, Oracle, or legacy apps).
+-> Migrate on-premises workloads that use NFS or SMB file systems.
+-> Provide high-performance, scalable, and secure file storage without managing hardware.
+
+What does GCNV provides:
+******************************
+-> File shares in the cloud using NFSv3/v4 and SMB protocols
+-> Snapshots, backups, and replication for data protection
+-> Multiple performance tiers(standard/premium/extream) to match workload needs.
+-> Integration with Google Cloud VMs, Kubernetes (GKE), and VMware Engine.
+
+Customer scneario, explaining the use of GCNV product :
+**************************************************************
+Customer Scenario: Global Architecture Firm
+
+Background:
+A large architecture and engineering firm has offices in multiple countries. Their teams work on massive 3D design files using tools like AutoCAD, Revit, and SketchUp. These files are stored on on-premises NetApp storage using SMB for Windows-based workstations and NFS for Linux-based rendering servers.
+
+Challenges:
+-> Teams in different regions experience slow file access due to distance from the central storage.
+-> Managing on-prem hardware across multiple sites is costly and complex.
+-> They want to enable remote work and scale storage without buying more hardware.
+
+Solution with GCNV:
+1. Lift-and-Shift to Google Cloud:
+-> They move their design applications to Google Cloud VMs.
+-> Use GCNV volumes to replicate their on-prem file shares in the cloud.
+
+2. Multi-Protocol Access:
+
+-> Designers on Windows VMs access files via SMB.
+-> Rendering farms on Linux VMs use NFS to access the same files.
+
+3.Performance Tiers:
+
+-> Use Extreme tier for active project files needing high IOPS.
+-> Use Flex or Standard tier for archived or less frequently accessed files.
+
+4. Snapshots & Backups:
+
+-> Enable automated snapshots for version control and quick recovery.
+-> Set up replication between regions for disaster recovery.
+
+Benefits:
+-> No need to rewrite applications—they work exactly as before.
+-> Faster access for global teams.
+-> Reduced IT overhead—no more physical storage to manage.
+-> Improved collaboration and remote work support.
+
+
+Step by step : Moving your App to a cloud VM with GCNV:
+***********************************************************
+
+Step 1: Assess your current setup which is residing on on-prem
+  -> Identify the application you want to move
+  -> Check how it accesses storage(e.g. NFSv3, NFSv4, SMB)
+  -> Note any dependencies (e.g. Active Directory, specific OS version)
+
+Step 2 : Setup Google cloud environment
+  1. Create a google cloud project (for each customer there would be a dedicated GCP project)
+  2. Enable required API's (compute engine API's, NetApp volumes API)
+  3. Setup a VPC network and subnets for each region (like us-east4/us-central1, europe-north1, europe-west1, au-se1) for your cloud resource
+  4. setup VPC peering between GCP cloud env and NetApp environment through commands to establish communication.
+
+Step 3: Deploy a cloud VM 
+  -> From google cloud compute engine, create a VM instance in the above created VPC with the OS your app needs(Linux or windows)
+  -> Ensure the VM is created in the same region as your VPC.
+
+Step 4: Create a GCNV Storage pool and then volume
+    -> First we create storage pool which is logical container for volumes, you can create storage pool with minm. from 1 Tib to 1000 Tib
+    -> Create volume within storage pool, you can create volume from 1 Gib minm. size to upto the size of storage pool
+    -> you can create NFSV3 or NFSV4, and SMB volume by choosing protocol NFS or SMB
+    -> Select performance tier(standard/premium/extreme, flex for SO volumes) for volume
+    -> Select capacity and region 
+
+Step 5 : Once the volume is created, you need to mount the volume on the VM(Linux/Windows)
+
+  For Linux based, volume mount command, these command you need to fire on GCP VM:
+    # sudo mkdir /mnt/gcnv
+    # sudo mount -t nfs <GCNV_IP>:/<volume_name> /mnt/gcnv
+
+  For windows based(SMB):
+    # net use Z: \\<GCNV_IP>\<volume_name>
+
+Step 6: Migrate your application
+    -> Copy your application files to VM
+    -> If needed, migrate data from on-prem using NetAPP migration tools like NetApp SnapMirror, NetAPP BlueXP(it allows for moving data from on-premises to the cloud)
+
+Step 7: Test and Validate
+    -> Run the application on VM
+    -> Ensure it can read/write to the GCNV volume.
+    -> Validate performance and functionality.
+
+Result:
+Your application is now running in the cloud, using GCNV just like it used your on-prem file server—no code changes needed.
+
+
+Key features :
+1. Fully managed service : No infrastructure management is needed—Google handles provisioning, scaling, and maintenance.
+2. Multiprotocol support : Supports NFS(V3, V4) and SMB (2.1,3.0,3.1.1) protocols enabling compatibility with Linux, Windows and UNIX systems.
+3. High Availability & Redundancy : Offers zonal(available within single zone) and regional storage pools(synchronously replicated across two zones for failover protection)
+4. Performance tiers(4 service levels) : Flex (support for SO), standard, premium and extreme. Each tier offers different performance and cost characteristics.
+5. Advance Data management : 
+                            -> Automated snapshots
+                            -> Auto-tiering (cold storage data)
+                            -> Manual and automated backups
+                            -> Volume replication for business continuity
+
+6. Scalibility : Volume can range from 1 Gib to 1 PiB with performance scaling accordingly.
+7. Security & Compliance : 
+                      -> Integration with Active Directory and LDAP
+                      -> Support for customer-managed encryption keys(CMEK)
+
+
+Difference between file storage and block storage :
+********************************************************
+File storage(like GCNV) : 
+  -> What it is: Stores data as files and folders, just like on your computer.
+  -> Accessed via: File system protocols like NFS (Linux/UNIX) or SMB (Windows).
+  -> Best for :
+      1. Shared drives
+      2. User directories
+      3. Applications that need to access files by name or path
+
+
+Block storage :
+**********************
+What it is : stores data in raw block(chunks of data), like a virtual hard disk
+Accessed via: The operating system mounts it as disk(e.g. /dev/sdb)
+Best for :
+  -> Databases (e.g. MYSQL, Oracle)
+  -> Operating system boot disks
+  -> Applications that need fast, low-level access to data
+Example:
+A VM running a database mounts a block storage volume as a disk and formats it with a file system like ext4(used on linux) or NTFS(used on windows).
+
+
+What is Snapshot ?
+************************
+-> Snapshot is read-only copy of data of a volume or file system at a particular point of time
+-> Basically It captures the state of your data at a specific moment without duplicating the entire volume.
+-> Snapshot help protect against accidental deletion, corruption or ransomware
+-> you can restore files or entire volumes quickly without downtime
+-> Snapshots are immutabl( they are just read only copy), you can't change them, but you can clone or restore from them.
+-> Snapshots can be taken manually(adhoc snapshots) and automated(scheduled snapshots), we can define snapshot policy when to take, like hourly, daily, weekly, monthly
+-> Snapshot resides at the same place as where the original volume is mounted.
+
+What we can do with Snapshots in GCNV ?
+-------------------------------------------
+-> Restore - Rollback a volume to previous snapshot state.
+-> Clone - Create a new writable volume from snapshot
+-> Backup - Use snapshots as a base for offsite or long-term backups.
+
+Do Snapshots Contain Data or Just State?
+-------------------------------------------
+-> Snapshots donot copy all data but they do preserve access to the data as it existed at the time snapshot was taken.
+
+-> When you take snapshot, the system marks all current data blocks as "in use" by that snapshot.
+-> No data is copied, just metadata is created to reference those blocks.
+-> Snapshots only consume space for changed blocks. If nothing changes after a snapshot, it takes almost no extra space.
+-> Snapshots use copy-on-write technology, so only the changed blocks after the snapshot are stored. This is easier to manage when everything is in the same place.
+-> The metadata that tracks snapshot state (like which blocks belong to which snapshot) is stored within the volume’s metadata layer.
+
+Example :
+------------
+Let’s say you have a 100 GB volume and take a snapshot.
+
+-> If you don’t change anything, the snapshot uses almost 0 GB.
+-> If you modify 10 GB of files, the snapshot will use 10 GB to preserve the original versions of those files.
+
+=> In GCNV , if you delete a volume then all its associated snapshots are also deleted. 
+-> Since snapshots are tied to the volume they were created from.They reside in the same storage pool and depend on the volume’s metadata and data blocks. 
+-> Once the volume is deleted, the system removes all its references, including snapshots.
+
+How to Protect Snapshots Before Deleting a Volume :
+--------------------------------------------------------
+If you want to preserve the data before deleting a volume, you have a few options:
+1. Clone the snapshot : Create a new volume from the snapshot.This new volume is independent and can be retained even if the original is deleted.
+2. Backup the snapshot : Use NetApp BlueXP or Google Cloud backup tools to export the snapshot to another storage system or region.
+3. Replicate the volume : Use SnapMirror to replicate the volume (and its snapshots) to another GCNV instance or region.
+
+=> “GCNV allows deletion of volumes even if snapshots exist. Since snapshots are volume-bound, they are deleted along with the volume. So, it’s important to clone or back up snapshots if you need to retain them.”
+=> To prevent users from deleting a volume if snapshots exist in Google Cloud NetApp Volumes (GCNV), there is currently no built-in feature that enforces this restriction automatically. 
+
+=> So this is why Backup of volume is required which will prevent data loss even if volume along with all its snapshots gets deleted accidently.
+************************************************************************************************************************************************
+
+What is Backup in GCNV ?
+-------------------------------
+-> A backup is independent copy of data of a volume/file system which is stored outside the place where original data of volume resides. often it is in a different region or tier for durability and long-term retention.
+
+-> Unlike snapshots, backups are stored in a seperate backup repository. not in the same volume. This makes them survivable even if the original volume is deleted.
+-> You can restore a backup to create new volume at any time.
+-> It is useful for disaster recovery, compliance, or long-term archiving.
+
+-> After the first full backup, subsequent backups are incremental - only changes are saved, reducing storage costs.
+
+Snapshot and backups key differences :
+********************************************
+-> Snapshot resides in the same place as where the original volume data resides, but backups are stored outside the original volume storage which is used for long term retention & archiving in case of disaster recovery.
+-> When you delete volume, all its snapshots are deleted but backups survived even if volume gets deleted.
+-> Snapshot use case is fast recovery, short-term rollback, but backups is used for long term retention and disaster recovery
+-> In order to access data you need to clone the snapshot, but in case of backups you need to restore them for accessing data.
+
+“In GCNV, snapshots are great for quick, short-term recovery, while backups are designed for long-term protection and disaster recovery. Snapshots live with the volume, but backups are stored separately and persist even if the volume is deleted.”
+
+Types of backups in GCNV :
+------------------------------
+GCNV supports 2 types of backups :
+
+1. Manual backups : Created on demand by user, Useful before making major changes or updates to applications or data.
+2. Scheduled (Automated) backups : Created based on backup policy(you can define frequency(e.g. hourly/daily/weekly/monthly)). Retention period (e.g., keep for 30 days).
+
+Backup is Incremental by Design
+
+-> After the first full backup, only changed data blocks are saved in subsequent backups.
+-> This makes backups storage-efficient and faster.
+
+Where does backups are stored exactly in GCNV ?
+*******************************************
+-> Yes, backups in Google Cloud NetApp Volumes (GCNV) are stored in NetApp-managed Google Cloud Storage (GCS) buckets, but not directly visible or accessible as standard GCS buckets to users.
+
+Backups are stored in "backup vaults", which are logical containers.
+These vaults are backed by Google Cloud Storage, but:
+They are managed by the GCNV service.
+Users do not interact with the GCS bucket directly.
+You manage backups through the GCNV interface or API, not through the GCS console.
+
+Ensures data integrity and security.
+Simplifies backup management (no need to manage buckets or permissions).
+Supports incremental backups and retention policies.
+Enables cross-region backup vaults for disaster recovery.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
