@@ -230,6 +230,8 @@ if __name__ == '__main__':
 
 
 
+##### this below approach is wrong, if therr are multiple element with same max. count then it will create problem
+
 def find_most_occuring_element_and_count_from_list(l1):
   """find most occuring element and count """
 
@@ -245,6 +247,28 @@ if __name__ == '__main__':
   lst=[1,2,3,2,3,2,4,5,5,6,5,7,5,4,3,2,1,2,3,4,5,6,7,8]
   output = find_most_occuring_element_and_count_from_list(lst)
   print(output)
+
+## correct approach to find max. occuring element from list
+***************************************************************
+l1 = [1,2,3,2,3,2,4,5,5,6,5,7,5,4,3,2,1,2,3,4,5,6,7,8]
+
+def find_most_occuring_element(l1):
+    
+    ele_count_dict = {item:l1.count(item) for item in l1}
+    
+    # max element count values
+    max_count = max(ele_count_dict.values())
+    
+    max_occured_element_count = {ele:count for ele, count in ele_count_dict.items() if max_count == count}
+    return max_occured_element_count
+    
+if __name__ == '__main__':
+    out = find_most_occuring_element(l1)
+    print(out)
+
+
+
+# Python program to get transpose of a matrix
 
 import numpy as np
 
