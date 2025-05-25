@@ -248,16 +248,16 @@ Where does backups are stored exactly in GCNV ?
 *******************************************
 -> Yes, backups in Google Cloud NetApp Volumes (GCNV) are stored in NetApp-managed Google Cloud Storage (GCS) buckets, but not directly visible or accessible as standard GCS buckets to users.
 
-Backups are stored in "backup vaults", which are logical containers.
-These vaults are backed by Google Cloud Storage, but:
-They are managed by the GCNV service.
-Users do not interact with the GCS bucket directly.
-You manage backups through the GCNV interface or API, not through the GCS console.
+-> Backups are stored in "backup vaults", which are logical containers (backup vault is created per region).
+-> These vaults are backed by Google Cloud Storage, but They are managed by the GCNV service.
+-> Users do not interact with the GCS bucket directly.
+-> You manage backups through the GCNV interface or API, not through the GCS console.
 
 Ensures data integrity and security.
-Simplifies backup management (no need to manage buckets or permissions).
-Supports incremental backups and retention policies.
-Enables cross-region backup vaults for disaster recovery.
+-----------------------------------------
+-> Simplifies backup management (no need to manage buckets or permissions).
+-> Supports incremental backups and retention policies.
+-> Enables cross-region backup vaults for disaster recovery.
 
 Full Backup and Incremental backup :
 -----------------------------------------
@@ -424,6 +424,8 @@ key differences :
 -> Use cases : Backup use cases are compliance, archival , disaster recovery while replication use cases are failover and cross region availability.
 
 
+Explain GCNV product architecture :
+----------------------------------------
 
 
 
