@@ -552,6 +552,46 @@ Handles snapshots, replication, and performance tuning.
 Provides the enterprise-grade reliability that GCNV is known for.
 
 
+ONTAP Component Categories
+Data Management
+
+Volume Management
+Thin Provisioning
+Deduplication
+Compression
+Protocol Support
+
+NFS
+SMB
+iSCSI
+Fibre Channel
+Storage Efficiency
+
+Deduplication
+Compression
+Thin Provisioning
+Auto-Tiering
+Data Protection
+
+Snapshots
+SnapMirror
+SnapVault
+SyncMirror
+Performance Optimization
+
+Flash Cache
+QoS (Quality of Service)
+FlexCache
+Storage QoS
+Security Features
+
+Encryption
+Access Control
+Multi-Factor Authentication
+Audit Logging
+
+
+
 
 
 
