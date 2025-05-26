@@ -179,7 +179,7 @@ What is Snapshot ?
 
 What we can do with Snapshots in GCNV ?
 -------------------------------------------
--> Restore - Rollback a volume to previous snapshot state.
+-> Restore/Revert - Rollback/revert a volume to previous snapshot state.
 -> Clone - Create a new writable volume from snapshot
 -> Backup - Use snapshots as a base for offsite or long-term backups.
 
@@ -401,7 +401,7 @@ GCNV Uses Asynchronous Replication :
 This means:
 
 -> Data is not replicated in real time.
--> Instead, it is copied at scheduled intervals (e.g., hourly, daily).
+-> Instead, it is copied at scheduled intervals (e.g., replication_schedule(10_minutely), hourly, daily).
 -> Only the data that existed at the last successful replication is guaranteed to be on the destination volume.
 
 What Happens During a Disaster?
@@ -413,7 +413,7 @@ This is known as Recovery Point Objective (RPO)—the maximum acceptable amount 
 
 How to Minimize Data Loss ?
 -----------------------------
--> Increase replication frequency (e.g., every 15 minutes instead of hourly).
+-> Increase replication frequency (e.g., every 10 minutes instead of hourly).
 -> Use snapshots in combination with replication for more granular recovery.
 -> Monitor replication health to ensure it’s running as expected.
 
