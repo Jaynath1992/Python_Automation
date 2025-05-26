@@ -1,0 +1,7 @@
+"Hi, I’m Jaynath Kumar, and I bring 10 years of experience in software testing. 
+My core expertise lies in automation—covering API testing, GUI automation using Selenium with Python, and backend automation through command-line interfaces. 
+I’ve worked extensively with both Pytest and Robot Framework for test development. 
+Additionally, I have hands-on experience with cloud-native technologies like Docker, Kubernetes, and Google Cloud Platform, which has helped me contribute to modern, scalable testing environments. 
+I’m passionate about building efficient, reliable test systems and continuously improving quality processes."
+
+So this is brief about myself, thank you.
