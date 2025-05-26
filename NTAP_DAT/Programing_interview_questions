@@ -148,6 +148,34 @@ if __name__ == '__main__':
     print(out)
 
 
+## Program to find highest and 2nd highest element from list
+
+
+l1 = [105, 109, 105, 90,87,12,34,67,102,68,100]
+
+def get_second_highest_element(l1):
+    
+    highest_ele = second_highest_ele = float('-inf')
+    
+    for item in l1:
+        if item > highest_ele:
+            second_highest_ele = highest_ele
+            highest_ele = item
+        elif item > second_highest_ele and item != highest_ele:
+            second_highest_ele = item
+    
+    return highest_ele, second_highest_ele
+
+
+
+if __name__ == '__main__':
+    highest_ele, second_highest_ele = get_second_highest_element(l1)
+    print(f'Highest element is : {highest_ele}')
+    print(f'Second highest element is : {second_highest_ele}')
+    
+            
+            
+
 
 
 Find none overlapping time interval:
