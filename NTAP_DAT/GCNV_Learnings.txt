@@ -173,7 +173,7 @@ What is Snapshot ?
 -> Basically It captures the state of your data at a specific moment without duplicating the entire volume.
 -> Snapshot help protect against accidental deletion, corruption or ransomware
 -> you can restore files or entire volumes quickly without downtime
--> Snapshots are immutabl( they are just read only copy), you can't change them, but you can clone or restore from them.
+-> Snapshots are immutable( they are just read only copy), you can't change them, but you can clone or restore from them.
 -> Snapshots can be taken manually(adhoc snapshots) and automated(scheduled snapshots), we can define snapshot policy when to take, like hourly, daily, weekly, monthly
 -> Snapshot resides at the same place as where the original volume is mounted.
 
